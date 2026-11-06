@@ -7,7 +7,7 @@ export async function onRequestGet({request,env}){
 export async function onRequestPut({request,env}){
  const u=await getUser(request,env);if(!u)return json({error:'Oturum geçersiz.'},401);
  const x=await body(request);const payload=x?.payload;if(!payload||payload.v!==1||typeof payload.iv!=='string'||typeof payload.cipher!=='string')return json({error:'Geçersiz şifreli yedek.'},400);
- const raw=JSON.stringify(payload);if(raw.length>7_000_000)return json({error:'Yedek dosyası 5 MB sınırını aşıyor.'},413);
+ const raw=JSON.stringify(payload);if(raw.length>50_000_000)return json({error:'Yedek dosyası 50 MB sınırını aşıyor.'},413);
  const key='users/'+u.id+'/latest.json';const previous=await env.BACKUPS.get(key);
  if(previous){const stamp=new Date().toISOString().replace(/[:.]/g,'-');await env.BACKUPS.put('users/'+u.id+'/history/'+stamp+'.json',previous.body,{httpMetadata:{contentType:'application/json'}})}
  await env.BACKUPS.put(key,raw,{httpMetadata:{contentType:'application/json'}});
