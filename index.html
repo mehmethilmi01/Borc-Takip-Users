@@ -108,7 +108,7 @@ html,body{overscroll-behavior-y:contain}#ptr{position:fixed;top:0;left:50%;z-ind
 <div id=npovl><div class=card style="max-width:400px;margin:0;width:94%;max-height:88vh;overflow-y:auto"><button class=gear onclick="goSet('Bildirimler')" aria-label="Ayarlar">⚙️</button><h2 id=nptitle style="margin-bottom:8px"></h2><div class=row style="gap:8px;margin-bottom:6px"><button class=add onclick="readAll()">✓ Tümünü okundu yap</button><button class=add style="color:var(--bad)" onclick="delAll()">🗑 Tümünü sil</button></div><div id=nplist></div><div class=row style="margin-top:10px"><button class=add onclick="closeNP()">Kapat</button></div></div></div>
 <div id=updovl><div class=card style="max-width:360px;margin:0;width:92%;max-height:86vh;overflow-y:auto"><h2 id=updtitle style="margin-bottom:8px">🆕 Yeni sürüm</h2><div id=updnotes class=mut style="white-space:pre-wrap;margin-bottom:10px"></div><div class=row style="gap:8px"><button class=add onclick="closeUpd()">Sonra</button><button id=updbtn class=add style="color:var(--acc)" onclick="updAct()">⬇️ İndir</button></div><button id=updre class=add style="display:none;margin-top:8px" onclick="startDl()">Tekrar indir</button></div></div>
 <div id=annovl><div class=card style="max-width:360px;margin:0;width:92%;max-height:86vh;overflow-y:auto"><h2 style="margin-bottom:8px">📣 Duyuru</h2><div id=anntext style="white-space:pre-wrap;margin-bottom:12px"></div><button class=add style="color:var(--acc)" onclick="dismissAnn()">Tamam</button></div></div>
-<div id=lockovl><span class=ico style="width:96px;height:96px"></span><div class=at>Borç Takip</div><div><span class=tag>Users App</span></div><input autocomplete=off spellcheck=false id=lkin class=in type=password inputmode=numeric placeholder="PIN" style="width:180px;text-align:center;font-size:22px" oninput="chkPin()"><div id=lkmsg class=bad style="min-height:20px"></div><button id=lkbio class=add style="display:none;width:220px" onclick="tryBio()">👆 Parmak izi ile aç</button><button class=x style="font-size:13px;color:var(--mut)" onclick="document.getElementById('lkrs').style.display='block'">PIN'imi unuttum</button><div id=lkrs style="display:none;text-align:center"><div class=mut>Kilidi kaldırmak için SIFIRLA yaz (verilerin silinmez)</div><input autocomplete=off spellcheck=false id=lkrsin class=in style="width:160px;margin:6px 0"><br><button class=add style="width:auto;padding:6px 14px" onclick="resetLock()">Kilidi kaldır</button></div></div>
+<div id=lockovl><span class=ico style="width:96px;height:96px"></span><div class=at>Borç Takip</div><div><span class=tag>Users App</span></div><input autocomplete=off spellcheck=false id=lkin class="in pinmask" type=text inputmode=numeric placeholder="PIN" style="width:180px;text-align:center;font-size:22px" oninput="chkPin()"><div id=lkmsg class=bad style="min-height:20px"></div><button id=lkbio class=add style="display:none;width:220px" onclick="tryBio()">👆 Parmak izi ile aç</button><button class=x style="font-size:13px;color:var(--mut)" onclick="document.getElementById('lkrs').style.display='block'">PIN'imi unuttum</button><div id=lkrs style="display:none;text-align:center"><div class=mut>Kilidi kaldırmak için SIFIRLA yaz (verilerin silinmez)</div><input autocomplete=off spellcheck=false id=lkrsin class=in style="width:160px;margin:6px 0"><br><button class=add style="width:auto;padding:6px 14px" onclick="resetLock()">Kilidi kaldır</button></div></div>
 <style>#addovl{display:none;position:fixed;inset:0;background:#0008;z-index:13;align-items:center;justify-content:center;padding:20px}</style><div id=addovl><div class=card style="max-width:380px;margin:0;width:92%;max-height:88vh;overflow-y:auto"><h2 style="margin-bottom:8px">Ödeme Ekle</h2><div id=addbody></div><div class=row style="gap:8px;margin-top:10px"><button class=add onclick="closeAddP()">Vazgeç</button><button class=add style="color:var(--acc)" onclick="addQuick()">Kaydet</button></div></div></div><style>#pkovl{display:none;position:fixed;inset:0;background:#0008;z-index:14;align-items:center;justify-content:center;padding:20px}</style><div id=pkovl><div class=card style="max-width:420px;margin:0;width:94%;max-height:88vh;overflow-y:auto"><h2 id=pktitle style="margin-bottom:6px">Hafta seç</h2><div id=pkinfo class=mut style="margin-bottom:6px"></div><div id=pkbody></div><div class=row style="gap:8px;margin-top:10px"><button class=add onclick="closePicker()">Vazgeç</button><button id=pkok class=add style="color:var(--acc)" onclick="pkConfirm()">Onayla</button></div></div></div><div class=nav><button data-t=o class=on><b>🏠</b>Özet</button><button data-t=a><b>📅</b>Aylık</button><button data-t=h><b>🧾</b>Harcama</button><button data-t=g><b>📊</b>Grafik</button><button data-t=b><b>💳</b>Borçlar</button><button data-t=s><b>⚙️</b>Ayarlar</button></div>
 <script>
 var cloudBadgeTxt='';
@@ -353,7 +353,7 @@ function harc(){
 let h=`<h1>Harcama</h1><div class=card><div class=chips>${S.cats.map(c=>`<button class="chip ${c==cat?'on':''}" onclick="catTap('${Q(c)}',this)">${E(c)}${c==cat&&csub?' › '+E(csub):''}</button>`).join('')}<button class=chip onclick="goSet('Kategoriler')">⚙️</button></div>
 <div class=row><input autocomplete=off spellcheck=false id=ea class="in n" type=number inputmode=decimal placeholder="Tutar" value="${ED.a}" oninput="ED.a=this.value" style="width:45%"><input autocomplete=off spellcheck=false id=ed class=in type=date value="${ED.d}" oninput="ED.d=this.value" style="width:52%"></div>
 <div class=row><input autocomplete=off spellcheck=false id=en class=in placeholder="Not (isteğe bağlı)" value="${E(ED.n)}" oninput="ED.n=this.value" style="width:100%"></div><button class=add onclick="hDs(this)" style="text-align:left;margin-bottom:6px;border-style:solid">${ED.ds?'🤝 Kaynak: '+E(dName(ED.ds))+' · değiştir ›':'💳 Kaynak: kendi param · tarihsiz borçtan öde ›'}</button><button class=add onclick="addEx()">+ Harcama ekle</button>${repChips()}</div>
-${limCard()}${searchCard()}<div class=chips>${[['g','Günlük'],['h','Haftalık'],['a','Aylık']].map(x=>`<button class="chip ${x[0]==per?'on':''}" onclick="per='${x[0]}';hWeek=null;aNav=null;draw(1)">${x[1]}</button>`).join('')}</div>`;
+${limCard()}${''}<div class=chips>${[['g','Günlük'],['h','Haftalık'],['a','Aylık']].map(x=>`<button class="chip ${x[0]==per?'on':''}" onclick="per='${x[0]}';hWeek=null;aNav=null;draw(1)">${x[1]}</button>`).join('')}</div>`;
 if(per=='g'){const wk=rng('h');h+=weekDaysList(wk[0],wk[1]).map(d=>dayRow(d,`openDayP('${d}')`)).join('')}
 else if(per=='h'){
 if(!hWeek){const ym=iso(bt0).slice(0,7);h+=weeksOfMonth(ym).map(([s,e])=>`<div class=card style="padding:10px 12px;cursor:pointer" onclick="hWeek={s:'${s}',e:'${e}'};draw(1)"><div class=row><span>${wkLabel(s,e)}${curTag(s,e)} ›</span><span class=n>${F(sumR(s,e))}</span></div></div>`).join('')}
@@ -395,7 +395,7 @@ let tot2=0,pd=0;const g={};
 S.m.forEach(m=>m.w.forEach(w=>w[2].forEach(p=>{if(!p[2])return;const c=p[5]||'📌 Diğer';g[c]=g[c]||{t:0,o:0,c:0};g[c].t+=+p[2];tot2+=+p[2];g[c].o+=paidOf(p);pd+=paidOf(p);if(remOf(p)>0)g[c].c++})));
 const l=Object.entries(g).filter(([c,x])=>x.t-x.o>0).sort((a,b)=>(b[1].t-b[1].o)-(a[1].t-a[1].o));
 let h=`<h1>Borçlar</h1><div class=card><div class=mut>Kalan toplam borç</div><div class="big bad">${F(tot2-pd+dtot())}</div><div class=bar style="margin:8px 0"><i style="width:${tot2?pd/tot2*100:0}%"></i></div><div class=mut>Ödenen ${F(pd)} / ${F(tot2)} (tarihli ödemeler)</div></div>`;
-h+=searchCard();h+=fxCard();h+=recvCard();
+h+='';h+=fxCard();h+=recvCard();
 h+=l.map(([c,x])=>`<div class=card style="padding:10px 12px;cursor:pointer" onclick="bcat='${Q(c)}';draw()"><div class=row><span>${c} ›</span><span class=n>${F(x.t-x.o)}</span></div><div class=bar><i style="width:${x.o/x.t*100}%;background:${CATC[S.dcats.indexOf(c)%CATC.length]||'var(--acc)'}"></i></div><div class=mut>${x.c} ödeme kaldı</div></div>`).join('');
 h+=`<h1 style="margin-top:16px">Tarihsiz Borçlar</h1><div class=card><div class=mut>Ödeme günü belirsiz ama toplam borca dahil olan borçlar (vergi borcu vb.)</div>
 <button class=add style="margin-top:6px" onclick="openDebtP(null)">+ Borç ekle</button></div>`;
@@ -457,39 +457,48 @@ return h+sixMonths()}
 
 function ayarCards(){const f=x=>x?new Date(x).toLocaleString('tr-TR'):'—';
 const on=k=>{const v=(M.nt||{})[k];return v===undefined?true:v};
-const tb=(v,f)=>`<button class="chip ${v?'':''} ${v?'on':''}" onclick="${f}">${v?'Açık':'Kapalı'}</button>`;
+const tb=(v,f2)=>`<button class="chip ${v?'on':''}" onclick="${f2}">${v?'Açık':'Kapalı'}</button>`;
 NP=notifPage(on,tb);
-let h=`<div class=card><h2>👤 Hesap</h2><div class=row><span>Giriş yapan</span><span class=n>${E((cloudUser&&cloudUser.username)||'Çevrimdışı')}</span></div><button class=add style="margin-top:8px;color:var(--bad);border-color:var(--bad)" onclick="cloudLogout()">Çıkış yap</button></div><div class=card><h2>Takvim Aralığı</h2><div class=mut>Uygulama her açılışta en az 2 yıl ileriye kadar otomatik ay ekler. İstersen elle de ekleyebilirsin.</div>
-<div class=row style="margin-top:6px"><span>Kapsanan aralık</span><span class=n style="text-align:right">${S.m[0].t} - ${S.m[S.m.length-1].t}</span></div>
-<div class=row style="gap:8px"><button class=add onclick="extendYear(1)">+ 1 yıl ekle (ileri)</button><button class=add onclick="extendYear(-1)">+ 1 yıl ekle (geri)</button></div></div>
-<div class=card><h2>Yedekleme</h2><div class=row><span>Son yedek (dosya/metin)</span><span class=n style="text-align:right">${M.lb?f(M.lb):'Henüz alınmadı'}</span></div>
-<div class=row><span>Otomatik kopya</span><span class=n>${f(M.la)}</span></div>
-<div class=row><span>Girişte otomatik kopya</span>${tb(M.auto!==false,"M.auto=M.auto===false?true:false;sm();autoBak();draw()")}</div>
-<div class=mut>Günde bir kez (günün ilk açılışında) alınır. Otomatik kopya uygulamanın içinde durur; uygulama verisi silinirse ya da telefon kaybolursa o da gider. Asıl yedek için dosyayı indir ya da metinle kopyala. Dosya yedeği belge fotoğraflarını da içerir, metinle yedek içermez; telefon değiştirirken dosya yedeğini kullan.</div>
-<div class=row style="gap:8px;margin-top:6px"><button class=add onclick="bak()">Yedeği indir</button><label class=add style="text-align:center">Yedeği yükle<input autocomplete=off spellcheck=false type=file accept=".json,application/json" hidden onchange="rst(this.files[0])"></label></div>
-${localStorage.getItem('butce_auto')?'<button class=add style="margin-top:6px" onclick="rsa()">Otomatik kopyayı geri yükle</button>':''}</div>
-<div class=card><h2>Metinle yedek</h2><div class=mut>İndirme çalışmazsa: Göster'e bas, Kopyala'ya bas, metni notlara ya da bir mesaja yapıştır. Geri yüklerken metni buraya yapıştırıp Geri yükle'ye bas.</div><textarea autocomplete=off spellcheck=false id=bt class=in style="width:100%;height:90px;margin:6px 0;font-size:12px"></textarea><div class=row style="gap:6px"><button class=add onclick="bt('g')">Göster</button><button class=add onclick="bt('c')">Kopyala</button><button class=add onclick="bt('r')">Geri yükle</button></div></div>
-<div class=card style="cursor:pointer" onclick="notifView=true;draw(1)"><h2>🔔 Bildirimler ›</h2><div class=mut>${NC.length} sistem bildirimi, ${S.customNotifs.length} kendi bildirimin. Ekle, düzenle, sil, simge değiştir.</div></div>
-<div class=card><h2>🧾 Faturalar</h2><div class=mut>Her ay tekrar eden faturalar (telefon, elektrik, su, internet vb.). Toplam borca eklenmez, Borçlar sekmesinde gözükmez — sadece ödeme gününe en yakın hafta kartında ayrı gösterilir.</div>
-${S.bills.map((b,i)=>{return `<div class=card style="padding:10px 12px;margin-top:8px;cursor:pointer" onclick="openBillP(${i})"><div class=row><span>${billIco(b.cat)} ${E(b.name)}</span><button class=x onclick="event.stopPropagation();delBill(${i})">×</button></div><div class=mut>${b.fixed?'Sabit: '+F(b.amount):'Değişken tutar'} · her ayın ${b.day}'i</div></div>`}).join('')||'<div class=mut style="margin-top:8px">Henüz fatura eklenmedi</div>'}
-<button class=add style="margin-top:8px" onclick="openBillP(null)">+ Fatura ekle</button></div>
-<div class=card><h2>Kategoriler</h2><div class=mut>Harcama kategorileri</div><div class=chips>${S.cats.map((c,i)=>`<span class=chip>${c} <button class=x style="font-size:13px" onclick="editCat('cat',${i})">✎</button><button class=x style="font-size:13px" onclick="delCat(${i})">×</button></span>`).join('')}</div>
-<button class=add style="margin-top:6px;padding:4px 10px;width:auto;font-size:12px" onclick="openCatP('cat',null)">+ Harcama kategorisi</button>
-<div class=mut style="margin-top:14px">Borç/ödeme kategorileri</div><div class=chips>${S.dcats.map((c,i)=>`<span class=chip>${c} <button class=x style="font-size:13px" onclick="editCat('dcat',${i})">✎</button><button class=x style="font-size:13px" onclick="delDcat(${i})">×</button></span>`).join('')}</div>
-<button class=add style="margin-top:6px;padding:4px 10px;width:auto;font-size:12px" onclick="openCatP('dcat',null)">+ Borç kategorisi</button></div>
-<div class=card><h2>🗂️ Belge Kategorileri</h2><div class=mut>Belgelerim'deki kategoriler. Adını ve simgesini düzenleyebilir, silebilir, yenisini ekleyebilirsin. 🏦 işaretli kategorilerde banka seçimi çıkar; ✎ ile açıp kapatabilirsin.</div><div class=chips>${S.docCats.map((c,i)=>`<span class=chip>${E(c)}${ISB(c)?' 🏦':''} <button class=x style="font-size:13px" onclick="editDC(${i})">✎</button><button class=x style="font-size:13px" onclick="delDC(${i})">×</button></span>`).join('')}</div><button class=add style="margin-top:6px;padding:4px 10px;width:auto;font-size:12px" onclick="openDC(null)">+ Belge kategorisi</button></div>
-<div class=card><h2>⭐ Sabit Harcamalar</h2><div class=mut>Her gün ya da sık yaptığın harcamaları kendin tanımla. Harcama sekmesinde tek dokunuşla bugüne eklenirler.</div>${(S.fixed||[]).map((f,i)=>`<div class=row style="margin-top:6px"><span>${E(f.n||f.c)}${f.ds?' · 🤝 '+E(dName(f.ds)):''} <span class=mut>· ${F(f.a)}</span></span><button class=x onclick="delFixed(${i})">×</button></div>`).join('')||'<div class=mut style="margin-top:6px">Henüz sabit harcama yok</div>'}<button class=add style="margin-top:8px" onclick="openFixedP()">+ Sabit harcama ekle</button></div><div class=card><h2>💱 Kurlar (Döviz · Altın · Gümüş)</h2><div class=mut>Döviz, altın ve gümüş borçlarının TL karşılığı bu kurlarla (satış fiyatı) hesaplanır. İnternet varken uygulama açılırken ve yenilemede otomatik güncellenir. Gelmezse kuru elle de yazabilirsin.</div>${Object.keys(FXU).map(u=>`<div class=row><span>${FXU[u][0]} ${FXU[u][1]}</span><input autocomplete=off spellcheck=false class="in n" type=number inputmode=decimal value="${fxRate(u)||''}" placeholder="kur" style="width:110px;text-align:right" onchange="setFx('${u}',this.value)"></div>`).join('')}<div class=mut style="margin-top:6px">Son güncelleme: ${M.rates&&M.rates.t?new Date(M.rates.t).toLocaleString('tr-TR'):'—'}</div><button class=add style="margin-top:6px" onclick="refreshRates(true)">🔄 Kurları şimdi güncelle</button></div>
-${ADMIN?adminCard():''}
-<div class=card><h2>⏱ Hafta Kapanışı</h2><div class=mut>Çarşamba günü bu saatten sonra o haftanın ödenmeyenleri bir sonraki haftaya devreder.</div><div class=row style="margin-top:6px"><span>Kapanış saati</span><input autocomplete=off spellcheck=false class="in n" type=number min=0 max=23 value="${M.ch==null?17:M.ch}" style="width:70px;text-align:center" onchange="setCh(this.value)"></div></div>
-<div class=card><h2>🌈 Renk şeması</h2><div class=mut>Vurgu rengini seç. Açık ve koyu temada otomatik uyum sağlar.</div><div class=chips>${Object.keys(SCHEMES).map(k=>`<button class="chip ${(M.scheme||'yesil')==k?'on':''}" onclick="setScheme('${k}')">${SCHEMES[k].n}</button>`).join('')}</div></div><div class=card><h2>📖 Kullanım rehberi</h2><div class=mut>Temel adımları yeniden gösterir.</div><button class=add style="margin-top:8px" onclick="openGuide()">Rehberi aç</button></div><div class=card><h2>🎨 Görünüm</h2><div class=chips>${[['auto','Otomatik'],['light','Açık'],['dark','Koyu']].map(x=>`<button class="chip ${(M.theme||'auto')==x[0]?'on':''}" onclick="setTheme('${x[0]}')">${x[1]}</button>`).join('')}</div></div>
-<div class=card><h2>🔒 Uygulama Kilidi</h2><div class=mut>Açılışta ve uygulamadan 1 dakikadan uzun süre çıkıp dönünce PIN ister. Gündelik gizlilik içindir.</div>
-<div class=row style="margin-top:6px"><span>PIN kilidi</span>${tb(!!M.pin,"togLock()")}</div>
-${M.pin?`<div class=row><span>PIN'i değiştir</span><button class=chip onclick="openPinP()">Değiştir</button></div><div class=row><span>Parmak izi (cihaz destekliyorsa)</span>${tb(!!M.bio,"togBio()")}</div>`:''}</div>
-<div class=card><h2>🎯 Aylık Harcama Limitleri</h2><div class=mut>Boş bırakırsan limit yok. %80'e gelince uyarır.</div>${S.cats.map((c,i)=>`<div class=row><span>${c}</span><input autocomplete=off spellcheck=false class="in n" type=number inputmode=decimal placeholder="Limit" value="${S.limits[c]||''}" style="width:110px;text-align:right" onchange="setLim(${i},this.value)"></div>`).join('')}</div>
-<div class=card><h2>📄 PDF Risk Raporu</h2><div class=mut>Uygulamadaki tüm veriden grafikli, görselli risk raporu (PDF) üretir.</div><button class=add style="margin-top:8px" onclick="pdfRapor()">Raporu oluştur</button></div>
-<div class=card><h2>Veriler</h2><div class=mut>Tüm ödemeleri, maaşları, notları, borçları ve harcamaları siler. Ay ve hafta takvimi kalır.</div><button class=add style="margin-top:8px;color:var(--bad);border-color:var(--bad)" onclick="clr()">Tüm verileri temizle</button></div>`;
-return h}
-
+const hesap=`<div class=card><h2>Hesap ve Yedek</h2>
+<div class=row><span>Giriş yapan</span><span class=n>${E((cloudUser&&cloudUser.username)||'Çevrimdışı')}</span></div>
+<div class=row><span>Son yedek</span><span class=n>${M.lb?f(M.lb):'Henüz alınmadı'}</span></div>
+<div class=row style="gap:8px;margin-top:12px"><button class=add style="flex:1" onclick="bak()">Yedeği indir</button><label class=add style="flex:1;text-align:center">Yedeği yükle<input type=file accept=".json,application/json" hidden onchange="rst(this.files[0])"></label></div>
+<details class=more><summary>Gelişmiş yedek seçenekleri</summary>
+ <div class=row style="margin-top:8px"><span>Girişte otomatik kopya</span>${tb(M.auto!==false,"M.auto=M.auto===false?true:false;sm();autoBak();draw()")}</div>
+ <div class=mut style="font-size:12px;margin-top:6px">Otomatik kopya: ${f(M.la)}</div>
+ ${localStorage.getItem('butce_auto')?'<button class=add style="margin-top:8px;width:100%" onclick="rsa()">Otomatik kopyayı geri yükle</button>':''}
+ <div class=mut style="margin-top:12px">Metinle yedek: Göster, metni kopyala ya da not defterine yapıştır. Geri yüklemek için metni aşağıya yapıştır.</div>
+ <textarea id=bt class=in style="width:100%;height:80px;margin:6px 0;font-size:12px"></textarea>
+ <div class=row style="gap:6px"><button class=add onclick="bt('g')">Göster</button><button class=add onclick="bt('c')">Kopyala</button><button class=add onclick="bt('r')">Geri yükle</button></div>
+</details>
+<button class=add style="margin-top:10px;width:100%;color:var(--bad)" onclick="cloudLogout()">Çıkış yap</button></div>`;
+const bild=`<div class=card style="cursor:pointer" onclick="notifView=true;draw(1)"><h2>Bildirimler</h2><div class=mut>${NC.length} sistem bildirimi, ${S.customNotifs.length} kendi bildirimin. Aç, düzenle, sil.</div></div>`;
+const gorunum=`<div class=card><h2>Görünüm</h2>
+<div class=mut>Tasarım</div><div class=chips>${[['defter','Defter'],['klasik','Klasik']].map(x=>`<button class="chip ${(M.skin=='klasik')==(x[0]=='klasik')?'on':''}" onclick="setSkin('${x[0]}')">${x[1]}</button>`).join('')}</div>
+<div class=mut style="margin-top:10px">Tema</div><div class=chips>${[['auto','Otomatik'],['light','Açık'],['dark','Koyu']].map(x=>`<button class="chip ${(M.theme||'auto')==x[0]?'on':''}" onclick="setTheme('${x[0]}')">${x[1]}</button>`).join('')}</div>
+<div class=mut style="margin-top:10px">Vurgu rengi</div><div class=chips>${Object.keys(SCHEMES).map(k=>`<button class="chip ${(M.scheme||'yesil')==k?'on':''}" onclick="setScheme('${k}')">${SCHEMES[k].n}</button>`).join('')}</div></div>`;
+const takvim=`<div class=card><h2>Takvim ve Hafta</h2>
+<div class=row><span>Kapsanan aralık</span><span class=n style="text-align:right">${S.m[0].t} – ${S.m[S.m.length-1].t}</span></div>
+<button class=add style="margin-top:10px;width:100%" onclick="extendYear(1)">+ 1 yıl ileri ekle</button>
+<details class=more><summary>Geri ekleme</summary><button class=add style="margin-top:8px;width:100%" onclick="extendYear(-1)">+ 1 yıl geri ekle</button></details>
+<div class=row style="margin-top:14px"><span>Hafta kapanış saati</span><input class="in n" type=number min=0 max=23 value="${M.ch==null?17:M.ch}" style="width:70px;text-align:center" onchange="setCh(this.value)"></div>
+<div class=mut style="font-size:12px;margin-top:6px">Çarşamba bu saatten sonra o haftanın ödenmeyenleri bir sonraki haftaya devreder.</div></div>`;
+const kat=`<div class=card><h2>Kategoriler</h2>
+<div class=mut>Harcama</div><div class=chips>${S.cats.map((c,i)=>`<span class=chip>${E(c)} <button class=x style="font-size:13px" onclick="editCat('cat',${i})">✎</button><button class=x style="font-size:13px" onclick="delCat(${i})">×</button></span>`).join('')}<button class=chip onclick="openCatP('cat',null)">+ Ekle</button></div>
+<div class=mut style="margin-top:12px">Borç ve ödeme</div><div class=chips>${S.dcats.map((c,i)=>`<span class=chip>${E(c)} <button class=x style="font-size:13px" onclick="editCat('dcat',${i})">✎</button><button class=x style="font-size:13px" onclick="delDcat(${i})">×</button></span>`).join('')}<button class=chip onclick="openCatP('dcat',null)">+ Ekle</button></div>
+<div class=mut style="margin-top:12px">Sabit harcamalar</div>${(S.fixed||[]).map((x,i)=>`<div class=row style="margin-top:6px"><span>${E(x.n||x.c)}${x.ds?' · 🤝 '+E(dName(x.ds)):''} <span class=mut>· ${F(x.a)}</span></span><button class=x onclick="delFixed(${i})">×</button></div>`).join('')||'<div class=mut style="margin-top:6px">Henüz sabit harcama yok</div>'}
+<button class=chip style="margin-top:8px" onclick="openFixedP()">+ Sabit harcama</button></div>`;
+const belge=`<div class=card><h2>Belge Kategorileri</h2><div class=mut>Belgelerim'deki kategoriler. 🏦 işaretli olanlarda banka seçimi çıkar.</div><div class=chips style="margin-top:8px">${S.docCats.map((c,i)=>`<span class=chip>${E(c)}${ISB(c)?' 🏦':''} <button class=x style="font-size:13px" onclick="editDC(${i})">✎</button><button class=x style="font-size:13px" onclick="delDC(${i})">×</button></span>`).join('')}<button class=chip onclick="openDC(null)">+ Ekle</button></div></div>`;
+const limit=`<div class=card><h2>Aylık Harcama Limitleri</h2><div class=mut>Boş bırakırsan limit yok. %80'e gelince uyarır.</div>${S.cats.map((c,i)=>`<div class=row style="margin-top:6px"><span>${E(c)}</span><input class="in n" type=number inputmode=decimal placeholder="Limit" value="${S.limits[c]||''}" style="width:110px;text-align:right" onchange="setLim(${i},this.value)"></div>`).join('')}</div>`;
+const fat=`<div class=card><h2>Faturalar</h2><div class=mut>Her ay tekrar eden faturalar. Borç listesine eklenmez, ödeme gününe en yakın haftada görünür.</div>${S.bills.map((b,i)=>`<div class=row style="margin-top:8px;cursor:pointer" onclick="openBillP(${i})"><span>${billIco(b.cat)} ${E(b.name)} <span class=mut>· ${b.fixed?F(b.amount):'değişken'} · ${b.day}'i</span></span><button class=x onclick="event.stopPropagation();delBill(${i})">×</button></div>`).join('')||'<div class=mut style="margin-top:8px">Henüz fatura yok</div>'}<button class=add style="margin-top:10px;width:100%" onclick="openBillP(null)">+ Fatura ekle</button></div>`;
+const kur=`<div class=card><h2>Kurlar</h2><div class=mut>Döviz, altın ve gümüş borçlarının TL karşılığı bu kurlarla hesaplanır. İnternet varken otomatik güncellenir.</div>${Object.keys(FXU).map(u=>`<div class=row style="margin-top:6px"><span>${FXU[u][0]} ${FXU[u][1]}</span><input class="in n" type=number inputmode=decimal value="${fxRate(u)||''}" placeholder="kur" style="width:110px;text-align:right" onchange="setFx('${u}',this.value)"></div>`).join('')}<div class=mut style="margin-top:8px;font-size:12px">Son güncelleme: ${M.rates&&M.rates.t?new Date(M.rates.t).toLocaleString('tr-TR'):'—'}</div><button class=add style="margin-top:10px;width:100%" onclick="refreshRates(true)">🔄 Kurları güncelle</button></div>`;
+const kilit=`<div class=card><h2>Uygulama Kilidi</h2><div class=mut>Açılışta ve 1 dakikadan uzun süre dışarıda kalınca PIN ister.</div>
+<div class=row style="margin-top:10px"><span>PIN kilidi</span>${tb(!!M.pin,"togLock()")}</div>
+${M.pin?`<div class=row style="margin-top:10px"><span>PIN'i değiştir</span><button class=chip onclick="openPinP()">Değiştir</button></div><div class=row style="margin-top:10px"><span>Parmak izi</span>${tb(!!M.bio,"togBio()")}</div>`:''}</div>`;
+const diger=`<div class=card><h2>Diğer</h2>
+<div class=row style="gap:8px"><button class=add style="flex:1" onclick="openGuide()">📖 Rehber</button><button class=add style="flex:1" onclick="pdfRapor()">📄 PDF rapor</button></div>
+<button class=add style="margin-top:10px;width:100%;color:var(--bad);border-color:var(--bad)" onclick="clr()">Tüm verileri temizle</button></div>`;
+return hesap+bild+gorunum+takvim+kat+belge+limit+fat+kur+kilit+`${ADMIN?adminCard():''}${window.IS_ADMIN?adminUsersCard():''}`+diger}
 const DEFICO={pb1:'🧾',pb2:'⚠️',p1:'⏰',p2:'📅',p4:'🗓️',p5:'📌',p3:'⚠️',p7:'✔️',p6:'📊',m1:'💳',m3:'⚠️',h1:'🧾',h2:'📈',h3:'📈',lm:'🎯',s1:'💾',s2:'👋',d1:'🗂️'};
 const DOWN=['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
 function notifPage(on,tb){let h=`<div class=card><h2>Kendi Bildirimlerin</h2><div class=mut>İstediğin metin ve simgeyle, istediğin sıklıkta kendi hatırlatmanı oluştur. Özet sayfasının üstünde çıkar.</div>
@@ -743,7 +752,7 @@ const addEx=()=>{const a=+ED.a;if(!a)return toast('Tutar gir');
  ED={a:'',d:iso(bt0),n:'',ds:ED.ds||null};save();draw()};
 function draw(reset){wbFill();const y=window.scrollY;
 document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==tab));
-document.getElementById('app').innerHTML={o:ozet,a:ay,h:harc,g:grafik,b:borc,s:ayar}[tab]();if(tab=='h'||tab=='b')renderSearch();
+document.getElementById('app').innerHTML={o:(M.skin!='klasik'?ozetDefter:ozet),a:(M.skin!='klasik'?ayDefter:ay),h:(M.skin!='klasik'?harcDefter:harc),g:(M.skin!='klasik'?grafikDefter:grafik),b:(M.skin!='klasik'?borcDefter:borc),s:ayar}[tab]();if(tab=='h'||tab=='b')renderSearch();
 if(reset){if(gw!==null){const e=document.getElementById('w'+gw);if(e){e.scrollIntoView();gw=null}else window.scrollTo(0,0)}else window.scrollTo(0,0)}else window.scrollTo(0,y)}
 /* ===== v2 eklentileri ===== */
 /* ===== v2.1 eklentileri ===== */
@@ -795,10 +804,10 @@ const setTheme=t=>{M.theme=t;sm();applyTheme();draw()};
 const H=s=>{let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return(4294967296*(2097151&h2)+(h1>>>0)).toString(36)};
 let locked=false,hiddenAt=0,fails=0;
 const showLock=()=>{if(!M.pin)return;locked=true;$('lockovl').style.display='flex';$('lkin').value='';$('lkmsg').textContent='';$('lkbio').style.display=M.bio?'block':'none';setTimeout(()=>{try{$('lkin').focus()}catch(e){}},150);if(M.bio)tryBio()};
-const hideLock=()=>{locked=false;fails=0;setTimeout(()=>{try{showAnn();if(!M.gSeen)openGuide()}catch(e){}},300);$('lockovl').style.display='none';$('lkrs').style.display='none'};
+const hideLock=()=>{try{document.getElementById('lkin').value=''}catch(e){}locked=false;fails=0;setTimeout(()=>{try{showAnn();if(!M.gSeen)openGuide()}catch(e){}},300);$('lockovl').style.display='none';$('lkrs').style.display='none'};
 const chkPin=()=>{const v=$('lkin').value;if(v.length<4)return;if(H('bt:'+v)==M.pin)return hideLock();if(v.length>=(M.pl||4)){fails++;$('lkmsg').textContent='Yanlış PIN';$('lkin').value=''}};
 const resetLock=()=>{if(($('lkrsin').value||'').trim().toLocaleUpperCase('en')!='SIFIRLA'&&($('lkrsin').value||'').trim().toUpperCase()!='SIFIRLA')return toast('SIFIRLA yazmalısın');delete M.pin;delete M.pl;delete M.bio;sm();hideLock();toast('Kilit kaldırıldı')};
-const openPinP=()=>{IP={mode:'pin',key:null};$('iptitle').textContent='PIN belirle (4-8 rakam)';$('ipicons').style.display='none';const i=$('ipinput');i.style.display='block';i.type='password';i.setAttribute('inputmode','numeric');i.value='';i.placeholder='••••';$('ipovl').style.display='flex'};
+const openPinP=()=>{IP={mode:'pin',key:null};$('iptitle').textContent='PIN belirle (4-8 rakam)';$('ipicons').style.display='none';const i=$('ipinput');i.style.display='block';i.type='text';i.classList.add('pinmask');i.setAttribute('inputmode','numeric');i.value='';i.placeholder='••••';$('ipovl').style.display='flex'};
 const togLock=()=>{if(M.pin)ask('Uygulama kilidi kapatılsın mı?',()=>{delete M.pin;delete M.pl;delete M.bio;sm();draw()});else openPinP()};
 const bioReg=async()=>{try{const id=crypto.getRandomValues(new Uint8Array(16)),c=await navigator.credentials.create({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:'Borç Takip'},user:{id,name:'user',displayName:'user'},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},timeout:60000}});M.bio=btoa(String.fromCharCode(...new Uint8Array(c.rawId)));sm();toast('Parmak izi açıldı');draw()}catch(e){toast('Bu cihazda/uygulamada parmak izi desteklenmiyor')}};
 const tryBio=async()=>{try{const raw=Uint8Array.from(atob(M.bio),c=>c.charCodeAt(0));await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{type:'public-key',id:raw}],userVerification:'required',timeout:60000}});hideLock()}catch(e){}};
@@ -1285,7 +1294,7 @@ const SCHEMES={yesil:{n:'Yeşil',l:['#1f6f5c','#dff3e6'],d:['#5fc4a8','#1f3a2e']
 const CATC_L=CATC.slice();
 const CATC_D=['#5fc4a8','#e0a070','#b59be0','#ef7a6a','#7aaee8','#d9bd5a','#8fd6b5','#e88aaa','#8fbfe6','#b9a08a'];
 const isDarkNow=()=>M.theme=='dark'||(M.theme!='light'&&!!(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches));
-const applyScheme=()=>{const s=SCHEMES[M.scheme]||SCHEMES.yesil,d=isDarkNow(),c=d?s.d:s.l;const st=document.documentElement.style;st.setProperty('--acc',c[0]);st.setProperty('--ok',c[1]);CATC=d?CATC_D:CATC_L};
+const applyScheme=()=>{document.documentElement.classList.toggle('dt',M.skin!='klasik');const s=SCHEMES[M.scheme]||SCHEMES.yesil,d=isDarkNow(),c=d?s.d:s.l;const st=document.documentElement.style;st.setProperty('--acc',c[0]);st.setProperty('--ok',c[1]);CATC=d?CATC_D:CATC_L};
 const applyTheme=()=>{applyThemeOld();applyScheme()};
 const setScheme=k=>{M.scheme=k;sm();applyScheme();draw()};
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{applyScheme();draw()})}catch(e){}
@@ -1953,7 +1962,7 @@ const cloudRestoreImgs=async()=>{const im=S._imgs||{};delete S._imgs;for(const k
 const cloudDoLogout=async()=>{if(cloudToken&&!cloudOffline){try{await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})})}catch(e){toast('Yedek alınamadı, çıkış yapılmadı. İnternetini kontrol et.');return}}
 ['bt_cloud_token','bt_cloud_user','bt_cloud_enc_key','butce_v3','butce_meta','butce_auto','butce_auto_prev'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});try{indexedDB.deleteDatabase('borc_docs')}catch(e){}location.reload()};
 const cloudLogout=()=>ask(cloudOffline?'Çevrimdışı veriler buluta kaydedilmediği için silinecek. Çıkış yapılsın mı?':'Çıkış yapılsın mı? Son veriler buluta kaydedilecek, bu cihazdaki veriler silinecek.',()=>cloudDoLogout());
-const cloudHideGate=()=>{if(window.CLOUD_MUST_CHANGE){cloudShowPwChange();return}document.getElementById('cloudAuth').style.display='none';document.getElementById('app').style.display='';};
+const cloudHideGate=()=>{['caPass','pwcur','pwnew','pwnew2'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});if(window.CLOUD_MUST_CHANGE){cloudShowPwChange();return}document.getElementById('cloudAuth').style.display='none';document.getElementById('app').style.display='';};
 const cloudUseLocal=()=>{cloudOffline=true;cloudHideGate();cloudShowBadge('Çevrimdışı · Bulut yedeği kapalı')};
 const cloudSubmit=async()=>{const username=(document.getElementById('caUser').value||'').trim();const password=document.getElementById('caPass').value||'';if(!/^[a-zA-Z0-9_.-]{3,24}$/.test(username))return cloudMsg('Kullanıcı adı 3-24 karakter olmalı (İngilizce harf, rakam, . _ -).');if(password.length<8)return cloudMsg('Şifre en az 8 karakter olmalı.');const b=document.getElementById('caSubmit');b.disabled=true;cloudMsg('Hesap kontrol ediliyor…');try{const path=cloudMode==='register'?'auth/register':'auth/login';const out=await cloudApi(path,{method:'POST',body:JSON.stringify({username,password})});cloudToken=out.token;cloudUser=out.user;window.CLOUD_MUST_CHANGE=!!out.user.mustChange;cloudEncKey=await cloudDeriveKey(password,cloudUser.backupSalt);localStorage.setItem('bt_cloud_token',cloudToken);localStorage.setItem('bt_cloud_user',JSON.stringify(cloudUser));localStorage.setItem('bt_cloud_enc_key',cloudEncKey);if(cloudMode==='register'){await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})});cloudMsg('Hesap oluşturuldu, ilk yedek buluta kaydedildi.');}else{cloudMsg('Bulut yedeği aranıyor…');const bk=await cloudApi('backup');if(bk.payload){cloudRestoring=true;S=await cloudDecrypt(bk.payload);await cloudRestoreImgs();norm(S);ensureRange();rollOver();genBills();save();cloudRestoring=false;draw(1);cloudMsg('Yedek geri yüklendi.');}else{await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})});cloudMsg('Bu hesapta yedek bulunamadı; bu cihazdaki veriler yedeklendi.');}}cloudHideGate();cloudShowBadge('☁ '+cloudUser.username+' · Senkron açık');setTimeout(()=>cloudMsg(''),1200);}catch(e){cloudRestoring=false;cloudMsg(e.message||'İşlem başarısız.');}finally{b.disabled=false;}};
 function cloudScheduleBackup(){if(!cloudToken||cloudOffline||cloudRestoring)return;if(cloudBackupTimer)clearTimeout(cloudBackupTimer);cloudBackupTimer=setTimeout(cloudUploadBackup,1400)}
@@ -1986,4 +1995,166 @@ const cloudChangePw=async()=>{const g=id=>(document.getElementById(id)||{}).valu
   cloudHideGate();cloudShowBadge('Senkron açık');
  }catch(e){m(e.message||'Şifre değiştirilemedi')}};
 
-</script><script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js'))}</script></body></html>
+
+
+/* ===== Defter tasarımı ===== */
+const setSkin=k=>{M.skin=k;sm();applyScheme();draw()};
+function dtStats(over){return `<div class=dtgrid><div class=card><div class=mut>Toplam borç</div><div class=big style="font-size:22px">${F(tot())}</div></div><div class=card><div class=mut>Geciken</div><div class=big style="font-size:22px;color:${over?'var(--bad)':'var(--ink)'}">${F(over)}</div></div></div>`;}
+function ozetDefter(){ozet();
+ const arrW=[];S.m.forEach((m,mi)=>m.w.forEach((w,wi)=>arrW.push({mi,wi,d:wd(w)})));
+ let nx=null;if(hw){const idx=arrW.findIndex(x=>x.mi==hw[0]&&x.wi==hw[1]);if(idx>=0)nx=[hw[0],hw[1],arrW[idx].d]}
+ let over=0;S.m.forEach(m=>m.w.forEach(w=>{if(isClosed(w))over+=kalan(w)}));
+ const head=`<div class=dthead><div><div class=ad>${fd(t0)}</div><div class=at>Borç Takip</div><div id=cloudSyncBadge>${cloudBadgeTxt}</div></div><div class=dtbtns><button class=docbtn onclick="openSearch()" aria-label="Ara">🔍</button><button class=docbtn onclick="openDocs()" aria-label="Belgeler">📁</button><button class=docbtn onclick="openNP()" aria-label="Bildirimler">🔔${unreadN()?`<span class=bdg>${Math.min(99,unreadN())}</span>`:''}</button></div></div>`
+   +updBanner()+(qsShow()?'<button class=add style="margin-bottom:12px;width:100%" onclick="openQS()">💰 Maaşı Gir</button>':'');
+ if(!nx)return head+'<div class=card><div class=mut>Açık hafta yok</div></div>'+dtStats(over);
+ const w=S.m[nx[0]].w[nx[1]],rem=kalanW(w),wt=wtotW(w),pct=wt?Math.min(100,Math.max(0,(wt-rem)/wt*100)):0;
+ const dl=Math.round((nx[2]-t0)/864e5);
+ const when=dl==0?'Bugün':dl==1?'Yarın':dl<0?'Geçti':dl+' gün sonra';
+ const rows=w[2].map((p,pi)=>`<div class="pl dtrow ${p[3]?'ok':''}" data-mi="${nx[0]}" data-wi="${nx[1]}" data-pi="${pi}"><button class="chk ${p[3]?'on':''}" onclick="tg(${nx[0]},${nx[1]},${pi})">${p[3]?'✓':''}</button><div><div class=nm>${E(p[0]||'—')}</div><div class=mut style="font-size:12px">${E(p[5]||'')}${p[1]?' · '+new Date(p[1]+'T00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'short'}):''}</div></div><div class=amt>${F(p[3]?p[2]:remOf(p))}</div></div>`).join('')+billRows(nx[0],nx[1]);
+ const salTxt=w[1]?('Maaş '+F(w[1])+(w[1]>=rem?' · artan '+F(w[1]-rem):' · açık '+F(rem-w[1]))):'Bu hafta maaş girilmedi';
+ return head+`
+ <div class=card style="padding:22px">
+  <div class=label>${when} · ${fd(nx[2])}</div>
+  <div class=big style="font-size:44px;margin:8px 0 2px">${F(rem)}</div>
+  <div class=mut>${salTxt}</div>
+  <div class=dtbar><i style="width:${pct.toFixed(0)}%"></i></div>
+  <div class=dtnav><button class=dtarr onclick="goHW(-1)">‹</button><span class=mut>${new Date(nx[2]).toLocaleDateString('tr-TR',{day:'numeric',month:'long'})}</span><button class=dtarr onclick="goHW(1)">›</button></div>
+ </div>
+ <div class=sec-h><b>Ödemeler</b><span class=mut>${w[2].filter(p=>p[3]).length}/${w[2].length} tamam</span></div>
+ <div class=dtledger>${rows||'<div class=mut style="padding:18px;text-align:center">Bu hafta için ödeme girilmemiş</div>'}</div>
+ ${dtStats(over)}`;
+}
+
+
+
+/* ===== Defter ekranları: Aylık, Harcama, Grafik, Borçlar ===== */
+const DCOL=['#f5b041','#3ddc97','#7aa2ff','#ff7a7a','#b48cff','#ffa3d1','#8fd3ff','#c9b98a'];
+const dSvg=(entries,center)=>{const tot=entries.reduce((s,e)=>s+e[1],0);if(!tot)return '<div class=mut style="padding:18px 0">Veri yok</div>';
+ const R=58,C=2*Math.PI*R;let acc=0;
+ const segs=entries.map((e,i)=>{const len=e[1]/tot*C,off=acc;acc+=len;return `<circle r="${R}" cx="80" cy="80" fill="none" stroke="${DCOL[i%DCOL.length]}" stroke-width="18" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}" transform="rotate(-90 80 80)"/>`}).join('');
+ return `<svg viewBox="0 0 160 160" width="150" height="150">${segs}<text x="80" y="76" text-anchor="middle" font-size="11" fill="var(--mut)">${center[0]}</text><text x="80" y="96" text-anchor="middle" font-family="Georgia,serif" font-size="15" fill="var(--ink)">${center[1]}</text></svg>`};
+const dLegend=(entries,tot,onc)=>entries.map((e,i)=>`<div class=legrow ${onc?`onclick="${onc(e[0])}"`:''}><span><i class=dot style="background:${DCOL[i%DCOL.length]}"></i>${E(e[0])}</span><span class=amt>${F(e[1])} <span class=mut>%${tot?Math.round(e[1]/tot*100):0}</span></span></div>`).join('');
+function ayDefter(){
+ const m=S.m[cur];
+ const inc=m.w.reduce((s,w)=>s+(+w[1]||0),0),left=mkW(m),all=mtotW(m),paid=all-left;
+ const sel=`<select onchange="cur=+this.value;gw=null;draw(1)" style="margin-bottom:12px">${S.m.map((x,i)=>`<option value=${i} ${i==cur?'selected':''}>${x.t}</option>`).join('')}</select>`;
+ const hero=`<div class=card style="padding:20px"><div class=label>${E(m.t)} · kalan</div><div class=big style="font-size:40px;margin:6px 0 4px">${F(left)}</div><div class=mut>Gelir ${F(inc)} · ödenen ${F(paid)}</div><div class=dtbar><i style="width:${all?Math.min(100,paid/all*100):0}%"></i></div></div>`;
+ const weeks=m.w.map((w,wi)=>{const dts=(w[0].match(/\((\d+\/\d+\/\d+)\)/)||[])[1]||'';const bl=billRows(cur,wi);return `
+  <details class=acc ${isClosed(w)?'':'open'}>
+   <summary><div><div class=nm>${E(w[0].split('(')[0].trim())}</div><div class=mut style="font-size:12px">${dts} · maaş ${F(w[1])}</div></div><div class=amt>${F(kalanW(w))}</div></summary>
+   <div class=body>
+    <div class=row style="justify-content:flex-end;margin-bottom:6px"><button class=add style="padding:6px 12px" onclick="openSalP(cur,${wi})">Maaş ✎</button></div>
+    <div class=dtledger>${w[2].map((p,pi)=>`<div class="pl dtrow ${p[3]?'ok':''}" data-mi="${cur}" data-wi="${wi}" data-pi="${pi}"><button class="chk ${p[3]?'on':''}" onclick="tg(cur,${wi},${pi})">${p[3]?'✓':''}</button><div onclick="openPEdit(${wi},${pi})" style="cursor:pointer"><div class=nm>${E(p[0]||'—')}</div><div class=mut style="font-size:12px">${E(p[5]||'')}${p[1]?' · '+fdShort(p[1]):''}${p[4]?' · '+E(p[4]):''}</div></div><div class=amt>${F(p[3]?p[2]:remOf(p))}</div></div>`).join('')}${bl}</div>
+    ${w[2].length||bl?'':'<div class=mut style="padding:8px 0">Ödeme yok</div>'}
+   </div>
+  </details>`}).join('');
+ const nav=`<div class=row style="margin-top:8px;gap:8px"><button class=add style="flex:1" onclick="go(-1)" ${cur?'':'disabled'}>← Önceki</button><button class=add style="flex:1" onclick="go(1)" ${cur<S.m.length-1?'':'disabled'}>Sonraki →</button></div>`;
+ return sel+hero+`<div class=row style="margin:12px 0"><button class=add style="flex:1;font-weight:700" onclick="openAddP()">＋ Ödeme ekle</button></div>`+weeks+nav;
+}
+function harcDefter(){
+ if(hWeek||aNav)return harc();
+ const todayIso=iso(bt0);
+ const todays=S.ex.map((e,i)=>({...e,i})).filter(e=>e.d==todayIso).sort((a,b)=>(b.ts||0)-(a.ts||0));
+ const todayTot=todays.reduce((s,e)=>s+e.a,0);
+ const cats=S.cats.map(c=>`<button class="chip ${c==cat?'on':''}" onclick="catTap('${Q(c)}',this)">${E(c)}${c==cat&&csub?' › '+E(csub):''}</button>`).join('');
+ const days=[];for(let i=6;i>=0;i--){const d=new Date(bt0);d.setDate(d.getDate()-i);days.push(iso(d))}
+ const vals=days.map(d=>daySum(d)),mx=Math.max(...vals,1),W=300,H=110,bw=28,gap=(W-bw*7)/6;
+ const bars=`<svg viewBox="0 0 ${W} ${H+20}" width="100%">${vals.map((v,i)=>{const h=v/mx*H,x=i*(bw+gap),y=H-h;const dn=new Date(days[i]+'T00:00').toLocaleDateString('tr-TR',{weekday:'short'});return `<rect x="${x}" y="${y}" width="${bw}" height="${Math.max(h,2)}" rx="8" fill="${i==6?'var(--acc)':'var(--line)'}"/><text x="${x+bw/2}" y="${H+15}" text-anchor="middle" font-size="10" fill="var(--mut)">${dn}</text>`}).join('')}</svg>`;
+ let periodRows='';
+ if(per=='g'){const wk=rng('h');periodRows=weekDaysList(wk[0],wk[1]).map(d=>dayRow(d,`openDayP('${d}')`)).join('')}
+ else if(per=='h'){periodRows=weeksOfMonth(iso(bt0).slice(0,7)).map(([s,e])=>`<div class=dtrow style="cursor:pointer;grid-template-columns:1fr auto" onclick="hWeek={s:'${s}',e:'${e}'};draw(1)"><span class=nm>${wkLabel(s,e)}</span><span class=amt>${F(sumR(s,e))}</span></div>`).join('')}
+ else{periodRows=monthsWithEx().map(([k,t])=>`<div class=dtrow style="cursor:pointer;grid-template-columns:1fr auto" onclick="aNav={mode:'m',k:'${k}'};draw(1)"><span class=nm>${monthLbl(k)}</span><span class=amt>${F(t)}</span></div>`).join('')||'<div class=mut style="padding:14px">Henüz harcama yok</div>'}
+ return `
+ <div class=card style="padding:20px">
+  <div class=label>Tutar</div>
+  <input class=in id=ea type=number inputmode=decimal placeholder="0" value="${ED.a}" oninput="ED.a=this.value" style="font-family:ui-serif,Georgia,serif;font-size:34px;padding:14px;margin-top:6px;width:100%">
+  <div class=chips style="margin-top:14px">${cats}</div>
+  <div class=row style="margin-top:6px;gap:8px"><input class=in id=ed type=date value="${ED.d}" oninput="ED.d=this.value" style="flex:1"><input class=in id=en placeholder="Not (isteğe bağlı)" value="${E(ED.n)}" oninput="ED.n=this.value" style="flex:1"></div>
+  <button class=add onclick="hDs(this)" style="width:100%;margin-top:10px;text-align:left">${ED.ds?'🤝 Kaynak: '+E(dName(ED.ds)):'💳 Kaynak: kendi param'}</button>
+  ${repChips()}
+  <button onclick="addEx()" style="width:100%;margin-top:12px;background:var(--acc);color:#fff;border:0;border-radius:16px;padding:14px;font:inherit;font-weight:700;cursor:pointer">Harcamayı kaydet</button>
+ </div>
+ ${limCard()}
+ <div class=sec-h><b>Bugün</b><span class=mut>${F(todayTot)}</span></div>
+ <div class=dtledger>${todays.map(e=>`<div class=dtrow style="cursor:pointer" onclick="openExEdit(${e.i})"><span></span><div><div class=nm>${E(e.c)}${e.s?' › '+E(e.s):''}</div><div class=mut style="font-size:12px">${e.n?E(e.n):''}</div></div><div class=amt>${F(e.a)}</div></div>`).join('')||'<div class=mut style="padding:18px;text-align:center">Bugün harcama yok</div>'}</div>
+ <div class=sec-h><b>Son 7 gün</b><span class=mut>günlük</span></div>
+ <div class=card style="padding:16px 12px 8px">${bars}</div>
+ <div class=chips style="margin-top:4px">${[['g','Günlük'],['h','Haftalık'],['a','Aylık']].map(x=>`<button class="chip ${x[0]==per?'on':''}" onclick="per='${x[0]}';hWeek=null;aNav=null;draw(1)">${x[1]}</button>`).join('')}</div>
+ <div class=dtledger>${periodRows}</div>
+ ${''}`;
+}
+function grafikDefter(){
+ if(gView)return grafik();
+ const tabs=`<div class=chips>${[['b','Borç'],['e','Harcama'],['i','Gelir↔Ödeme'],['f','Döviz']].map(x=>`<button class="chip ${x[0]==gcat?'on':''}" onclick="gcat='${x[0]}';gView=null;gCatSel=null;draw()">${x[1]}</button>`).join('')}</div>`;
+ if(gcat=='i')return tabs+incomeCard();
+ if(gcat=='f')return tabs+fxTrendCard();
+ if(gcat=='b'){
+  const dg={};S.m.forEach(m=>m.w.forEach(w=>w[2].forEach(p=>{if(!p[2]||remOf(p)<=0)return;const c=p[5]||'📌 Diğer';dg[c]=(dg[c]||0)+remOf(p)})));
+  S.debts.forEach(d=>{if(!d.paid&&d.amount)dg[d.cat]=(dg[d.cat]||0)+ +d.amount});
+  const en=Object.entries(dg).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]),t=en.reduce((s,e)=>s+e[1],0);
+  return tabs+`<div class=card style="padding:20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">${dSvg(en,['Kalan borç',F(t)])}<div style="flex:1;min-width:150px">${dLegend(en,t,c=>`selBCat('${encodeURIComponent(c)}')`)}</div></div>`+bCatDetail();
+ }
+ // gcat == 'e': harcama
+ const rg=rng(gper),list=inR(gper),map=exCatMap(list),en=Object.entries(map).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]),t=en.reduce((s,e)=>s+e[1],0);
+ const ms=[];for(let i=5;i>=0;i--){const d=new Date(bt0.getFullYear(),bt0.getMonth()-i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),r=rngOfMonth(k);ms.push([MTR[+k.slice(5,7)-1].slice(0,3),sumR(r[0],r[1])])}
+ const mx=Math.max(...ms.map(x=>x[1]),1),W=300,H=120,bw=30,gap=(W-bw*6)/5;
+ const bars=`<svg viewBox="0 0 ${W} ${H+20}" width="100%">${ms.map((m,i)=>{const h=m[1]/mx*H,x=i*(bw+gap);return `<rect x="${x}" y="${H-h}" width="${bw}" height="${Math.max(h,2)}" rx="9" fill="${i==5?'var(--acc)':'var(--line)'}"/><text x="${x+bw/2}" y="${H+15}" text-anchor="middle" font-size="10" fill="var(--mut)">${m[0]}</text>`}).join('')}</svg>`;
+ return tabs+`<div class=chips>${[['g','Günlük'],['h','Haftalık'],['a','Aylık']].map(x=>`<button class="chip ${x[0]==gper?'on':''}" onclick="gper='${x[0]}';gCatSel=null;draw()">${x[1]}</button>`).join('')}</div>
+ <div class=card style="padding:20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">${dSvg(en,['Harcama',F(t)])}<div style="flex:1;min-width:150px">${dLegend(en,t,c=>`selGCat('${encodeURIComponent(c)}')`)}</div></div>
+ ${gCatSel?catDetail(rg):''}
+ <div class=sec-h><b>Son 6 ay</b><span class=mut>harcama</span></div>
+ <div class=card style="padding:16px 12px 8px">${bars}</div>`;
+}
+function borcDefter(){
+ if(bplan||bcat)return borc();
+ const g={};let tot2=0,pd=0;
+ S.m.forEach(m=>m.w.forEach(w=>w[2].forEach(p=>{if(!p[2])return;const c=p[5]||'📌 Diğer';g[c]=g[c]||{t:0,o:0,c:0};g[c].t+=+p[2];tot2+=+p[2];g[c].o+=paidOf(p);pd+=paidOf(p);if(remOf(p)>0)g[c].c++})));
+ const l=Object.entries(g).filter(([c,x])=>x.t-x.o>0).sort((a,b)=>(b[1].t-b[1].o)-(a[1].t-a[1].o));
+ const left=tot2-pd+dtot();
+ const hero=`<div class=card style="padding:20px"><div class=label>Kalan toplam borç</div><div class=big style="font-size:40px;margin:6px 0 4px">${F(left)}</div><div class=mut>Ödenen ${F(pd)} / ${F(tot2)}</div><div class=dtbar><i style="width:${tot2?Math.min(100,pd/tot2*100):0}%"></i></div></div>`;
+ const cats=l.map(([c,x])=>`<div class="card cat-card" onclick="bcat='${Q(c)}';draw()" style="padding:14px 16px"><div class=row><span class=nm>${E(c)}</span><span class=amt>${F(x.t-x.o)}</span></div><div class=dtbar style="margin-top:10px"><i style="width:${x.t?x.o/x.t*100:0}%"></i></div><div class=mut style="font-size:12px;margin-top:6px">${x.c} ödeme kaldı</div></div>`).join('');
+ const dl=S.debts.map((d,i)=>({...d,i}));
+ const debts=`<div class=sec-h><b>Tarihsiz borçlar</b><button class=add style="padding:6px 12px" onclick="openDebtP(null)">+ Ekle</button></div>
+  <div class=dtledger>${dl.map(d=>`<div class="pl dtrow ${d.paid?'ok':''}" data-dtid="${d.id}"><button class="chk ${d.paid?'on':''}" onclick="dtTog(${d.i})">${d.paid?'✓':''}</button><div onclick="openDebtP(${d.i})" style="cursor:pointer"><div class=nm>${E(d.name)}</div><div class=mut style="font-size:12px">${E(d.cat)}${d.fx?' · '+fxLbl(d.fx.u,d.fx.q):''}</div></div><div class=amt>${F(d.amount)}</div></div>`).join('')||'<div class=mut style="padding:16px;text-align:center">Tarihsiz borç yok</div>'}</div>`;
+ return hero+''+fxCard()+recvCard()+`<div class=sec-h><b>Kategoriler</b><span class=mut>dokun, detay gör</span></div>`+(cats||'<div class=mut>Kalan borç yok</div>')+debts;
+}
+
+
+
+/* ===== Arama (ana sayfadan açılır) ===== */
+const srOv=document.createElement('div');srOv.id='srchovl';srOv.style.cssText='display:none;position:fixed;inset:0;background:#0008;z-index:12;align-items:flex-start;justify-content:center;padding:20px;padding-top:calc(20px + env(safe-area-inset-top,0px))';document.body.appendChild(srOv);
+function openSearch(){const o=document.getElementById('srchovl');
+ o.innerHTML=`<div class=card style="max-width:440px;margin:0;width:100%;max-height:84vh;overflow-y:auto"><h2>Ara</h2><input id=sq class=in placeholder="Harcama, ödeme, borç, belge…" value="${E(SQ)}" oninput="SQ=this.value;renderSearch()" style="width:100%;margin-top:8px"><div id=sres></div></div>`;
+ o.style.display='flex';
+ o.onclick=e=>{if(e.target===o)closeSearch();else if(e.target.closest('#sres .row'))closeSearch()};
+ renderSearch();setTimeout(()=>{try{document.getElementById('sq').focus()}catch(e){}},80)}
+function closeSearch(){const o=document.getElementById('srchovl');if(o)o.style.display='none';SQ=''}
+
+</script><script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js'))}</script><style id=defter>html.dt{--bg:#f4f1ea;--card:#ffffff;--ink:#15181e;--mut:#6e7685;--line:#e4dfd4;--acc:#b7791f;--ok:#f5ecd7;--bad:#c2410c;--in:#fbf8f1}html.dt[data-theme=dark]{--bg:#0d1017;--card:#151a23;--ink:#eef1f6;--mut:#8a94a6;--line:#252c3a;--acc:#f5b041;--ok:#2b2310;--bad:#ff7a7a;--in:#1b2130}@media (prefers-color-scheme:dark){html.dt:not([data-theme=light]){--bg:#0d1017;--card:#151a23;--ink:#eef1f6;--mut:#8a94a6;--line:#252c3a;--acc:#f5b041;--ok:#2b2310;--bad:#ff7a7a;--in:#1b2130}}html.dt body{background:radial-gradient(1100px 500px at 50% -260px,color-mix(in srgb,var(--acc) 13%,transparent),transparent 70%),var(--bg);padding-bottom:124px}html.dt h1, html.dt h2, html.dt .big, html.dt .at{font-family:ui-serif,'Iowan Old Style',Palatino,'Palatino Linotype',Georgia,serif}html.dt h1{font-size:28px;font-weight:600;letter-spacing:-.02em}html.dt h2{font-size:17px;font-weight:600;letter-spacing:-.01em;border-bottom:0;padding-bottom:0}html.dt .big{font-size:34px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}html.dt .mut{letter-spacing:.005em}html.dt .card{border-radius:24px;border:1px solid color-mix(in srgb,var(--line) 70%,transparent);background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.05),0 22px 44px -28px rgba(0,0,0,.35);padding:18px;margin-bottom:14px}html.dt .add{border-radius:16px;padding:12px 14px;font-weight:600;background:var(--card);border:1px solid color-mix(in srgb,var(--line) 80%,transparent);box-shadow:0 1px 2px rgba(0,0,0,.05)}html.dt .add:active{transform:scale(.97)}html.dt .chip{border-radius:999px;background:color-mix(in srgb,var(--card) 88%,var(--acc) 12%);border:1px solid color-mix(in srgb,var(--line) 80%,transparent)}html.dt .chip.on{background:var(--acc);color:#fff;border-color:transparent;box-shadow:0 10px 22px -12px var(--acc)}html.dt .in{border-radius:14px;background:var(--in)}html.dt .in:focus, html.dt select:focus{outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 28%,transparent);border-color:var(--acc)}html.dt .chk{border-radius:50%;border-width:1.5px}html.dt .p{border-radius:16px}html.dt .p.ok{background:color-mix(in srgb,var(--ok) 90%,transparent)}html.dt .bar{height:7px;background:color-mix(in srgb,var(--line) 75%,transparent)}html.dt .bar i{background:linear-gradient(90deg,var(--acc),color-mix(in srgb,var(--acc) 60%,#fff))}html.dt .nav{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));border-radius:28px;border:1px solid color-mix(in srgb,var(--line) 70%,transparent);background:color-mix(in srgb,var(--card) 86%,transparent);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);box-shadow:0 18px 40px -18px rgba(0,0,0,.4);padding:6px 4px}html.dt .nav button{border-radius:20px;padding:8px 0 7px}html.dt .nav button.on{background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc);transform:none}html.dt [id$=ovl]{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}html.dt [id$=ovl]>.card{border-radius:28px}html.dt .toast{border-radius:18px;font-weight:600}html.dt .docbtn{position:relative;left:auto;top:auto;width:40px;height:40px;background:var(--card);border:1px solid var(--line);box-shadow:none}html.dt .dthead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:2px 2px 16px}html.dt .dthead .ad{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}html.dt .dthead .at{font-size:30px;color:var(--ink);margin-top:2px;letter-spacing:-.01em}html.dt .dtbtns{display:flex;gap:8px}html.dt .dtbar{height:6px;border-radius:9px;background:color-mix(in srgb,var(--line) 75%,transparent);overflow:hidden;margin-top:16px}html.dt .dtbar i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,var(--acc),color-mix(in srgb,var(--acc) 60%,#fff));transition:width .4s}html.dt .dtnav{display:flex;align-items:center;justify-content:space-between;margin-top:14px;gap:8px}html.dt .dtarr{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:16px;cursor:pointer}html.dt .dtledger{background:var(--card);border:1px solid var(--line);border-radius:22px;overflow:hidden}html.dt .dtrow{display:grid;grid-template-columns:28px 1fr auto;gap:12px;align-items:center;padding:14px 16px;border-top:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none}html.dt .dtrow:first-child{border-top:0}html.dt .dtrow .chk{width:26px;height:26px;border-radius:9px;background:transparent;color:transparent;display:grid;place-items:center;padding:0;font-size:14px}html.dt .dtrow.ok .chk{background:#3ddc97;border-color:#3ddc97;color:#06150e}html.dt .dtrow.ok .nm{text-decoration:line-through;color:var(--mut)}html.dt .dtrow .nm{font-weight:600}html.dt .sec-h{display:flex;justify-content:space-between;align-items:baseline;margin:22px 4px 10px}html.dt .sec-h b{font-family:ui-serif,Georgia,serif;font-weight:500;font-size:19px}html.dt .dtgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}html.dt .dtgrid .card{margin-bottom:0}html.dt .label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}</style><style id=defter2>html.dt .acc{background:var(--card);border:1px solid var(--line);border-radius:22px;margin-bottom:10px;overflow:hidden}html.dt .acc summary{list-style:none;cursor:pointer;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px}html.dt .acc summary::-webkit-details-marker{display:none}html.dt .acc .body{padding:0 12px 12px}html.dt .cat-card{cursor:pointer}html.dt .legrow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:14px;cursor:pointer}html.dt .legrow:first-child{border-top:0}html.dt .legrow .dot{width:10px;height:10px;margin-right:8px}html.dt .chip{padding:8px 14px;font-size:13px}html.dt .dtrow .amt{white-space:nowrap}</style><style id=defter3>
+html.dt .p{display:grid;background:var(--card);border:1px solid var(--line);border-radius:16px;margin-bottom:8px;padding:10px 12px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+html.dt .p.ok{background:color-mix(in srgb,var(--ok) 70%,var(--card))}
+html.dt .p input{border-bottom:1px solid var(--line)}
+html.dt .tot{border-top:1px solid var(--line)}
+html.dt .x{color:var(--mut)}
+html.dt .gear,html.dt .gearS{border-radius:50%;background:var(--card);border:1px solid var(--line)}
+html.dt .curtag{background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--acc);border:0}
+html.dt select{border-radius:14px;padding:12px 14px;background:var(--in);border:1px solid var(--line);color:var(--ink);font:inherit}
+html.dt input,html.dt textarea{font-family:inherit}
+html.dt .aifab{position:fixed;right:14px;bottom:100px;width:56px;height:56px;border-radius:20px;background:var(--acc);color:#fff;border:0;box-shadow:0 16px 30px -12px var(--acc);font-size:24px;padding:0}
+html.dt .aimsg{border-radius:18px;padding:10px 13px;max-width:88%}
+html.dt .aimsg.user{background:var(--acc);color:#fff;margin-left:auto}
+html.dt .aimsg.assistant{background:var(--card);border:1px solid var(--line)}
+html.dt .donut{box-shadow:none}
+html.dt .donut::after{background:var(--card)}
+html.dt .bdg{border-color:var(--card)}
+html.dt .toast{border-radius:18px;font-weight:600}
+html.dt .setrow,html.dt .kv{padding:14px 16px}
+html.dt .chips{gap:8px}
+html.dt button{font-family:inherit}
+html.dt #cloudAuth .ca-card,html.dt #lockovl{font-family:inherit}
+html.dt .docbtn{width:40px;height:40px}
+</style><style id=defter4>
+html.dt details.more{margin-top:10px}
+html.dt details.more summary{cursor:pointer;color:var(--acc);font-weight:600;font-size:14px;padding:4px 0}
+html.dt #srchovl .card{border-radius:28px}
+</style><style id=pinfix>.pinmask{-webkit-text-security:disc}</style></body></html>
