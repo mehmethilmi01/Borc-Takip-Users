@@ -10,7 +10,7 @@ export async function onRequestPost({request,env,params}){
   if(t.is_admin===1&&id!==r.u.id)return json({error:'Başka bir yöneticinin şifresi buradan sıfırlanamaz.'},400);
   const p=await hashPassword(password);
   // token_ver artırılır: bu kullanıcının tüm açık oturumları geçersiz olur.
-  await env.DB.prepare('UPDATE users SET password_salt=?,password_hash=?,token_ver=COALESCE(token_ver,0)+1 WHERE id=?').bind(p.salt,p.hash,id).run();
+  await env.DB.prepare('UPDATE users SET password_salt=?,password_hash=?,token_ver=COALESCE(token_ver,0)+1,must_change=1 WHERE id=?').bind(p.salt,p.hash,id).run();
   await wipeBackups(env,id);
   return json({ok:true});
 }

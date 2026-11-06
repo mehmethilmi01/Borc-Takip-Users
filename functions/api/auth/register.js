@@ -6,6 +6,6 @@ export async function onRequestPost({request,env}){
  const id=crypto.randomUUID();const p=await hashPassword(password);const backupSalt=btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
  try{await env.DB.prepare('INSERT INTO users(id,username,username_norm,password_salt,password_hash,backup_salt,created_at) VALUES(?,?,?,?,?,?,?)').bind(id,username,username.toLowerCase(),p.salt,p.hash,backupSalt,Date.now()).run();}
  catch(e){return json({error:'Bu kullanıcı adı zaten alınmış.'},409)}
- const token=await signToken({sub:id,exp:Math.floor(Date.now()/1000)+60*60*24*30},env.AUTH_SECRET);
+ const token=await signToken({sub:id,ver:0,exp:Math.floor(Date.now()/1000)+60*60*24*30},env.AUTH_SECRET);
  return json({token,user:{id,username,backupSalt}});
 }

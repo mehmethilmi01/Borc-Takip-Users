@@ -14,7 +14,7 @@ export async function onRequestPost({request,env}){
   const id=crypto.randomUUID();const p=await hashPassword(password);
   const backupSalt=btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
   try{
-    await env.DB.prepare('INSERT INTO users(id,username,username_norm,password_salt,password_hash,backup_salt,created_at,is_admin) VALUES(?,?,?,?,?,?,?,0)')
+    await env.DB.prepare('INSERT INTO users(id,username,username_norm,password_salt,password_hash,backup_salt,created_at,is_admin,must_change) VALUES(?,?,?,?,?,?,?,0,1)')
       .bind(id,username,username.toLowerCase(),p.salt,p.hash,backupSalt,Date.now()).run();
   }catch(e){return json({error:'Bu kullanıcı adı zaten var.'},409)}
   return json({ok:true,id,username});
