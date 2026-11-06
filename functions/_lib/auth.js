@@ -4,7 +4,7 @@ const fromB64u = (s) => Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/
 export async function hashPassword(password, saltHex) {
   const salt = saltHex ? Uint8Array.from(saltHex.match(/.{2}/g).map(x=>parseInt(x,16))) : crypto.getRandomValues(new Uint8Array(16));
   const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:100000,hash:'SHA-256'},key,256);
+  const bits = await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:210000,hash:'SHA-256'},key,256);
   return {salt:[...salt].map(x=>x.toString(16).padStart(2,'0')).join(''),hash:b64u(bits)};
 }
 export async function signToken(payload, secret) {
@@ -21,7 +21,10 @@ export async function verifyToken(token, secret) {
 export async function getUser(request, env) {
   const token=(request.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'');
   const p=await verifyToken(token,env.AUTH_SECRET); if(!p?.sub)return null;
-  return await env.DB.prepare('SELECT id, username FROM users WHERE id=?').bind(p.sub).first();
+  const row=await env.DB.prepare('SELECT id, username, token_ver FROM users WHERE id=?').bind(p.sub).first();
+  // Şifre sıfırlanınca token_ver artar; eski sürümdeki oturumlar geçersiz olur.
+  if(!row||(row.token_ver||0)!==(p.ver||0))return null;
+  return {id:row.id,username:row.username};
 }
 export const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 export async function body(request){try{return await request.json()}catch{return null}}
