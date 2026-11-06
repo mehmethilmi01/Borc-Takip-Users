@@ -117,6 +117,7 @@ try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!S||!S.m)S={"m":[{"t":"Ocak 2025","g":0,"w":[["1. ÇARŞAMBA  (01/01/2025)",0,[]],["2. ÇARŞAMBA  (08/01/2025)",0,[]],["3. ÇARŞAMBA  (15/01/2025)",0,[]],["4. ÇARŞAMBA  (22/01/2025)",0,[]],["5. ÇARŞAMBA (VARSA)  (29/01/2025)",0,[]]]},{"t":"Şubat 2025","g":0,"w":[["1. ÇARŞAMBA  (05/02/2025)",0,[]],["2. ÇARŞAMBA  (12/02/2025)",0,[]],["3. ÇARŞAMBA  (19/02/2025)",0,[]],["4. ÇARŞAMBA  (26/02/2025)",0,[]]]},{"t":"Mart 2025","g":0,"w":[["1. ÇARŞAMBA  (05/03/2025)",0,[]],["2. ÇARŞAMBA  (12/03/2025)",0,[]],["3. ÇARŞAMBA  (19/03/2025)",0,[]],["4. ÇARŞAMBA  (26/03/2025)",0,[]]]},{"t":"Nisan 2025","g":0,"w":[["1. ÇARŞAMBA  (02/04/2025)",0,[]],["2. ÇARŞAMBA  (09/04/2025)",0,[]],["3. ÇARŞAMBA  (16/04/2025)",0,[]],["4. ÇARŞAMBA  (23/04/2025)",0,[]],["5. ÇARŞAMBA (VARSA)  (30/04/2025)",0,[]]]},{"t":"Mayıs 2025","g":0,"w":[["1. ÇARŞAMBA  (07/05/2025)",0,[]],["2. ÇARŞAMBA  (14/05/2025)",0,[]],["3. ÇARŞAMBA  (21/05/2025)",0,[]],["4. ÇARŞAMBA  (28/05/2025)",0,[]]]},{"t":"Haziran 2025","g":0,"w":[["1. ÇARŞAMBA  (04/06/2025)",0,[]],["2. ÇARŞAMBA  (11/06/2025)",0,[]],["3. ÇARŞAMBA  (18/06/2025)",0,[]],["4. ÇARŞAMBA  (25/06/2025)",0,[]]]},{"t":"Temmuz 2025","g":0,"w":[["1. ÇARŞAMBA  (02/07/2025)",0,[]],["2. ÇARŞAMBA  (09/07/2025)",0,[]],["3. ÇARŞAMBA  (16/07/2025)",0,[]],["4. ÇARŞAMBA  (23/07/2025)",0,[]],["5. ÇARŞAMBA (VARSA)  (30/07/2025)",0,[]]]},{"t":"Ağustos 2025","g":0,"w":[["1. ÇARŞAMBA  (06/08/2025)",0,[]],["2. ÇARŞAMBA  (13/08/2025)",0,[]],["3. ÇARŞAMBA  (20/08/2025)",0,[]],["4. ÇARŞAMBA  (27/08/2025)",0,[]]]},{"t":"Eylül 2025","g":0,"w":[["1. ÇARŞAMBA  (03/09/2025)",0,[]],["2. ÇARŞAMBA  (10/09/2025)",0,[]],["3. ÇARŞAMBA  (17/09/2025)",0,[]],["4. ÇARŞAMBA  (24/09/2025)",0,[]]]},{"t":"Ekim 2025","g":0,"w":[["1. ÇARŞAMBA  (01/10/2025)",0,[]],["2. ÇARŞAMBA  (08/10/2025)",0,[]],["3. ÇARŞAMBA  (15/10/2025)",0,[]],["4. ÇARŞAMBA  (22/10/2025)",0,[]],["5. ÇARŞAMBA (VARSA)  (29/10/2025)",0,[]]]},{"t":"Kasım 2025","g":0,"w":[["1. ÇARŞAMBA  (05/11/2025)",0,[]],["2. ÇARŞAMBA  (12/11/2025)",0,[]],["3. ÇARŞAMBA  (19/11/2025)",0,[]],["4. ÇARŞAMBA  (26/11/2025)",0,[]]]},{"t":"Aralık 2025","g":0,"w":[["1. ÇARŞAMBA  (03/12/2025)",0,[]],["2. ÇARŞAMBA  (10/12/2025)",0,[]],["3. ÇARŞAMBA  (17/12/2025)",0,[]],["4. ÇARŞAMBA  (24/12/2025)",0,[]],["5. ÇARŞAMBA (VARSA)  (31/12/2025)",0,[]]]},{"t":"Ocak 2026","g":0,"w":[["1. ÇARŞAMBA  (07/01/2026)",0,[]],["2. ÇARŞAMBA  (14/01/2026)",0,[]],["3. ÇARŞAMBA  (21/01/2026)",0,[]],["4. ÇARŞAMBA  (28/01/2026)",0,[]]]},{"t":"Şubat 2026","g":0,"w":[["1. ÇARŞAMBA  (04/02/2026)",0,[]],["2. ÇARŞAMBA  (11/02/2026)",0,[]],["3. ÇARŞAMBA  (18/02/2026)",0,[]],["4. ÇARŞAMBA  (25/02/2026)",0,[]]]},{"t":"Mart 2026","g":0,"w":[["1. ÇARŞAMBA  (04/03/2026)",0,[]],["2. ÇARŞAMBA  (11/03/2026)",0,[]],["3. ÇARŞAMBA  (18/03/2026)",0,[]],["4. ÇARŞAMBA  (25/03/2026)",0,[]]]},{"t":"Nisan 2026","g":0,"w":[["1. ÇARŞAMBA  (01/04/2026)",0,[]],["2. ÇARŞAMBA  (08/04/2026)",0,[]],["3. ÇARŞAMBA  (15/04/2026)",0,[]],["4. ÇARŞAMBA  (22/04/2026)",0,[]],["5. ÇARŞAMBA (VARSA)  (29/04/2026)",0,[]]]},{"t":"Mayıs 2026","g":0,"w":[["1. ÇARŞAMBA  (06/05/2026)",0,[]],["2. ÇARŞAMBA  (13/05/2026)",0,[]],["3. ÇARŞAMBA  (20/05/2026)",0,[]],["4. ÇARŞAMBA  (27/05/2026)",0,[]]]},{"t":"Haziran 2026","g":0,"w":[["1. ÇARŞAMBA  (03/06/2026)",0,[]],["2. ÇARŞAMBA  (10/06/2026)",0,[]],["3. ÇARŞAMBA  (17/06/2026)",0,[]],["4. ÇARŞAMBA  (24/06/2026)",0,[]]]},{"t":"Temmuz 2026","g":0,"w":[["1. ÇARŞAMBA  (01/07/2026)",0,[]],["2. ÇARŞAMBA  (08/07/2026)",0,[]],["3. ÇARŞAMBA  (15/07/2026)",0,[]],["4. ÇARŞAMBA  (22/07/2026)",0,[]],["5. ÇARŞAMBA (VARSA)  (29/07/2026)",0,[]]]},{"t":"Ağustos 2026","g":0,"w":[["1. ÇARŞAMBA  (05/08/2026)",0,[]],["2. ÇARŞAMBA  (12/08/2026)",0,[]],["3. ÇARŞAMBA  (19/08/2026)",0,[]],["4. ÇARŞAMBA  (26/08/2026)",0,[]]]},{"t":"Eylül 2026","g":0,"w":[["1. ÇARŞAMBA  (02/09/2026)",0,[]],["2. ÇARŞAMBA  (09/09/2026)",0,[]],["3. ÇARŞAMBA  (16/09/2026)",0,[]],["4. ÇARŞAMBA  (23/09/2026)",0,[]],["5. ÇARŞAMBA (VARSA)  (30/09/2026)",0,[]]]},{"t":"Ekim 2026","g":0,"w":[["1. ÇARŞAMBA  (07/10/2026)",0,[]],["2. ÇARŞAMBA  (14/10/2026)",0,[]],["3. ÇARŞAMBA  (21/10/2026)",0,[]],["4. ÇARŞAMBA  (28/10/2026)",0,[]]]},{"t":"Kasım 2026","g":0,"w":[["1. ÇARŞAMBA  (04/11/2026)",0,[]],["2. ÇARŞAMBA  (11/11/2026)",0,[]],["3. ÇARŞAMBA  (18/11/2026)",0,[]],["4. ÇARŞAMBA  (25/11/2026)",0,[]]]},{"t":"Aralık 2026","g":0,"w":[["1. ÇARŞAMBA  (02/12/2026)",0,[]],["2. ÇARŞAMBA  (09/12/2026)",0,[]],["3. ÇARŞAMBA  (16/12/2026)",0,[]],["4. ÇARŞAMBA  (23/12/2026)",0,[]],["5. ÇARŞAMBA (VARSA)  (30/12/2026)",0,[]]]},{"t":"Ocak 2027","g":0,"w":[["1. ÇARŞAMBA  (06/01/2027)",0,[]],["2. ÇARŞAMBA  (13/01/2027)",0,[]],["3. ÇARŞAMBA  (20/01/2027)",0,[]],["4. ÇARŞAMBA  (27/01/2027)",0,[]]]},{"t":"Şubat 2027","g":0,"w":[["1. ÇARŞAMBA  (03/02/2027)",0,[]],["2. ÇARŞAMBA  (10/02/2027)",0,[]],["3. ÇARŞAMBA  (17/02/2027)",0,[]],["4. ÇARŞAMBA  (24/02/2027)",0,[]]]},{"t":"Mart 2027","g":0,"w":[["1. ÇARŞAMBA  (03/03/2027)",0,[]],["2. ÇARŞAMBA  (10/03/2027)",0,[]],["3. ÇARŞAMBA  (17/03/2027)",0,[]],["4. ÇARŞAMBA  (24/03/2027)",0,[]],["5. ÇARŞAMBA (VARSA)  (31/03/2027)",0,[]]]},{"t":"Nisan 2027","g":0,"w":[["1. ÇARŞAMBA  (07/04/2027)",0,[]],["2. ÇARŞAMBA  (14/04/2027)",0,[]],["3. ÇARŞAMBA  (21/04/2027)",0,[]],["4. ÇARŞAMBA  (28/04/2027)",0,[]]]},{"t":"Mayıs 2027","g":0,"w":[["1. ÇARŞAMBA  (05/05/2027)",0,[]],["2. ÇARŞAMBA  (12/05/2027)",0,[]],["3. ÇARŞAMBA  (19/05/2027)",0,[]],["4. ÇARŞAMBA  (26/05/2027)",0,[]]]},{"t":"Haziran 2027","g":0,"w":[["1. ÇARŞAMBA  (02/06/2027)",0,[]],["2. ÇARŞAMBA  (09/06/2027)",0,[]],["3. ÇARŞAMBA  (16/06/2027)",0,[]],["4. ÇARŞAMBA  (23/06/2027)",0,[]],["5. ÇARŞAMBA (VARSA)  (30/06/2027)",0,[]]]},{"t":"Temmuz 2027","g":0,"w":[["1. ÇARŞAMBA  (07/07/2027)",0,[]],["2. ÇARŞAMBA  (14/07/2027)",0,[]],["3. ÇARŞAMBA  (21/07/2027)",0,[]],["4. ÇARŞAMBA  (28/07/2027)",0,[]]]},{"t":"Ağustos 2027","g":0,"w":[["1. ÇARŞAMBA  (04/08/2027)",0,[]],["2. ÇARŞAMBA  (11/08/2027)",0,[]],["3. ÇARŞAMBA  (18/08/2027)",0,[]],["4. ÇARŞAMBA  (25/08/2027)",0,[]]]},{"t":"Eylül 2027","g":0,"w":[["1. ÇARŞAMBA  (01/09/2027)",0,[]],["2. ÇARŞAMBA  (08/09/2027)",0,[]],["3. ÇARŞAMBA  (15/09/2027)",0,[]],["4. ÇARŞAMBA  (22/09/2027)",0,[]],["5. ÇARŞAMBA (VARSA)  (29/09/2027)",0,[]]]},{"t":"Ekim 2027","g":0,"w":[["1. ÇARŞAMBA  (06/10/2027)",0,[]],["2. ÇARŞAMBA  (13/10/2027)",0,[]],["3. ÇARŞAMBA  (20/10/2027)",0,[]],["4. ÇARŞAMBA  (27/10/2027)",0,[]]]},{"t":"Kasım 2027","g":0,"w":[["1. ÇARŞAMBA  (03/11/2027)",0,[]],["2. ÇARŞAMBA  (10/11/2027)",0,[]],["3. ÇARŞAMBA  (17/11/2027)",0,[]],["4. ÇARŞAMBA  (24/11/2027)",0,[]]]},{"t":"Aralık 2027","g":0,"w":[["1. ÇARŞAMBA  (01/12/2027)",0,[]],["2. ÇARŞAMBA  (08/12/2027)",0,[]],["3. ÇARŞAMBA  (15/12/2027)",0,[]],["4. ÇARŞAMBA  (22/12/2027)",0,[]],["5. ÇARŞAMBA (VARSA)  (29/12/2027)",0,[]]]},{"t":"Ocak 2028","g":0,"w":[["1. ÇARŞAMBA  (05/01/2028)",0,[]],["2. ÇARŞAMBA  (12/01/2028)",0,[]],["3. ÇARŞAMBA  (19/01/2028)",0,[]],["4. ÇARŞAMBA  (26/01/2028)",0,[]]]},{"t":"Şubat 2028","g":0,"w":[["1. ÇARŞAMBA  (02/02/2028)",0,[]],["2. ÇARŞAMBA  (09/02/2028)",0,[]],["3. ÇARŞAMBA  (16/02/2028)",0,[]],["4. ÇARŞAMBA  (23/02/2028)",0,[]]]},{"t":"Mart 2028","g":0,"w":[["1. ÇARŞAMBA  (01/03/2028)",0,[]],["2. ÇARŞAMBA  (08/03/2028)",0,[]],["3. ÇARŞAMBA  (15/03/2028)",0,[]],["4. ÇARŞAMBA  (22/03/2028)",0,[]],["5. ÇARŞAMBA (VARSA)  (29/03/2028)",0,[]]]},{"t":"Nisan 2028","g":0,"w":[["1. ÇARŞAMBA  (05/04/2028)",0,[]],["2. ÇARŞAMBA  (12/04/2028)",0,[]],["3. ÇARŞAMBA  (19/04/2028)",0,[]],["4. ÇARŞAMBA  (26/04/2028)",0,[]]]},{"t":"Mayıs 2028","g":0,"w":[["1. ÇARŞAMBA  (03/05/2028)",0,[]],["2. ÇARŞAMBA  (10/05/2028)",0,[]],["3. ÇARŞAMBA  (17/05/2028)",0,[]],["4. ÇARŞAMBA  (24/05/2028)",0,[]],["5. ÇARŞAMBA (VARSA)  (31/05/2028)",0,[]]]},{"t":"Haziran 2028","g":0,"w":[["1. ÇARŞAMBA  (07/06/2028)",0,[]],["2. ÇARŞAMBA  (14/06/2028)",0,[]],["3. ÇARŞAMBA  (21/06/2028)",0,[]],["4. ÇARŞAMBA  (28/06/2028)",0,[]]]},{"t":"Temmuz 2028","g":0,"w":[["1. ÇARŞAMBA  (05/07/2028)",0,[]],["2. ÇARŞAMBA  (12/07/2028)",0,[]],["3. ÇARŞAMBA  (19/07/2028)",0,[]],["4. ÇARŞAMBA  (26/07/2028)",0,[]]]},{"t":"Ağustos 2028","g":0,"w":[["1. ÇARŞAMBA  (02/08/2028)",0,[]],["2. ÇARŞAMBA  (09/08/2028)",0,[]],["3. ÇARŞAMBA  (16/08/2028)",0,[]],["4. ÇARŞAMBA  (23/08/2028)",0,[]],["5. ÇARŞAMBA (VARSA)  (30/08/2028)",0,[]]]},{"t":"Eylül 2028","g":0,"w":[["1. ÇARŞAMBA  (06/09/2028)",0,[]],["2. ÇARŞAMBA  (13/09/2028)",0,[]],["3. ÇARŞAMBA  (20/09/2028)",0,[]],["4. ÇARŞAMBA  (27/09/2028)",0,[]]]},{"t":"Ekim 2028","g":0,"w":[["1. ÇARŞAMBA  (04/10/2028)",0,[]],["2. ÇARŞAMBA  (11/10/2028)",0,[]],["3. ÇARŞAMBA  (18/10/2028)",0,[]],["4. ÇARŞAMBA  (25/10/2028)",0,[]]]},{"t":"Kasım 2028","g":0,"w":[["1. ÇARŞAMBA  (01/11/2028)",0,[]],["2. ÇARŞAMBA  (08/11/2028)",0,[]],["3. ÇARŞAMBA  (15/11/2028)",0,[]],["4. ÇARŞAMBA  (22/11/2028)",0,[]],["5. ÇARŞAMBA (VARSA)  (29/11/2028)",0,[]]]},{"t":"Aralık 2028","g":0,"w":[["1. ÇARŞAMBA  (06/12/2028)",0,[]],["2. ÇARŞAMBA  (13/12/2028)",0,[]],["3. ÇARŞAMBA  (20/12/2028)",0,[]],["4. ÇARŞAMBA  (27/12/2028)",0,[]]]},{"t":"Ocak 2029","g":0,"w":[["1. ÇARŞAMBA  (03/01/2029)",0,[]],["2. ÇARŞAMBA  (10/01/2029)",0,[]],["3. ÇARŞAMBA  (17/01/2029)",0,[]],["4. ÇARŞAMBA  (24/01/2029)",0,[]],["5. ÇARŞAMBA (VARSA)  (31/01/2029)",0,[]]]},{"t":"Şubat 2029","g":0,"w":[["1. ÇARŞAMBA  (07/02/2029)",0,[]],["2. ÇARŞAMBA  (14/02/2029)",0,[]],["3. ÇARŞAMBA  (21/02/2029)",0,[]],["4. ÇARŞAMBA  (28/02/2029)",0,[]]]},{"t":"Mart 2029","g":0,"w":[["1. ÇARŞAMBA  (07/03/2029)",0,[]],["2. ÇARŞAMBA  (14/03/2029)",0,[]],["3. ÇARŞAMBA  (21/03/2029)",0,[]],["4. ÇARŞAMBA  (28/03/2029)",0,[]]]},{"t":"Nisan 2029","g":0,"w":[["1. ÇARŞAMBA  (04/04/2029)",0,[]],["2. ÇARŞAMBA  (11/04/2029)",0,[]],["3. ÇARŞAMBA  (18/04/2029)",0,[]],["4. ÇARŞAMBA  (25/04/2029)",0,[]]]},{"t":"Mayıs 2029","g":0,"w":[["1. ÇARŞAMBA  (02/05/2029)",0,[]],["2. ÇARŞAMBA  (09/05/2029)",0,[]],["3. ÇARŞAMBA  (16/05/2029)",0,[]],["4. ÇARŞAMBA  (23/05/2029)",0,[]],["5. ÇARŞAMBA (VARSA)  (30/05/2029)",0,[]]]},{"t":"Haziran 2029","g":0,"w":[["1. ÇARŞAMBA  (06/06/2029)",0,[]],["2. ÇARŞAMBA  (13/06/2029)",0,[]],["3. ÇARŞAMBA  (20/06/2029)",0,[]],["4. ÇARŞAMBA  (27/06/2029)",0,[]]]},{"t":"Temmuz 2029","g":0,"w":[["1. ÇARŞAMBA  (04/07/2029)",0,[]],["2. ÇARŞAMBA  (11/07/2029)",0,[]],["3. ÇARŞAMBA  (18/07/2029)",0,[]],["4. ÇARŞAMBA  (25/07/2029)",0,[]]]},{"t":"Ağustos 2029","g":0,"w":[["1. ÇARŞAMBA  (01/08/2029)",0,[]],["2. ÇARŞAMBA  (08/08/2029)",0,[]],["3. ÇARŞAMBA  (15/08/2029)",0,[]],["4. ÇARŞAMBA  (22/08/2029)",0,[]],["5. ÇARŞAMBA (VARSA)  (29/08/2029)",0,[]]]},{"t":"Eylül 2029","g":0,"w":[["1. ÇARŞAMBA  (05/09/2029)",0,[]],["2. ÇARŞAMBA  (12/09/2029)",0,[]],["3. ÇARŞAMBA  (19/09/2029)",0,[]],["4. ÇARŞAMBA  (26/09/2029)",0,[]]]},{"t":"Ekim 2029","g":0,"w":[["1. ÇARŞAMBA  (03/10/2029)",0,[]],["2. ÇARŞAMBA  (10/10/2029)",0,[]],["3. ÇARŞAMBA  (17/10/2029)",0,[]],["4. ÇARŞAMBA  (24/10/2029)",0,[]],["5. ÇARŞAMBA (VARSA)  (31/10/2029)",0,[]]]},{"t":"Kasım 2029","g":0,"w":[["1. ÇARŞAMBA  (07/11/2029)",0,[]],["2. ÇARŞAMBA  (14/11/2029)",0,[]],["3. ÇARŞAMBA  (21/11/2029)",0,[]],["4. ÇARŞAMBA  (28/11/2029)",0,[]]]},{"t":"Aralık 2029","g":0,"w":[["1. ÇARŞAMBA  (05/12/2029)",0,[]],["2. ÇARŞAMBA  (12/12/2029)",0,[]],["3. ÇARŞAMBA  (19/12/2029)",0,[]],["4. ÇARŞAMBA  (26/12/2029)",0,[]]]},{"t":"Ocak 2030","g":0,"w":[["1. ÇARŞAMBA  (02/01/2030)",0,[]],["2. ÇARŞAMBA  (09/01/2030)",0,[]],["3. ÇARŞAMBA  (16/01/2030)",0,[]],["4. ÇARŞAMBA  (23/01/2030)",0,[]],["5. ÇARŞAMBA (VARSA)  (30/01/2030)",0,[]]]},{"t":"Şubat 2030","g":0,"w":[["1. ÇARŞAMBA  (06/02/2030)",0,[]],["2. ÇARŞAMBA  (13/02/2030)",0,[]],["3. ÇARŞAMBA  (20/02/2030)",0,[]],["4. ÇARŞAMBA  (27/02/2030)",0,[]]]},{"t":"Mart 2030","g":0,"w":[["1. ÇARŞAMBA  (06/03/2030)",0,[]],["2. ÇARŞAMBA  (13/03/2030)",0,[]],["3. ÇARŞAMBA  (20/03/2030)",0,[]],["4. ÇARŞAMBA  (27/03/2030)",0,[]]]},{"t":"Nisan 2030","g":0,"w":[["1. ÇARŞAMBA  (03/04/2030)",0,[]],["2. ÇARŞAMBA  (10/04/2030)",0,[]],["3. ÇARŞAMBA  (17/04/2030)",0,[]],["4. ÇARŞAMBA  (24/04/2030)",0,[]]]},{"t":"Mayıs 2030","g":0,"w":[["1. ÇARŞAMBA  (01/05/2030)",0,[]],["2. ÇARŞAMBA  (08/05/2030)",0,[]],["3. ÇARŞAMBA  (15/05/2030)",0,[]],["4. ÇARŞAMBA  (22/05/2030)",0,[]],["5. ÇARŞAMBA (VARSA)  (29/05/2030)",0,[]]]},{"t":"Haziran 2030","g":0,"w":[["1. ÇARŞAMBA  (05/06/2030)",0,[]],["2. ÇARŞAMBA  (12/06/2030)",0,[]],["3. ÇARŞAMBA  (19/06/2030)",0,[]],["4. ÇARŞAMBA  (26/06/2030)",0,[]]]},{"t":"Temmuz 2030","g":0,"w":[["1. ÇARŞAMBA  (03/07/2030)",0,[]],["2. ÇARŞAMBA  (10/07/2030)",0,[]],["3. ÇARŞAMBA  (17/07/2030)",0,[]],["4. ÇARŞAMBA  (24/07/2030)",0,[]],["5. ÇARŞAMBA (VARSA)  (31/07/2030)",0,[]]]},{"t":"Ağustos 2030","g":0,"w":[["1. ÇARŞAMBA  (07/08/2030)",0,[]],["2. ÇARŞAMBA  (14/08/2030)",0,[]],["3. ÇARŞAMBA  (21/08/2030)",0,[]],["4. ÇARŞAMBA  (28/08/2030)",0,[]]]},{"t":"Eylül 2030","g":0,"w":[["1. ÇARŞAMBA  (04/09/2030)",0,[]],["2. ÇARŞAMBA  (11/09/2030)",0,[]],["3. ÇARŞAMBA  (18/09/2030)",0,[]],["4. ÇARŞAMBA  (25/09/2030)",0,[]]]},{"t":"Ekim 2030","g":0,"w":[["1. ÇARŞAMBA  (02/10/2030)",0,[]],["2. ÇARŞAMBA  (09/10/2030)",0,[]],["3. ÇARŞAMBA  (16/10/2030)",0,[]],["4. ÇARŞAMBA  (23/10/2030)",0,[]],["5. ÇARŞAMBA (VARSA)  (30/10/2030)",0,[]]]},{"t":"Kasım 2030","g":0,"w":[["1. ÇARŞAMBA  (06/11/2030)",0,[]],["2. ÇARŞAMBA  (13/11/2030)",0,[]],["3. ÇARŞAMBA  (20/11/2030)",0,[]],["4. ÇARŞAMBA  (27/11/2030)",0,[]]]},{"t":"Aralık 2030","g":0,"w":[["1. ÇARŞAMBA  (04/12/2030)",0,[]],["2. ÇARŞAMBA  (11/12/2030)",0,[]],["3. ÇARŞAMBA  (18/12/2030)",0,[]],["4. ÇARŞAMBA  (25/12/2030)",0,[]]]}],"ex":[],"debts":[],"ibans":{},"bills":[],"billPaid":{},"cats":["⛽ Benzin","🚬 Sigara","🍽 Yemek","🛒 Market","📌 Diğer"],"dcats":["🏦 Kredi","💳 Kredi Kartı","🧾 Fatura","🏠 Kira","👤 Kişisel","📌 Diğer"]};
+if(!localStorage.getItem(KEY))S.m.forEach(m=>m.w.forEach(w=>{w[1]=0;w[2]=[]}));
 S.ex=S.ex||[];S.debts=S.debts||[];S.ibans=S.ibans||{};S.subs=S.subs||{};S.bills=S.bills||[];S.billPaid=S.billPaid||{};S.ntIco=S.ntIco||{};S.customNotifs=S.customNotifs||[];S.limits=S.limits||{};S.docs=S.docs||[];S.docCats=S.docCats||[];S.recv=S.recv||[];
 let APPLY_ALL=new Set();
 let NF={icon:'🔔',text:'',sched:'daily',day:1,mday:'1',edit:null};
@@ -458,7 +459,7 @@ function ayarCards(){const f=x=>x?new Date(x).toLocaleString('tr-TR'):'—';
 const on=k=>{const v=(M.nt||{})[k];return v===undefined?true:v};
 const tb=(v,f)=>`<button class="chip ${v?'':''} ${v?'on':''}" onclick="${f}">${v?'Açık':'Kapalı'}</button>`;
 NP=notifPage(on,tb);
-let h=`<div class=card><h2>Takvim Aralığı</h2><div class=mut>Uygulama her açılışta en az 2 yıl ileriye kadar otomatik ay ekler. İstersen elle de ekleyebilirsin.</div>
+let h=`<div class=card><h2>👤 Hesap</h2><div class=row><span>Giriş yapan</span><span class=n>${E((cloudUser&&cloudUser.username)||'Çevrimdışı')}</span></div><button class=add style="margin-top:8px;color:var(--bad);border-color:var(--bad)" onclick="cloudLogout()">Çıkış yap</button></div><div class=card><h2>Takvim Aralığı</h2><div class=mut>Uygulama her açılışta en az 2 yıl ileriye kadar otomatik ay ekler. İstersen elle de ekleyebilirsin.</div>
 <div class=row style="margin-top:6px"><span>Kapsanan aralık</span><span class=n style="text-align:right">${S.m[0].t} - ${S.m[S.m.length-1].t}</span></div>
 <div class=row style="gap:8px"><button class=add onclick="extendYear(1)">+ 1 yıl ekle (ileri)</button><button class=add onclick="extendYear(-1)">+ 1 yıl ekle (geri)</button></div></div>
 <div class=card><h2>Yedekleme</h2><div class=row><span>Son yedek (dosya/metin)</span><span class=n style="text-align:right">${M.lb?f(M.lb):'Henüz alınmadı'}</span></div>
@@ -712,6 +713,7 @@ changed=true})});
 if(changed)save()}
 const rm=(w,p)=>{const snap=JSON.stringify(S);const xr=S.m[cur].w[w][2][p];if(xr)logEv(pid(xr),xr[0],'silindi: '+F(xr[2]));S.m[cur].w[w][2].splice(p,1);save();draw();UNDO=snap;showUndo('Ödeme silindi')};
 const ad=w=>{const a=S.m[cur].w[w][2];const lastDate=a.length?a[a.length-1][1]:'';a.push(['',lastDate,0,0,'',dcat]);save();draw()};
+const pickWeekFor=td=>{const arr=[];S.m.forEach((m,mi)=>m.w.forEach((w,wi)=>arr.push({mi,wi,w,d:wd(w)})));let h=null;arr.forEach(x=>{if(x.d<=td)h=x});return h||arr[0]};
 const addQuick=()=>{const n=($('qn').value||'').trim(),c=QD.c,d=$('qd').value||iso(t0),cu=($('qcu').value||'').trim().split(/[\s;]+/).map(x=>+x.replace(',','.')).filter(x=>x>0),amt=cu.length?cu.reduce((s,x)=>s+x,0):+$('qa').value,cnt=cu.length?cu.length:Math.max(1,parseInt($('qt').value)||1),note=($('qnote').value||'').trim();
 if(!n||!amt)return toast('Ad ve tutar gerekli');if(QD.fx&&!fxRate(QD.fx))return toast('Önce Ayarlar > Kurlar bölümünden kuru güncelle');
 if(!S.m.length)return toast('Hafta bulunamadı');
@@ -721,17 +723,15 @@ if(cnt>1){const endT=new Date(target.getFullYear(),target.getMonth()+cnt-1,1);en
 const base=QD.fx?Math.round(amt/cnt*1000)/1000:Math.floor(amt/cnt),rem=QD.fx?Math.round((amt-base*cnt)*1000)/1000:amt-base*cnt;let added=0,fmi=null,fwi=null;
 if(cnt==1){
 const arr=[];S.m.forEach((m,mi)=>m.w.forEach((w,wi)=>arr.push({mi,wi,d:wd(w)})));
-let best=0,bd=Infinity;arr.forEach((x,i)=>{const diff=Math.abs(x.d-target);if(diff<bd||(diff==bd&&x.d>arr[best].d)){bd=diff;best=i}});
-const ref=arr[best];S.m[ref.mi].w[ref.wi][2].push(mkP(n,iso(ref.d),amt,note,c));added=1;fmi=ref.mi;fwi=ref.wi;
+const ref=pickWeekFor(target);S.m[ref.mi].w[ref.wi][2].push(mkP(n,iso(ref.d),amt,note,c));added=1;fmi=ref.mi;fwi=ref.wi;
 }else{
 let baseMi=S.m.findIndex(m=>{const d0=wd(m.w[0]);return d0.getFullYear()==target.getFullYear()&&d0.getMonth()==target.getMonth()});
 if(baseMi<0){let bd=Infinity;S.m.forEach((m,i)=>{const dd=Math.abs(wd(m.w[0])-target);if(dd<bd){bd=dd;baseMi=i}})}
 for(let i=0;i<cnt;i++){const mi=baseMi+i;
 const y=wd(S.m[mi].w[0]).getFullYear(),mo=wd(S.m[mi].w[0]).getMonth(),td=new Date(y,mo,target.getDate());
-let wi=null;S.m[mi].w.forEach((w,j)=>{const dt=wd(w);if(dt<=td&&(wi==null||dt>wd(S.m[mi].w[wi])))wi=j});
-if(wi==null)wi=0;
-const ref=wd(S.m[mi].w[wi]),a2=cu.length?cu[i]:(i==cnt-1?base+rem:base),nm=`${n} (${i+1}/${cnt})`;
-S.m[mi].w[wi][2].push(mkP(nm,iso(ref),a2,note,c));added++;if(fmi===null){fmi=mi;fwi=wi}}
+const pw=pickWeekFor(td);const wi=pw.wi,pmi=pw.mi;
+const ref=wd(pw.w),a2=cu.length?cu[i]:(i==cnt-1?base+rem:base),nm=`${n} (${i+1}/${cnt})`;
+pw.w[2].push(mkP(nm,iso(ref),a2,note,c));added++;if(fmi===null){fmi=pmi;fwi=wi}}
 }
 save();QD={n:'',c,d:iso(t0),a:'',t:'1',note:'',fx:''};
 closeAddP();toast(added>1?added+' taksit eklendi':'Ödeme eklendi');
@@ -1524,7 +1524,7 @@ const aiExec={
  add_payment(a){const n=Math.max(1,(a.installments|0)||1),amt=+a.amount;if(!(amt>0))throw new Error('tutar geçersiz');
    const base=new Date((a.date||a.week||iso(bt0))+'T00:00'),share=Math.floor(amt/n*100)/100;let last='';
    for(let i=0;i<n;i++){const td=new Date(base.getFullYear(),base.getMonth()+i,base.getDate());ensureCovers(td);
-     const wk=(i==0&&a.week)?weekByKey(a.week):nearestWeek(td);
+     const wk=(i==0&&a.week)?weekByKey(a.week):pickWeekFor(td);
      const v=i==n-1?Math.round((amt-share*(n-1))*100)/100:share;
      const nm=n>1?`${a.name} (${i+1}/${n})`:a.name;const np=[nm,a.date?iso(td):(wkIso(wk.w)||iso(wd(wk.w))),v,0,a.note||'',pcatOf(a.category,a.name),0,0,null,0,null,null,null];
      pid(np);wk.w[2].push(np);logEv(pid(np),nm,'asistan ile eklendi: '+F(v));last=wkIso(wk.w)}
@@ -1566,43 +1566,55 @@ const aiRun=calls=>{const snap=JSON.stringify(S);
  const log=calls.map(c=>{try{const f=aiExec[c.name];if(!f)throw new Error('bilinmeyen işlem');return '✓ '+f(c.input||{})}catch(e){return '✗ '+c.name+': '+e.message}});
  save();UNDO=snap;draw(1);showUndo('Asistan '+calls.length+' işlem uyguladı');return log};
 
-const aiSystem=()=>`Sen "Borç Takip" uygulamasının asistanısın. Kullanıcı Türkçe konuşur; kısa, net ve somut yanıt ver.
-Elindeki VERİ (JSON) uygulamanın güncel durumudur: haftalar (key, maaş, ödemeler ve id'leri), borçlar, son 90 gün harcamalar, faturalar, sabit harcamalar, kategoriler, limitler, alacaklar, kurlar. Sadece bu veriye dayan, veri dışında rakam uydurma. Toplam ve özet soruları için ozet alanını kullan. Her ödeme ve borçta gecmis (tarih saatli işlem geçmişi) ve kismi_odemeler alanları vardır; geçmiş soruları bunlara göre yanıtla. Tutarlar TL'dir. Tarihli ödemeler (yarın, belirli gün vb.) için add_payment ve date kullan; tarihsiz borç için add_debt kullan. Hafta anahtarı, verideki "key" alanıdır.
-Kullanıcı bir değişiklik istediğinde veya bir öneriyi uygulanabilir yaparken ilgili araçları çağır; id'leri sadece veriden kullan. Önerilen işlemler kullanıcı onaylayıp uygulamadan yapılmaz. Analiz ve tavsiye sorularında önce kısa bir değerlendirme yaz, gerekiyorsa önerilen işlemleri araçlarla ekle.
+const aiSystem=()=>`Sen "Borç Takip" uygulamasının asistanısın. Kullanıcıyla sade, samimi bir Türkçe ile konuş.
+Kurallar:
+- Teknik terim kullanma. Araç adı, id, anahtar, JSON, alan adı yazma. "ödeme", "borç", "hafta", "fatura" gibi günlük kelimeler kullan.
+- Cevapları kısa ve net tut. Karşılaştırma ve listelerde Markdown tablo kullan (| Ad | Tutar | Tarih |). Önemli yerleri **kalın** yaz.
+- Tutarları 12.370 ₺ biçiminde yaz.
+- Ayrıntı gerekiyorsa uygun aracı kullanarak getir (haftalar, harcamalar, borçlar, arama, geçmiş). Tahmin etme, veri yoksa bunu söyle.
+- Değişiklik önerirken ne yapacağını bir cümleyle açıkça anlat. Kullanıcı onaylayınca uygulanır.
+- Toplam sorularında "ozet" bölümündeki gerçek toplamları kullan.
 Bugün: ${iso(bt0)} (${fd(t0)}).`;
 
 const aiCallGemini=async msgs=>{const up=t=>String(t).toUpperCase();
  const conv=s=>({type:'OBJECT',properties:Object.fromEntries(Object.entries(s.properties).map(([k,v])=>[k,{type:up(v.type),description:v.description||''}])),required:s.required||[]});
- const body={system_instruction:{parts:[{text:aiSystem()}]},
-  contents:msgs.map(m=>({role:m.role=='assistant'?'model':'user',parts:[{text:m.content}]})),
-  tools:[{functionDeclarations:AI_TOOLS.map(t=>({name:t.name,description:t.description,parameters:conv(t.input_schema)}))}],
-  generationConfig:{maxOutputTokens:2000,thinkingConfig:{thinkingLevel:'low'}}};
- let j=null,lastErr='',lastSt=0;
-for(const mdl of await aiModelChain()){
- for(let attempt=0;attempt<2;attempt++){
-  const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent',{method:'POST',headers:{'content-type':'application/json','x-goog-api-key':aiKey()},body:JSON.stringify(body)});
-  const jj=await r.json().catch(()=>({}));lastSt=r.status;
-  if(r.ok){j=jj;AI.model=mdl;break}
-  lastErr=(jj.error&&jj.error.message)||('HTTP '+r.status);
-  if(r.status==400&&/thinking/i.test(lastErr)&&body.generationConfig.thinkingConfig){delete body.generationConfig.thinkingConfig;continue}
-  if([429,500,503].includes(r.status)&&attempt<1){await new Promise(z=>setTimeout(z,2000));continue}
-  break;
- }
- if(j)break;
- const modelErr=lastSt==404||(lastSt==400&&/model/i.test(lastErr))||[429,500,503].includes(lastSt);
- if(!modelErr)break;
-}
-if(!j)throw new Error(lastErr);
- const cand=(j.candidates||[])[0]||{};const parts=(cand.content&&cand.content.parts)||[];
- if(!parts.length)throw new Error('boş yanıt ('+(cand.finishReason||'kota ya da filtre')+')');
- return {content:parts.map(p=>p.functionCall?{type:'tool_use',name:p.functionCall.name,input:p.functionCall.args||{}}:{type:'text',text:p.text||''})}};
-
+ const readDecl=AI_READ_TOOLS.map(t=>{const pr=t.function.parameters.properties||{};const d={name:t.function.name,description:t.function.description};
+   if(Object.keys(pr).length)d.parameters={type:'OBJECT',properties:Object.fromEntries(Object.entries(pr).map(([k,v])=>[k,{type:'STRING',description:k}])),required:t.function.parameters.required||[]};return d});
+ const decl=AI_TOOLS.map(t=>({name:t.name,description:t.description,parameters:conv(t.input_schema)})).concat(readDecl);
+ const contents=msgs.map(m=>({role:m.role=='assistant'?'model':'user',parts:[{text:m.content}]}));
+ const mkBody=()=>({system_instruction:{parts:[{text:aiSystem()}]},contents:contents,tools:[{functionDeclarations:decl}],generationConfig:{maxOutputTokens:2000,thinkingConfig:{thinkingLevel:'low'}}});
+ const callOnce=async body=>{let lastErr='',lastSt=0;
+  for(const mdl of await aiModelChain()){
+   for(let attempt=0;attempt<2;attempt++){
+    const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent',{method:'POST',headers:{'content-type':'application/json','x-goog-api-key':aiKey()},body:JSON.stringify(body)});
+    const jj=await r.json().catch(()=>({}));lastSt=r.status;
+    if(r.ok){AI.model=mdl;return jj}
+    lastErr=(jj.error&&jj.error.message)||('HTTP '+r.status);
+    if(r.status==400&&/thinking/i.test(lastErr)&&body.generationConfig.thinkingConfig){delete body.generationConfig.thinkingConfig;continue}
+    if([429,500,503].includes(r.status)&&attempt<1){await new Promise(z=>setTimeout(z,2000));continue}
+    break}
+   const modelErr=lastSt==404||(lastSt==400&&/model/i.test(lastErr))||[429,500,503].includes(lastSt);
+   if(!modelErr)break}
+  throw new Error(lastErr||'yanıt alınamadı')};
+ for(let step=0;step<5;step++){
+  const j=await callOnce(mkBody());
+  const cand=(j.candidates||[])[0]||{};const parts=(cand.content&&cand.content.parts)||[];
+  if(!parts.length)throw new Error('boş yanıt ('+(cand.finishReason||'kota ya da filtre')+')');
+  const fcs=parts.filter(p=>p.functionCall);
+  const reads=fcs.filter(p=>AI_READ_NAMES.includes(p.functionCall.name));
+  const acts=fcs.filter(p=>!AI_READ_NAMES.includes(p.functionCall.name));
+  if(reads.length&&!acts.length){
+   contents.push({role:'model',parts:parts});
+   contents.push({role:'user',parts:reads.map(p=>{let res;try{res=aiReadExec[p.functionCall.name](p.functionCall.args||{})}catch(e){res={hata:e.message}};return {functionResponse:{name:p.functionCall.name,response:{sonuc:res}}}})});
+   continue}
+  return {content:parts.map(p=>p.functionCall?{type:'tool_use',name:p.functionCall.name,input:p.functionCall.args||{}}:{type:'text',text:p.text||''}).filter(b=>b.type=='tool_use'||b.text)}}
+ return {content:[{type:'text',text:'Bu soru çok fazla veri gerektiriyor. Daha dar bir tarih aralığıyla sorabilir misin?'}]}};
 const aiPublishKey=async()=>{const k=($('aiadm').value||'').trim();if(k.length<20)return toast('Geçerli bir anahtar gir');try{localStorage.setItem('butce_ai_key',k)}catch(e){}if(await pushGist({ai_key:k}))toast('Asistan anahtarı yayınlandı ✓')};
 
 const aiRender=()=>{const el=$('aimsgs');
- el.innerHTML=AI.msgs.map(m=>`<div class="aimsg ${m.role}">${nlHtml(m.text)}</div>`).join('')||'<div class=mut>Ne yapmak istersin? Örneğin: "bu ayın ödemelerini özetle" ya da "bir ödemeyi başka haftaya taşı"</div>';
+ el.innerHTML=AI.msgs.map(m=>`<div class="aimsg ${m.role}">${aiMd(m.text)}</div>`).join('')||'<div class=mut>Ne yapmak istersin? Örneğin: "bu ayın ödemelerini özetle" ya da "bir ödemeyi başka haftaya taşı"</div>';
  el.scrollTop=el.scrollHeight;
- $('aiprev').innerHTML=AI.pending?`<div class=card style="border-color:var(--acc);margin:6px 0"><b>Önerilen ${AI.pending.length} işlem</b><div style="max-height:30vh;overflow-y:auto">${AI.pending.map(c=>`<div class=mut style="font-size:12px;margin-top:4px">• <b>${E(c.name)}</b> ${E(Object.entries(c.input||{}).map(x=>x[0]+'='+(typeof x[1]=='object'?JSON.stringify(x[1]):x[1])).join(', '))}</div>`).join('')}</div><div class=row style="gap:8px;margin-top:8px"><button class=add onclick="aiDismiss()">Vazgeç</button><button class=add style="color:var(--acc)" onclick="aiAccept()">✓ Önerileri uygula</button></div></div>`:'';
+ $('aiprev').innerHTML=AI.pending?`<div class=aicard><div class=aicardh>Önerilen ${AI.pending.length} değişiklik</div>${AI.pending.map(c=>`<div class=aiitem>${aiHuman(c)}</div>`).join('')}<div class=row style="gap:8px;margin-top:8px"><button class=add onclick="aiDismiss()">Vazgeç</button><button class=add style="color:var(--acc)" onclick="aiAccept()">✓ Uygula</button></div></div>`:'';
  $('aikeyrow').innerHTML=aiKey()?'':`<div class=card style="margin:6px 0"><div class=mut>Gemini anahtarı gerekli (yalnızca bu cihazda saklanır)</div><div class=row style="gap:6px"><input id=aikey type=password class=in placeholder="AIza..." style="flex:1"><button class=add style="width:auto" onclick="aiSaveKey()">Kaydet</button></div></div>`};
 
 const openAI=()=>{if(locked)return;$('aiovl').style.display='flex';aiRender()};
@@ -1611,6 +1623,8 @@ const aiDismiss=()=>{AI.pending=null;aiRender()};
 
 const aiCss=document.createElement('style');aiCss.textContent='.aifab{position:fixed;right:12px;bottom:82px;width:52px;height:52px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:24px;box-shadow:0 2px 8px #0003;z-index:12;padding:0}#aiovl{display:none;position:fixed;inset:0;background:#0008;z-index:13;align-items:center;justify-content:center;padding:20px}#aiovl .card{animation:none}.aimsg{padding:8px 10px;border-radius:12px;margin:6px 0;max-width:90%;white-space:normal}.aimsg.user{background:var(--ok);margin-left:auto}.aimsg.assistant{background:var(--bg);border:1px solid var(--line)}';
 document.head.appendChild(aiCss);
+const aiCss2=document.createElement('style');aiCss2.textContent='.aicard{background:var(--card);border:1px solid var(--acc);border-radius:14px;padding:10px 12px;margin:6px 0}.aicardh{font-weight:700;color:var(--acc);margin-bottom:6px}.aiitem{padding:7px 0;border-bottom:1px dashed var(--line);font-size:14px}.aiitem:last-child{border-bottom:0}';document.head.appendChild(aiCss2);
+
 const aiFab=document.createElement('button');aiFab.className='aifab';aiFab.textContent='🤖';aiFab.setAttribute('aria-label','Asistan');aiFab.onclick=()=>openAI();document.body.appendChild(aiFab);
 const aiOvl=document.createElement('div');aiOvl.id='aiovl';
 aiOvl.innerHTML=`<div class=card style="max-width:420px;margin:0;width:94%;height:80vh;display:flex;flex-direction:column"><h2 style="margin-bottom:6px">🤖 Asistan <span id=aistat class=mut style="font-size:12px"></span></h2><div id=aimsgs style="flex:1;overflow-y:auto;min-height:120px"></div><div id=aiprev></div><div id=aikeyrow></div><div class=row style="gap:6px;margin-top:8px"><input id=aiin name=asistan-mesaj class=in type=text placeholder="Ne yapmak istersin?" style="flex:1" autocomplete="on" autocapitalize="sentences" autocorrect="on" spellcheck="true" enterkeyhint="send" onkeydown="if(event.key=='Enter')aiSend()"><button class=add style="width:auto" onclick="aiSend()">Gönder</button></div></div>`;
@@ -1661,8 +1675,7 @@ const openDebtMenu=id=>{const d=S.debts.find(x=>x.id==id);if(!d)return;const idx
  <div class=row style="margin-top:10px"><button class=add onclick="closePop('dtmovl')">Kapat</button></div>`)};
 const openDebtAssign=id=>{const d=S.debts.find(x=>x.id==id);if(!d)return;
  showPop('dtasovl',`<h2 style="margin-bottom:4px">📅 Hangi tarihe?</h2><div class=mut style="margin-bottom:10px">${E(d.name)} · ${F(d.amount)} borcu, seçtiğin tarihin düştüğü haftaya ödeme olarak geçer.</div><input id=dtadate type=date class=in value="${iso(bt0)}" style="width:100%" oninput="dtaPreview()"><div id=dtaprev class=mut style="margin-top:10px;font-size:13px"></div><div class=row style="gap:8px;margin-top:12px"><button class=add onclick="closePop('dtasovl')">Vazgeç</button><button class=add style="color:var(--acc)" onclick="doAssignDate('${id}')">Ata</button></div>`);dtaPreview()};
-const dtaWeekOf=dateStr=>{const td=new Date(dateStr+'T00:00');ensureCovers(td);let best=null;S.m.forEach((m,mi)=>m.w.forEach((w,wi)=>{if(wd(w)<=td)best={mi,wi,w}}));
- if(!best)S.m.forEach((m,mi)=>m.w.forEach((w,wi)=>{if(!best)best={mi,wi,w}}));return best};
+const dtaWeekOf=dateStr=>{const td=new Date(dateStr+'T00:00');ensureCovers(td);return pickWeekFor(td)};
 const dtaPreview=()=>{const el=$('dtaprev'),v=$('dtadate')&&$('dtadate').value;if(!el)return;if(!v){el.textContent='Tarih seç';return}
  const wk=dtaWeekOf(v);el.innerHTML=`→ <b>${E(wk.w[0].split('(')[0].trim())}</b> · ${fd(wd(wk.w))} haftası`};
 const doAssignDate=id=>{const v=$('dtadate')&&$('dtadate').value;if(!v)return toast('Tarih seç');const snap=JSON.stringify(S);
@@ -1767,21 +1780,48 @@ const aiIsGroq=()=>aiKey().startsWith('gsk_');
 const aiSnapshotSmall=()=>{const s=aiSnapshotHist();const lo=iso(new Date(bt0.getTime()-183*864e5)),hi=iso(new Date(bt0.getTime()+365*864e5));
  s.haftalar=s.haftalar.filter(w=>w.key>=lo&&w.key<=hi);s.harcamalar=s.harcamalar.filter(e=>e.tarih>=lo);
  s.not='Veri boyut sınırı nedeniyle son 6 ay ve gelecek 12 ay ile sınırlandı; toplamlar (ozet) tüm veriyi kapsar.';return s};
+const AI_LBL={add_payment:'Ödeme ekle',edit_payment:'Ödeme düzenle',move_payment:'Ödemeyi başka haftaya taşı',delete_payment:'Ödeme sil',set_salary:'Maaş gir',add_expense:'Harcama ekle',edit_expense:'Harcama düzenle',delete_expense:'Harcama sil',add_debt:'Tarihsiz borç ekle',edit_debt:'Borç düzenle',delete_debt:'Borç sil',add_bill:'Fatura ekle',edit_bill:'Fatura düzenle',delete_bill:'Fatura sil',add_fixed_expense:'Sabit harcama ekle',delete_fixed_expense:'Sabit harcama sil',set_limit:'Aylık limit ayarla',add_category:'Kategori ekle',add_receivable:'Alacak ekle',edit_receivable:'Alacak düzenle',delete_receivable:'Alacak sil',partial_payment:'Kısmi ödeme yap',set_bill_month_paid:'Fatura ödendi/ödenmedi',set_iban:'IBAN kaydet',add_notification:'Hatırlatıcı ekle',set_theme:'Görünümü değiştir',set_color_scheme:'Renk şemasını değiştir',assign_debt_to_week:'Borcu haftaya ata',transfer_payment_to_debt:'Ödemeyi borca aktar',reorder_payment:'Ödemenin sırasını değiştir'};
+const fdShort=s=>{if(!s)return'';const m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return String(s);return new Date(+m[1],+m[2]-1,+m[3]).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'})};
+const aiNameOf=id=>{if(!id)return'';try{return findPay(id).p[0]||''}catch(e){}const d=S.debts.find(x=>x.id==id);if(d)return d.name;const b=S.bills.find(x=>x.id==id);if(b)return b.name;const rc=(S.recv||[]).find(x=>ridOf(x)==id);if(rc)return rc.name;const ex=S.ex.find(e=>eidOf(e)==id);if(ex)return ex.c+(ex.n?' · '+ex.n:'');return''};
+const aiHuman=c=>{const i=c.input||{};const parts=[];
+ const nm=i.name||aiNameOf(i.id)||aiNameOf(i.debt_id)||aiNameOf(i.bill_id);if(nm)parts.push(nm);
+ if(i.amount!==undefined&&i.amount!==null&&i.amount!=='')parts.push(F(i.amount));
+ if(i.date)parts.push(fdShort(i.date));
+ if(i.week)parts.push(fdShort(i.week));
+ if(i.to_week)parts.push('→ '+fdShort(i.to_week));
+ if(i.category)parts.push(i.category);
+ if(i.installments>1)parts.push(i.installments+' taksit');
+ if(i.paid!==undefined)parts.push(i.paid?'ödendi olarak işaretlensin':'ödenmedi olarak işaretlensin');
+ if(i.note)parts.push('not: '+i.note);
+ if(i.month)parts.push(i.month);
+ return '<b>'+E(AI_LBL[c.name]||'İşlem')+'</b>'+(parts.length?'<br><span class=mut>'+E(parts.join(' · '))+'</span>':'')};
+const aiMd=t=>{const inl=x=>E(x).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');let out='',tbl=null;
+ const flush=()=>{if(!tbl)return;out+='<div style="overflow-x:auto;margin:6px 0"><table style="border-collapse:collapse;width:100%;font-size:13px">'+tbl.map((r,i)=>'<tr>'+r.map(c=>i==0?'<th style="text-align:left;padding:5px 6px;border-bottom:2px solid var(--line)">'+inl(c.trim())+'</th>':'<td style="padding:5px 6px;border-bottom:1px solid var(--line)">'+inl(c.trim())+'</td>').join('')+'</tr>').join('')+'</table></div>';tbl=null};
+ for(const l of String(t||'').split(/\r?\n/)){
+  if(/^\s*\|/.test(l)){const cells=l.trim().replace(/^\|/,'').replace(/\|$/,'').split('|');if(cells.every(c=>/^\s*:?-{2,}:?\s*$/.test(c)))continue;(tbl=tbl||[]).push(cells);continue}
+  flush();
+  if(/^\s*[-•*]\s+/.test(l))out+='<div style="padding-left:10px">• '+inl(l.replace(/^\s*[-•*]\s+/,''))+'</div>';
+  else out+=l.trim()?'<div>'+inl(l)+'</div>':'<div style="height:6px"></div>'}
+ flush();return out};
+const aiContext=()=>{const mk=i=>{const m=S.m[i];return {ay:m.t,maas:m.w.reduce((s,w)=>s+(+w[1]||0),0),odenecek_kalan:mkW(m),odenen:mtotW(m)-mkW(m),bekleyen_odeme_sayisi:m.w.reduce((s,w)=>s+w[2].filter(p=>remOf(p)>0).length,0)}};
+ const ci=Math.max(0,S.m.findIndex(m=>mKey(wd(m.w[0]))==mKey(t0)));const aylar=[];
+ for(let i=Math.max(0,ci-1);i<=Math.min(S.m.length-1,ci+2);i++)aylar.push(mk(i));
+ return {bugun:iso(bt0),ozet:aiOzet(),bu_ve_yakin_aylar:aylar,
+  tarihsiz_borclar:S.debts.filter(d=>!d.paid).map(d=>({id:d.id,ad:d.name,kategori:d.cat,tutar:+d.amount||0})),
+  faturalar:S.bills.map(b=>({id:b.id,ad:b.name,ayin_gunu:b.day,tutar:b.amount||0,sabit:!!b.fixed})),
+  harcama_kategorileri:S.cats,borc_kategorileri:S.dcats,aylik_limitler:S.limits,
+  not:'Haftalar, harcamalar, ödeme geçmişi ve arama için uygun araçları kullan. Kimlik bilgilerini (id) yalnızca araçlardan al ve kullanıcıya gösterme.'}};
 const aiSend=async()=>{const inp=$('aiin');const txt=(inp.value||'').trim();if(!txt||AI.busy)return;
  if(!aiKey())return toast('Önce API anahtarını gir');
  inp.value='';AI.msgs.push({role:'user',text:txt});AI.pending=null;AI.busy=true;$('aistat').textContent='düşünüyor…';aiRender();
- const hist=AI.msgs.slice(0,-1).filter(m=>!m.err).slice(-10).map(m=>({role:m.role,content:m.text}));
+ const hist=AI.msgs.slice(0,-1).filter(m=>!m.err).slice(-8).map(m=>({role:m.role,content:m.text}));
  while(hist.length&&hist[0].role!='user')hist.shift();
  let j=null,err=null;
- for(const small of [false,true]){
-  try{const veri=small?aiSnapshotSmall():aiSnapshotHist();
-   j=await aiCall(hist.concat([{role:'user',content:'VERİ:\n'+JSON.stringify(aiIsGroq()?aiGroqSummary():veri)+'\n\nSORU: '+txt}]));err=null;break}
-  catch(e){err=e;if(!/rate|too large|413|token|limit|kota|quota/i.test(e.message))break}
- }
+ try{j=await aiCall(hist.concat([{role:'user',content:'VERİ:\n'+JSON.stringify(aiContext())+'\n\nSORU: '+txt}]))}catch(e){err=e}
  if(err)AI.msgs.push({role:'assistant',text:aiFriendly(err.message),err:1});
  else{const text=j.content.filter(b=>b.type=='text').map(b=>b.text).join('\n').trim();
   const calls=j.content.filter(b=>b.type=='tool_use').map(b=>({name:b.name,input:b.input}));
-  AI.msgs.push({role:'assistant',text:text||(calls.length?'Önerilerim aşağıda:':'(boş yanıt)')});
+  AI.msgs.push({role:'assistant',text:text||(calls.length?'Şu değişiklikleri önerebilirim:':'Bir cevap oluşturamadım, sorunu biraz farklı yazabilir misin?')});
   AI.pending=calls.length?calls:null}
  AI.busy=false;$('aistat').textContent='';aiRender()};
 
@@ -1908,12 +1948,17 @@ const cloudDeriveKey=async(password,salt)=>{const mat=await crypto.subtle.import
 const cloudEncrypt=async(data)=>{const key=await crypto.subtle.importKey('raw',cloudUnB64(cloudEncKey),{name:'AES-GCM'},false,['encrypt']);const iv=crypto.getRandomValues(new Uint8Array(12));const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(data)));return {v:1,iv:cloudB64(iv),cipher:cloudB64(cipher)}};
 const cloudDecrypt=async(payload)=>{if(!payload||payload.v!==1)throw new Error('Bulut yedeği biçimi tanınmıyor.');const key=await crypto.subtle.importKey('raw',cloudUnB64(cloudEncKey),{name:'AES-GCM'},false,['decrypt']);const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:cloudUnB64(payload.iv)},key,cloudUnB64(payload.cipher));return JSON.parse(new TextDecoder().decode(plain))};
 const cloudShowBadge=t=>{const x=String(t||'');let st='Senkron açık';if(/Yedekleniyor|ediliyor/i.test(x))st='Senkron ediliyor…';else if(/bekliyor|hata|kurulamadı/i.test(x))st='Senkron hatası';else if(/Çevrimdışı/i.test(x))st='Çevrimdışı';const who=(cloudUser&&cloudUser.username)||'';window.cloudBadgeTxt=(who?who+' • ':'')+st;cloudBadgeTxt=window.cloudBadgeTxt;const e=document.getElementById('cloudSyncBadge');if(e)e.textContent=cloudBadgeTxt};
+const cloudPayload=async()=>{const im={};for(const d of S.docs||[])for(const id of d.imgs||[]){try{const v=await idbGet(id);if(v)im[id]=v}catch(e){}}return Object.assign({},S,{_imgs:im})};
+const cloudRestoreImgs=async()=>{const im=S._imgs||{};delete S._imgs;for(const k of Object.keys(im)){try{await idbPut(k,im[k]);DC[k]=im[k]}catch(e){}}};
+const cloudDoLogout=async()=>{if(cloudToken&&!cloudOffline){try{await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})})}catch(e){toast('Yedek alınamadı, çıkış yapılmadı. İnternetini kontrol et.');return}}
+['bt_cloud_token','bt_cloud_user','bt_cloud_enc_key','butce_v3','butce_meta','butce_auto','butce_auto_prev'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});try{indexedDB.deleteDatabase('borc_docs')}catch(e){}location.reload()};
+const cloudLogout=()=>ask(cloudOffline?'Çevrimdışı veriler buluta kaydedilmediği için silinecek. Çıkış yapılsın mı?':'Çıkış yapılsın mı? Son veriler buluta kaydedilecek, bu cihazdaki veriler silinecek.',()=>cloudDoLogout());
 const cloudHideGate=()=>{document.getElementById('cloudAuth').style.display='none';document.getElementById('app').style.display='';};
 const cloudUseLocal=()=>{cloudOffline=true;cloudHideGate();cloudShowBadge('Çevrimdışı · Bulut yedeği kapalı')};
-const cloudSubmit=async()=>{const username=(document.getElementById('caUser').value||'').trim();const password=document.getElementById('caPass').value||'';if(!/^[a-zA-Z0-9_.-]{3,24}$/.test(username))return cloudMsg('Kullanıcı adı 3-24 karakter olmalı (İngilizce harf, rakam, . _ -).');if(password.length<8)return cloudMsg('Şifre en az 8 karakter olmalı.');const b=document.getElementById('caSubmit');b.disabled=true;cloudMsg('Hesap kontrol ediliyor…');try{const path=cloudMode==='register'?'auth/register':'auth/login';const out=await cloudApi(path,{method:'POST',body:JSON.stringify({username,password})});cloudToken=out.token;cloudUser=out.user;cloudEncKey=await cloudDeriveKey(password,cloudUser.backupSalt);localStorage.setItem('bt_cloud_token',cloudToken);localStorage.setItem('bt_cloud_user',JSON.stringify(cloudUser));localStorage.setItem('bt_cloud_enc_key',cloudEncKey);if(cloudMode==='register'){await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(S)})});cloudMsg('Hesap oluşturuldu, ilk yedek buluta kaydedildi.');}else{cloudMsg('Bulut yedeği aranıyor…');const bk=await cloudApi('backup');if(bk.payload){cloudRestoring=true;S=await cloudDecrypt(bk.payload);norm(S);ensureRange();rollOver();genBills();save();cloudRestoring=false;draw(1);cloudMsg('Yedek geri yüklendi.');}else{await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(S)})});cloudMsg('Bu hesapta yedek bulunamadı; bu cihazdaki veriler yedeklendi.');}}cloudHideGate();cloudShowBadge('☁ '+cloudUser.username+' · Senkron açık');setTimeout(()=>cloudMsg(''),1200);}catch(e){cloudRestoring=false;cloudMsg(e.message||'İşlem başarısız.');}finally{b.disabled=false;}};
+const cloudSubmit=async()=>{const username=(document.getElementById('caUser').value||'').trim();const password=document.getElementById('caPass').value||'';if(!/^[a-zA-Z0-9_.-]{3,24}$/.test(username))return cloudMsg('Kullanıcı adı 3-24 karakter olmalı (İngilizce harf, rakam, . _ -).');if(password.length<8)return cloudMsg('Şifre en az 8 karakter olmalı.');const b=document.getElementById('caSubmit');b.disabled=true;cloudMsg('Hesap kontrol ediliyor…');try{const path=cloudMode==='register'?'auth/register':'auth/login';const out=await cloudApi(path,{method:'POST',body:JSON.stringify({username,password})});cloudToken=out.token;cloudUser=out.user;cloudEncKey=await cloudDeriveKey(password,cloudUser.backupSalt);localStorage.setItem('bt_cloud_token',cloudToken);localStorage.setItem('bt_cloud_user',JSON.stringify(cloudUser));localStorage.setItem('bt_cloud_enc_key',cloudEncKey);if(cloudMode==='register'){await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})});cloudMsg('Hesap oluşturuldu, ilk yedek buluta kaydedildi.');}else{cloudMsg('Bulut yedeği aranıyor…');const bk=await cloudApi('backup');if(bk.payload){cloudRestoring=true;S=await cloudDecrypt(bk.payload);await cloudRestoreImgs();norm(S);ensureRange();rollOver();genBills();save();cloudRestoring=false;draw(1);cloudMsg('Yedek geri yüklendi.');}else{await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})});cloudMsg('Bu hesapta yedek bulunamadı; bu cihazdaki veriler yedeklendi.');}}cloudHideGate();cloudShowBadge('☁ '+cloudUser.username+' · Senkron açık');setTimeout(()=>cloudMsg(''),1200);}catch(e){cloudRestoring=false;cloudMsg(e.message||'İşlem başarısız.');}finally{b.disabled=false;}};
 function cloudScheduleBackup(){if(!cloudToken||cloudOffline||cloudRestoring)return;if(cloudBackupTimer)clearTimeout(cloudBackupTimer);cloudBackupTimer=setTimeout(cloudUploadBackup,1400)}
-const cloudUploadBackup=async()=>{if(!cloudToken||cloudOffline||cloudRestoring)return;try{cloudShowBadge('☁ Yedekleniyor…');await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(S)})});cloudShowBadge('☁ '+(cloudUser?.username||'Hesap')+' · Güncel');}catch(e){cloudShowBadge('☁ Yedekleme bekliyor');console.warn('Cloud backup:',e)}};
-const cloudInit=async()=>{document.getElementById('app').style.display='none';const t=localStorage.getItem('bt_cloud_token');if(t){cloudToken=t;cloudEncKey=localStorage.getItem('bt_cloud_enc_key')||'';try{const me=await cloudApi('auth/me');cloudUser=me.user;const bk=await cloudApi('backup');if(bk.payload){cloudRestoring=true;S=await cloudDecrypt(bk.payload);norm(S);ensureRange();rollOver();genBills();localStorage.setItem(KEY,JSON.stringify(S));cloudRestoring=false;}cloudHideGate();cloudShowBadge('☁ '+cloudUser.username+' · Senkron açık');draw(1);return;}catch(e){localStorage.removeItem('bt_cloud_token');localStorage.removeItem('bt_cloud_user');localStorage.removeItem('bt_cloud_enc_key');cloudToken='';cloudEncKey='';}}
+const cloudUploadBackup=async()=>{if(!cloudToken||cloudOffline||cloudRestoring)return;try{cloudShowBadge('☁ Yedekleniyor…');await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})});cloudShowBadge('☁ '+(cloudUser?.username||'Hesap')+' · Güncel');}catch(e){cloudShowBadge('☁ Yedekleme bekliyor');console.warn('Cloud backup:',e)}};
+const cloudInit=async()=>{document.getElementById('app').style.display='none';const t=localStorage.getItem('bt_cloud_token');if(t){cloudToken=t;cloudEncKey=localStorage.getItem('bt_cloud_enc_key')||'';try{const me=await cloudApi('auth/me');cloudUser=me.user;const bk=await cloudApi('backup');if(bk.payload){cloudRestoring=true;S=await cloudDecrypt(bk.payload);await cloudRestoreImgs();norm(S);ensureRange();rollOver();genBills();localStorage.setItem(KEY,JSON.stringify(S));cloudRestoring=false;}cloudHideGate();cloudShowBadge('☁ '+cloudUser.username+' · Senkron açık');draw(1);return;}catch(e){localStorage.removeItem('bt_cloud_token');localStorage.removeItem('bt_cloud_user');localStorage.removeItem('bt_cloud_enc_key');cloudToken='';cloudEncKey='';}}
  document.getElementById('app').style.display='none';};
 window.addEventListener('online',()=>{if(cloudToken)cloudUploadBackup()});
 setTimeout(()=>cloudInit().catch(e=>cloudMsg('Bulut bağlantısı kurulamadı: '+e.message)),0);
