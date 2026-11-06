@@ -461,7 +461,8 @@ const tb=(v,f2)=>`<button class="chip ${v?'on':''}" onclick="${f2}">${v?'Açık'
 NP=notifPage(on,tb);
 const hesap=`<div class=card><h2>Hesap ve Yedek</h2>
 <div class=row><span>Giriş yapan</span><span class=n>${E((cloudUser&&cloudUser.username)||'Çevrimdışı')}</span></div>
-<div class=row><span>Son yedek</span><span class=n>${M.lb?f(M.lb):'Henüz alınmadı'}</span></div>
+<div class=row><span>Son bulut yedeği</span><span class=n>${localStorage.getItem('bt_cloud_last_backup')?f(+localStorage.getItem('bt_cloud_last_backup')):'Henüz alınmadı'}</span></div>
+<div class=row><span>Son manuel yedek</span><span class=n>${M.lb?f(M.lb):'Henüz alınmadı'}</span></div>
 <div class=row style="gap:8px;margin-top:12px"><button class=add style="flex:1" onclick="bak()">Yedeği indir</button><label class=add style="flex:1;text-align:center">Yedeği yükle<input type=file accept=".json,application/json" hidden onchange="rst(this.files[0])"></label></div>
 <details class=more><summary>Gelişmiş yedek seçenekleri</summary>
  <div class=row style="margin-top:8px"><span>Girişte otomatik kopya</span>${tb(M.auto!==false,"M.auto=M.auto===false?true:false;sm();autoBak();draw()")}</div>
@@ -1948,18 +1949,21 @@ const aiFriendly=msg=>{const m=String(msg||'');const tech=m.length>140?m.slice(0
 
 /* ===== Cloudflare hesap + JSON bulut yedekleme ===== */
 let cloudUser=null,cloudToken='',cloudEncKey='',cloudMode='login',cloudBackupTimer=null,cloudRestoring=false,cloudOffline=false;
-const cloudApi=async(path,opts={})=>{const h=Object.assign({'content-type':'application/json'},opts.headers||{});if(cloudToken)h.Authorization='Bearer '+cloudToken;const r=await fetch('/api/'+path,Object.assign({},opts,{headers:h}));const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('Sunucu hatası ('+r.status+')'));return j};
+const cloudApi=async(path,opts={})=>{
+  const h=Object.assign({'content-type':'application/json'},opts.headers||{});
+  if(cloudToken)h.Authorization='Bearer '+cloudToken;
+  const r=await fetch('/api/'+path,Object.assign({},opts,{headers:h}));
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.error||('Sunucu hatası ('+r.status+')'));
+  if(path==='backup'&&opts.method==='PUT'){
+    const ts=j.updatedAt?Date.parse(j.updatedAt):0;
+    localStorage.setItem('bt_cloud_last_backup',String(ts||Date.now()));
+  }
+  return j;
+};
 const cloudSetMode=m=>{cloudMode=m;document.getElementById('caLoginTab').classList.toggle('active',m==='login');document.getElementById('caRegTab').classList.toggle('active',m==='register');document.getElementById('caSubmit').textContent=m==='register'?'Hesap Oluştur':'Giriş Yap';document.getElementById('caMsg').textContent='';document.getElementById('caPass').autocomplete=m==='register'?'new-password':'current-password'};
 const cloudMsg=t=>{const e=document.getElementById('caMsg');if(e)e.textContent=t};
-const cloudB64=b=>{
-  const bytes=new Uint8Array(b);
-  let binary='';
-  const chunk=8192;
-  for(let i=0;i<bytes.length;i+=chunk){
-    binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
-  }
-  return btoa(binary);
-};
+const cloudB64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
 const cloudUnB64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const cloudDeriveKey=async(password,salt)=>{const mat=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:cloudUnB64(salt),iterations:250000,hash:'SHA-256'},mat,256);return cloudB64(bits)};
 const cloudEncrypt=async(data)=>{const key=await crypto.subtle.importKey('raw',cloudUnB64(cloudEncKey),{name:'AES-GCM'},false,['encrypt']);const iv=crypto.getRandomValues(new Uint8Array(12));const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(data)));return {v:1,iv:cloudB64(iv),cipher:cloudB64(cipher)}};
@@ -1975,7 +1979,7 @@ const cloudUseLocal=()=>{cloudOffline=true;cloudHideGate();cloudShowBadge('Çevr
 const cloudSubmit=async()=>{const username=(document.getElementById('caUser').value||'').trim();const password=document.getElementById('caPass').value||'';if(!/^[a-zA-Z0-9_.-]{3,24}$/.test(username))return cloudMsg('Kullanıcı adı 3-24 karakter olmalı (İngilizce harf, rakam, . _ -).');if(password.length<8)return cloudMsg('Şifre en az 8 karakter olmalı.');const b=document.getElementById('caSubmit');b.disabled=true;cloudMsg('Hesap kontrol ediliyor…');try{const path=cloudMode==='register'?'auth/register':'auth/login';const out=await cloudApi(path,{method:'POST',body:JSON.stringify({username,password})});cloudToken=out.token;cloudUser=out.user;window.CLOUD_MUST_CHANGE=!!out.user.mustChange;cloudEncKey=await cloudDeriveKey(password,cloudUser.backupSalt);localStorage.setItem('bt_cloud_token',cloudToken);localStorage.setItem('bt_cloud_user',JSON.stringify(cloudUser));localStorage.setItem('bt_cloud_enc_key',cloudEncKey);if(cloudMode==='register'){await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})});cloudMsg('Hesap oluşturuldu, ilk yedek buluta kaydedildi.');}else{cloudMsg('Bulut yedeği aranıyor…');const bk=await cloudApi('backup');if(bk.payload){cloudRestoring=true;S=await cloudDecrypt(bk.payload);await cloudRestoreImgs();norm(S);ensureRange();rollOver();genBills();save();cloudRestoring=false;draw(1);cloudMsg('Yedek geri yüklendi.');}else{await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})});cloudMsg('Bu hesapta yedek bulunamadı; bu cihazdaki veriler yedeklendi.');}}cloudHideGate();cloudShowBadge('☁ '+cloudUser.username+' · Senkron açık');setTimeout(()=>cloudMsg(''),1200);}catch(e){cloudRestoring=false;cloudMsg(e.message||'İşlem başarısız.');}finally{b.disabled=false;}};
 function cloudScheduleBackup(){if(!cloudToken||cloudOffline||cloudRestoring)return;if(cloudBackupTimer)clearTimeout(cloudBackupTimer);cloudBackupTimer=setTimeout(cloudUploadBackup,1400)}
 const cloudUploadBackup=async()=>{if(!cloudToken||cloudOffline||cloudRestoring)return;try{cloudShowBadge('☁ Yedekleniyor…');await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})});cloudShowBadge('☁ '+(cloudUser?.username||'Hesap')+' · Güncel');}catch(e){cloudShowBadge('☁ Yedekleme bekliyor');console.warn('Cloud backup:',e);toast('Senkron hatası: '+(e.message||'bilinmeyen'))}};
-const cloudInit=async()=>{document.getElementById('app').style.display='none';const t=localStorage.getItem('bt_cloud_token');if(t){cloudToken=t;cloudEncKey=localStorage.getItem('bt_cloud_enc_key')||'';try{const me=await cloudApi('auth/me');cloudUser=me.user;window.CLOUD_MUST_CHANGE=!!me.user.mustChange;const bk=await cloudApi('backup');const cTs=bk.updatedAt?Date.parse(bk.updatedAt)||0:0;const lTs=+(localStorage.getItem('butce_ts')||0);if(bk.payload&&(!lTs||cTs>lTs+5000)){cloudRestoring=true;S=await cloudDecrypt(bk.payload);await cloudRestoreImgs();norm(S);ensureRange();rollOver();genBills();localStorage.setItem(KEY,JSON.stringify(S));localStorage.setItem('butce_ts',String(cTs||Date.now()));cloudRestoring=false;}else if(bk.payload&&lTs>cTs+5000){cloudUploadBackup();}cloudHideGate();cloudShowBadge('☁ '+cloudUser.username+' · Senkron açık');draw(1);return;}catch(e){localStorage.removeItem('bt_cloud_token');localStorage.removeItem('bt_cloud_user');localStorage.removeItem('bt_cloud_enc_key');cloudToken='';cloudEncKey='';document.documentElement.classList.remove('cl-in');}}
+const cloudInit=async()=>{document.getElementById('app').style.display='none';const t=localStorage.getItem('bt_cloud_token');if(t){cloudToken=t;cloudEncKey=localStorage.getItem('bt_cloud_enc_key')||'';try{const me=await cloudApi('auth/me');cloudUser=me.user;window.CLOUD_MUST_CHANGE=!!me.user.mustChange;const bk=await cloudApi('backup');const cTs=bk.updatedAt?Date.parse(bk.updatedAt)||0:0;if(cTs)localStorage.setItem('bt_cloud_last_backup',String(cTs));const lTs=+(localStorage.getItem('butce_ts')||0);if(bk.payload&&(!lTs||cTs>lTs+5000)){cloudRestoring=true;S=await cloudDecrypt(bk.payload);await cloudRestoreImgs();norm(S);ensureRange();rollOver();genBills();localStorage.setItem(KEY,JSON.stringify(S));localStorage.setItem('butce_ts',String(cTs||Date.now()));cloudRestoring=false;}else if(bk.payload&&lTs>cTs+5000){cloudUploadBackup();}cloudHideGate();cloudShowBadge('☁ '+cloudUser.username+' · Senkron açık');draw(1);return;}catch(e){localStorage.removeItem('bt_cloud_token');localStorage.removeItem('bt_cloud_user');localStorage.removeItem('bt_cloud_enc_key');cloudToken='';cloudEncKey='';document.documentElement.classList.remove('cl-in');}}
  document.getElementById('app').style.display='none';};
 window.addEventListener('online',()=>{if(cloudToken)cloudUploadBackup()});
 setTimeout(()=>cloudInit().catch(e=>cloudMsg('Bulut bağlantısı kurulamadı: '+e.message)),0);
