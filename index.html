@@ -1963,7 +1963,15 @@ const cloudApi=async(path,opts={})=>{
 };
 const cloudSetMode=m=>{cloudMode=m;document.getElementById('caLoginTab').classList.toggle('active',m==='login');document.getElementById('caRegTab').classList.toggle('active',m==='register');document.getElementById('caSubmit').textContent=m==='register'?'Hesap Oluştur':'Giriş Yap';document.getElementById('caMsg').textContent='';document.getElementById('caPass').autocomplete=m==='register'?'new-password':'current-password'};
 const cloudMsg=t=>{const e=document.getElementById('caMsg');if(e)e.textContent=t};
-const cloudB64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
+const cloudB64=b=>{
+  const bytes=new Uint8Array(b);
+  let binary='';
+  const chunk=8192;
+  for(let i=0;i<bytes.length;i+=chunk){
+    binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));
+  }
+  return btoa(binary);
+};
 const cloudUnB64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const cloudDeriveKey=async(password,salt)=>{const mat=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:cloudUnB64(salt),iterations:250000,hash:'SHA-256'},mat,256);return cloudB64(bits)};
 const cloudEncrypt=async(data)=>{const key=await crypto.subtle.importKey('raw',cloudUnB64(cloudEncKey),{name:'AES-GCM'},false,['encrypt']);const iv=crypto.getRandomValues(new Uint8Array(12));const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(data)));return {v:1,iv:cloudB64(iv),cipher:cloudB64(cipher)}};
