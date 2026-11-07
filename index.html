@@ -270,7 +270,7 @@ function akIncBody(){
 function akFxChart(){
  const gs=fxGroups();if(!gs.length)return '<div class="card empty">Döviz/altın borcu yok</div>';
  const key=x=>x.u+'|'+x.name;const g=gs.find(x=>key(x)==akSt.gfx)||gs[0];akSt.gfx=key(g);
- const chips=`<div class="cats" style="margin-bottom:12px">${gs.map(x=>`<button class="${key(x)==akSt.gfx?'on':''}" onclick="akSt.gfx='${Q(key(x))}';draw()">${FXU[x.u][0]} ${E(x.name)}</button>`).join('')}</div>`;
+ const chips=`<select class=fxsel onchange="akSt.gfx=this.value;draw()">${gs.map(x=>`<option value="${E(key(x))}" ${key(x)==akSt.gfx?'selected':''}>${FXU[x.u][0]} ${E(x.name)}</option>`).join('')}</select>`;
  const today=new Date(bt0);let start=g.d?new Date(g.d+'T00:00'):null;
  if(!start){const ks=Object.keys(M.rh||{}).sort();start=ks.length?new Date(ks[0]+'T00:00'):new Date(today)}
  const pts=[];for(let d=new Date(start);d<=today;d.setDate(d.getDate()+1)){const k=iso(d),r=rateOn(g.u,k);if(r)pts.push({k,v:g.q*r})}
@@ -2938,4 +2938,6 @@ html.nv .sheetwrap{z-index:70}
 .sheetwrap .sheet .ovlx{top:12px;right:12px}
 
 .ak-sep{height:1px;background:var(--line);margin:14px 0}
+
+.fxsel{width:100%;padding:14px 16px;border-radius:16px;border:0;background:var(--surface);color:var(--ink);font:inherit;font-size:15px;font-weight:600;box-shadow:var(--shadow);margin-bottom:14px;-webkit-appearance:menulist}
 </style></body></html>
