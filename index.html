@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><title>Borç Takip</title><style>.ring circle{fill:none}</style>
+<!DOCTYPE html><html lang="tr" class="booting"><head><meta charset="utf-8"><title>Borç Takip</title><style>.ring circle{fill:none}</style><style>html.booting #app{visibility:hidden}#bootsplash{position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;background:#f4f1ea;color:#1d2a26;font:600 22px system-ui,-apple-system,sans-serif}@media(prefers-color-scheme:dark){#bootsplash{background:#0d1017;color:#eef1f6}}</style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1f6f5c">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -51,7 +51,7 @@ html,body{overscroll-behavior-y:contain}#ptr{position:fixed;top:0;left:50%;z-ind
 [id$=ovl]>.card{position:relative}.gear{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:16px;padding:0;z-index:2}.gear~h2{padding-right:40px}.gearS{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:14px;padding:0;flex:none}#sovl{z-index:12}#ovl,#ipovl,#covl,#billovl,#cnovl,#docatovl{z-index:13}.toast{z-index:20}
 #updovl{display:none;position:fixed;inset:0;background:#0008;z-index:13;align-items:center;justify-content:center;padding:20px}#updovl .card{animation:none}#annovl{display:none;position:fixed;inset:0;background:#0008;z-index:14;align-items:center;justify-content:center;padding:20px}#annovl .card{animation:none}
 #pmovl,#pmovl *,#pkovl,#pkovl *,.pl,.pl *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-</style><style>html.cl-in #cloudAuth{display:none!important}</style><script>if(localStorage.getItem('bt_cloud_token'))document.documentElement.classList.add('cl-in')</script></head><body>
+</style><style>html.cl-in #cloudAuth{display:none!important}</style><script>if(localStorage.getItem('bt_cloud_token'))document.documentElement.classList.add('cl-in')</script></head><body><div id=bootsplash>Borç Takip</div>
 <style id="cloud-auth-style">
 #cloudAuth{position:fixed;inset:0;z-index:99999;background:var(--bg,#f5f5f5);display:flex;align-items:center;justify-content:center;padding:20px;font-family:Arial,sans-serif;color:var(--ink,#222)}
 #cloudAuth .ca-card{width:100%;max-width:390px;background:var(--card,#fff);border:1px solid var(--line,#ddd);border-radius:18px;padding:24px;box-shadow:0 12px 40px #0002}
@@ -2940,4 +2940,4 @@ html.nv .sheetwrap{z-index:70}
 .ak-sep{height:1px;background:var(--line);margin:14px 0}
 
 .fxsel{width:100%;padding:14px 16px;border-radius:16px;border:0;background:var(--surface);color:var(--ink);font:inherit;font-size:15px;font-weight:600;box-shadow:var(--shadow);margin-bottom:14px;-webkit-appearance:menulist}
-</style></body></html>
+</style><script>(function(){var done=0;function reveal(){if(done++)return;requestAnimationFrame(function(){requestAnimationFrame(function(){document.documentElement.classList.remove('booting');var s=document.getElementById('bootsplash');if(s)s.remove()})})}if(document.readyState==='complete')reveal();else addEventListener('load',reveal);setTimeout(reveal,4000)})();</script></body></html>
