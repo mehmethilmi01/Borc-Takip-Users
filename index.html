@@ -131,7 +131,7 @@ function akMonthTot(mi){const ym=ymOf(mi);let tot=0,paid=0;
  S.bills.forEach(b=>{const inst=S.billPaid[b.id+'_'+ym];if(inst){const a=+inst.amount||0;tot+=a;if(inst.paid)paid+=a}});
  return {tot,paid,left:tot-paid}}
 function akWk(mi,wi){akSt.wk=[mi,wi];draw(1)}
-function akTab(t){tab=t;draw(1)}
+function akTab(t){tab=t;if(t=='a')akSt.mi=null;draw(1);if(t=='a')setTimeout(()=>{const e=document.querySelector('.tl-week.cur');if(e)e.scrollIntoView({block:'start'})},30)}
 function akEdit(mi,wi,pi){cur=mi;openPEdit(wi,pi)}
 function akDay(k){akSt.day=k;draw()}
 function akMon(d){akSt.mi=Math.max(0,Math.min(S.m.length-1,(akSt.mi==null?akMonthIdx():akSt.mi)+d));draw()}
@@ -156,25 +156,25 @@ function akFlowBody(){
  bl.forEach(b=>{const a=+b.inst.amount||0;total+=a;if(b.inst.paid)paid+=a;const bm=wd(w);items.push({k:iso(new Date(bm.getFullYear(),bm.getMonth(),b.b.day)),h:akBillRow(b),paid:!!b.inst.paid,nm:b.b.name,d:''})});
  const left=kalanW(w),pct=total?Math.round(paid/total*100):0,C=2*Math.PI*50;
  const next=items.filter(i=>!i.paid).sort((a,b)=>(a.d||'9').localeCompare(b.d||'9'))[0];
- const strip=arr.slice(Math.max(0,idx-2),idx+4).map(y=>{const on=y.mi==x.mi&&y.wi==x.wi;return `<button class="wk ${on?'on':''}" onclick="akWk(${y.mi},${y.wi})"><small>${new Date(y.d).toLocaleDateString('tr-TR',{day:'numeric',month:'short'})} · kalan</small><b class=num>${F(kalanW(y.w))}</b></button>`}).join('');
+ const cI0=first?arr.findIndex(y=>y.mi==first.mi&&y.wi==first.wi):-1,st0=Math.max(0,cI0<0?idx:Math.min(cI0,idx)),en0=Math.max(st0+6,idx+1),strip=arr.slice(st0,en0).map(y=>{const on=y.mi==x.mi&&y.wi==x.wi;return `<button class="wk ${on?'on':''}" onclick="akWk(${y.mi},${y.wi})"><small>${new Date(y.d).toLocaleDateString('tr-TR',{day:'numeric',month:'short'})} · kalan</small><b class=num>${F(kalanW(y.w))}</b></button>`}).join('');
  const n=items.length,pc=items.filter(i=>i.paid).length;
  return `<div class=strip>${strip}</div>
  <section class="hero stagger"><div class=ring><svg viewBox="0 0 120 120"><circle class=track cx=60 cy=60 r=50 /><circle class=bar cx=60 cy=60 r=50 stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}"/></svg><div class="pct num">${pct}%</div></div>
   <div><div class=lbl>Kalan bu hafta</div><div class="big num">${F(left)}</div>${next?`<span class=chip><i></i>${E(next.nm)}${next.d?' · '+fdShort(next.d):''}</span>`:'<span class=chip>Hepsi ödendi 🎉</span>'}</div></section>
  ${atCur?'':'<button class=ghost-pill onclick="akSt.wk=null;draw(1)">Güncel haftaya dön</button>'}
  <div class=sect><h2>Akış</h2><span class="mut num">${pc}/${n} tamam</span></div>
- ${n?akGroups(items):'<div class="card empty">Bu hafta için ödeme yok</div>'}`}
+ ${n?`<div class=list>${items.slice().sort((a,b)=>(a.k||'9999').localeCompare(b.k||'9999')).map(i=>i.h).join('')}</div>`:'<div class="card empty">Bu hafta için ödeme yok</div>'}`}
 
 /* 2) TAKVİM: ay özeti + haftalar zaman çizelgesi */
 function akCalBody(){
- const mi=akSt.mi==null?akMonthIdx():akSt.mi;akSt.mi=mi;
+ const mi=akSt.mi==null?akMonthIdx():akSt.mi;akSt.mi=mi;const cw=akWeeks().find(y=>!isClosed(y.w));
  const m=S.m[mi],ym=ymOf(mi),T=akMonthTot(mi),pct=T.tot?Math.round(T.paid/T.tot*100):0;
  const weeks=m.w.map((w,wi)=>{const pay=w[2].map((p,pi)=>akPayRow(mi,wi,pi,p)).join('');
    const bl=billsFor(mi,wi),blh=bl.map(akBillRow).join('');
    const wt=akWt(w)+bl.reduce((s,b)=>s+(+b.inst.amount||0),0);
    const wp=w[2].reduce((s,p)=>s+akPaidOf(p),0)+bl.reduce((s,b)=>s+(b.inst.paid?(+b.inst.amount||0):0),0);
    const done=wt>0&&wp>=wt;
-   return `<section class="tl-week ${done?'done':''}"><span class=tl-dot></span>
+   return `<section class="tl-week ${done?'done':''} ${cw&&cw.mi==mi&&cw.wi==wi?'cur':''}"><span class=tl-dot></span>
      <div class=tl-head><div><small>${w[0].split('(')[0].trim()}</small><b>${fdShort(iso(wd(w)))}</b></div><div class=tl-sum><b class=num>${F(wt)}</b><small class=num>ödenen ${F(wp)}</small></div></div>
      <div class=tl-sal>Maaş ${+w[1]?F(w[1]):'girilmedi'}</div>
      <div class=list>${pay+blh||'<div class=empty>Ödeme yok</div>'}</div></section>`}).join('');
@@ -195,7 +195,7 @@ function akBarsSvg(vals,labs,onc){const mx=Math.max(1,...vals),W=300,H=120,bw=30
 function akModes(cur,list,fn){return `<div class="cats ak-modes">${list.map(x=>`<button class="${x[0]==cur?'on':''}" onclick="${fn(x[0])}">${x[1]}</button>`).join('')}</div>`}
 function akStatsBody(){
  const gm=akSt.gm||'b';
- const head=akModes(gm,[['b','Borç'],['e','Harcama'],['i','Gelir↔Ödeme'],['f','Döviz']],k=>`akSt.gm='${k}';akSt.gpath=[];akSt.gcat=null;akSt.gbc=null;draw()`);
+ const head=akModes(gm,[['b','Borç'],['e','Harcama'],['f','Döviz']],k=>`akSt.gm='${k}';akSt.gpath=[];akSt.gcat=null;akSt.gbc=null;draw()`);
  if(gm=='i')return head+akIncBody();
  if(gm=='f')return head+akFxChart();
  if(gm=='b')return head+akDebtChart();
@@ -322,7 +322,7 @@ function akSkinCard(){return `<div class=ak-grp><h4>Tasarım</h4><div class=ak-s
 function akSheet(html){let w=document.getElementById('akSW');
  if(!w){w=document.createElement('div');w.id='akSW';w.className='sheetwrap';w.innerHTML='<div class=scrim onclick="akClose()"></div><div class=sheet><div class=grab></div><div id=akSB></div></div>';document.body.appendChild(w)}
  document.getElementById('akSB').innerHTML=html;w.classList.add('open')}
-function akClose(){const w=document.getElementById('akSW');if(w)w.classList.remove('open')}
+function akClose(){akSecI=null;const w=document.getElementById('akSW');if(w)w.classList.remove('open')}
 function akAdd(){akSheet(`<h3>Ne eklemek istersin?</h3><div class=menu>
  <button onclick="akClose();akPay()"><i>🧾</i>Ödeme<small class=mut style="margin-left:auto">tarihli</small></button>
  <button onclick="akClose();akSpend()"><i>💸</i>Harcama<small class=mut style="margin-left:auto">bugün</small></button>
@@ -352,6 +352,17 @@ function akDebtNew(){DP.idx=null;DP.cat=DP.cat||S.dcats[0];
   <select id=dfx style="display:none"><option value=""></option></select><input id=dq type=hidden value="">
   <button class=btn onclick="saveDebtP();akClose()">Kaydet</button><button class="btn ghost" onclick="akClose()">Vazgeç</button>`)}
 
+/* ayarlar: her grup bir buton, tıklayınca pop-up */
+let akSecI=null,akSecParts=[];
+const akSecTitle=p=>(p.match(/<h4>(.*?)<\/h4>/)||[])[1]||'';
+function akSetList(){
+ const parts=(akSkinCard()+akSetBody()).split(/(?=<div class=ak-grp>)/).filter(p=>/<h4>/.test(p));
+ akSecParts=parts;
+ const w=document.getElementById('akSW');
+ if(akSecI!=null&&parts[akSecI]&&w&&w.classList.contains('open')){const sb=document.getElementById('akSB');if(sb)sb.innerHTML=`<h3>${akSecTitle(parts[akSecI])}</h3>`+parts[akSecI].replace(/<h4>.*?<\/h4>/,'')}
+ return `<div class=ak-seclist>${parts.map((p,i)=>`<button class=ak-sec onclick="akSecOpen(${i})"><span>${akSecTitle(p)}</span><b>›</b></button>`).join('')}</div>`;
+}
+function akSecOpen(i){akSecI=i;const p=akSecParts[i];if(!p)return;akSheet(`<h3>${akSecTitle(p)}</h3>`+p.replace(/<h4>.*?<\/h4>/,''))}
 /* ana çizim */
 function akRender(){
  ozet();
@@ -359,7 +370,7 @@ function akRender(){
  if(tab=='a'){title='Takvim';body=akCalBody()}
  else if(tab=='g'){title='Grafik';body=akStatsBody()}
  else if(tab=='b'){title='Borçlar';body=akDebtBody()}
- else if(tab=='s'){title='Ayarlar';body=akSkinCard()+akSetBody()}
+ else if(tab=='s'){title='Ayarlar';body=akSetList()}
  else{title='Akış';body=akFlowBody()}
  const tabs=[['o','Akış','<path d="M4 6h16M4 12h10M4 18h7"/>'],['a','Takvim','<rect x="3" y="5" width="18" height="16" rx="4"/><path d="M3 10h18M8 3v4M16 3v4"/>'],['+'],['g','Grafik','<path d="M5 20V11M12 20V5M19 20v-7"/>'],['b','Borçlar','<rect x="3" y="6" width="18" height="13" rx="4"/><path d="M3 11h18M7 15h3"/>']];
  const bar=tabs.map(t=>t[0]=='+'?`<button class=fab onclick="akAdd()" aria-label="Ekle"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`:`<button class="tab ${tab==t[0]||(tab=='o'&&t[0]=='o')?'on':''}" onclick="akTab('${t[0]}')"><svg viewBox="0 0 24 24">${t[2]}</svg>${t[1]}</button>`).join('');
@@ -2282,8 +2293,8 @@ const cloudLogout=()=>ask(cloudOffline?'Çevrimdışı veriler buluta kaydedilme
 const cloudHideGate=()=>{['caPass','pwcur','pwnew','pwnew2'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});if(window.CLOUD_MUST_CHANGE){cloudShowPwChange();return}document.getElementById('cloudAuth').style.display='none';document.getElementById('app').style.display='';};
 const cloudUseLocal=()=>{cloudOffline=true;cloudHideGate();cloudShowBadge('Çevrimdışı · Bulut yedeği kapalı')};
 const cloudSubmit=async()=>{const username=(document.getElementById('caUser').value||'').trim();const password=document.getElementById('caPass').value||'';if(!/^[a-zA-Z0-9_.-]{3,24}$/.test(username))return cloudMsg('Kullanıcı adı 3-24 karakter olmalı (İngilizce harf, rakam, . _ -).');if(password.length<8)return cloudMsg('Şifre en az 8 karakter olmalı.');const b=document.getElementById('caSubmit');b.disabled=true;cloudMsg('Hesap kontrol ediliyor…');try{const path=cloudMode==='register'?'auth/register':'auth/login';const out=await cloudApi(path,{method:'POST',body:JSON.stringify({username,password})});cloudToken=out.token;cloudUser=out.user;window.CLOUD_MUST_CHANGE=!!out.user.mustChange;cloudEncKey=await cloudDeriveKey(password,cloudUser.backupSalt);localStorage.setItem('bt_cloud_token',cloudToken);localStorage.setItem('bt_cloud_user',JSON.stringify(cloudUser));localStorage.setItem('bt_cloud_enc_key',cloudEncKey);if(cloudMode==='register'){await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})});cloudMsg('Hesap oluşturuldu, ilk yedek buluta kaydedildi.');}else{cloudMsg('Bulut yedeği aranıyor…');const bk=await cloudApi('backup');if(bk.payload){cloudRestoring=true;S=await cloudDecrypt(bk.payload);await cloudRestoreImgs();norm(S);ensureRange();rollOver();genBills();save();cloudRestoring=false;draw(1);cloudMsg('Yedek geri yüklendi.');}else{await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})});cloudMsg('Bu hesapta yedek bulunamadı; bu cihazdaki veriler yedeklendi.');}}cloudHideGate();cloudShowBadge('☁ '+cloudUser.username+' · Senkron açık');setTimeout(()=>cloudMsg(''),1200);}catch(e){cloudRestoring=false;cloudMsg(e.message||'İşlem başarısız.');}finally{b.disabled=false;}};
-function cloudScheduleBackup(){if(!cloudToken||cloudOffline||cloudRestoring)return;if(cloudBackupTimer)clearTimeout(cloudBackupTimer);cloudBackupTimer=setTimeout(cloudUploadBackup,1400)}
-const cloudUploadBackup=async()=>{if(!cloudToken||cloudOffline||cloudRestoring)return;try{cloudShowBadge('☁ Yedekleniyor…');await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})});cloudShowBadge('☁ '+(cloudUser?.username||'Hesap')+' · Güncel');}catch(e){cloudShowBadge('☁ Yedekleme bekliyor');console.warn('Cloud backup:',e);toast('Senkron hatası: '+(e.message||'bilinmeyen'))}};
+function cloudScheduleBackup(){if(!cloudToken||cloudOffline||cloudRestoring)return;if(cloudBackupTimer)clearTimeout(cloudBackupTimer);const last=+(localStorage.getItem('bt_cloud_last_backup')||0);const wait=Math.max(1400,last+864e5-Date.now());cloudBackupTimer=setTimeout(cloudUploadBackup,wait)}
+const cloudUploadBackup=async()=>{if(!cloudToken||cloudOffline||cloudRestoring)return;try{cloudShowBadge('☁ Yedekleniyor…');await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})});localStorage.setItem('bt_cloud_last_backup',String(Date.now()));cloudShowBadge('☁ '+(cloudUser?.username||'Hesap')+' · Güncel');}catch(e){cloudShowBadge('☁ Yedekleme bekliyor');console.warn('Cloud backup:',e);toast('Senkron hatası: '+(e.message||'bilinmeyen'))}};
 const cloudInit=async()=>{const t=localStorage.getItem('bt_cloud_token');if(!t)document.getElementById('app').style.display='none';if(t){cloudToken=t;cloudEncKey=localStorage.getItem('bt_cloud_enc_key')||'';try{const me=await cloudApi('auth/me');cloudUser=me.user;window.CLOUD_MUST_CHANGE=!!me.user.mustChange;const bk=await cloudApi('backup');const cTs=bk.updatedAt?Date.parse(bk.updatedAt)||0:0;if(cTs)localStorage.setItem('bt_cloud_last_backup',String(cTs));const lTs=+(localStorage.getItem('butce_ts')||0);if(bk.payload&&(!lTs||cTs>lTs+5000)){cloudRestoring=true;S=await cloudDecrypt(bk.payload);await cloudRestoreImgs();norm(S);ensureRange();rollOver();genBills();localStorage.setItem(KEY,JSON.stringify(S));localStorage.setItem('butce_ts',String(cTs||Date.now()));cloudRestoring=false;}else if(bk.payload&&lTs>cTs+5000){cloudUploadBackup();}cloudHideGate();cloudShowBadge('☁ '+cloudUser.username+' · Senkron açık');draw(1);return;}catch(e){if(e instanceof TypeError||e.name==='AbortError'){cloudShowBadge('☁ Çevrimdışı · yerel veri');cloudHideGate();draw(1);return}localStorage.removeItem('bt_cloud_token');localStorage.removeItem('bt_cloud_user');localStorage.removeItem('bt_cloud_enc_key');cloudToken='';cloudEncKey='';document.documentElement.classList.remove('cl-in');}}
  document.getElementById('app').style.display='none';};
 window.addEventListener('online',()=>{if(cloudToken)cloudUploadBackup()});
@@ -2403,7 +2414,7 @@ function harcDefter(){
 }
 function grafikDefter(){
  if(gView)return grafik();
- const tabs=`<div class=chips>${[['b','Borç'],['e','Harcama'],['i','Gelir↔Ödeme'],['f','Döviz']].map(x=>`<button class="chip ${x[0]==gcat?'on':''}" onclick="gcat='${x[0]}';gView=null;gCatSel=null;draw()">${x[1]}</button>`).join('')}</div>`;
+ const tabs=`<div class=chips>${[['b','Borç'],['e','Harcama'],['f','Döviz']].map(x=>`<button class="chip ${x[0]==gcat?'on':''}" onclick="gcat='${x[0]}';gView=null;gCatSel=null;draw()">${x[1]}</button>`).join('')}</div>`;
  if(gcat=='i')return tabs+incomeCard();
  if(gcat=='f')return tabs+fxTrendCard();
  if(gcat=='b'){
@@ -2449,7 +2460,7 @@ function openSearch(){const o=document.getElementById('srchovl');
 function closeSearch(){const o=document.getElementById('srchovl');if(o)o.style.display='none';SQ=''}
 
 
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&cloudBackupTimer){clearTimeout(cloudBackupTimer);cloudBackupTimer=null;cloudUploadBackup()}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&cloudBackupTimer&&Date.now()-(+(localStorage.getItem('bt_cloud_last_backup')||0))>=864e5){clearTimeout(cloudBackupTimer);cloudBackupTimer=null;cloudUploadBackup()}});
 
 
 /* Fatura tutarını pop-up ile düzenleme */
@@ -2848,7 +2859,7 @@ html.nv .debt .info .bar i{display:block;height:100%;background:var(--accent);bo
 html.nv .sect .link{padding:0}
 html.nv .strip .wk.on .num{color:inherit}
 html.nv .screen>.ak-grp:first-child{margin-top:4px}
-html.nv .screen{padding-bottom:12px}
+html.nv .screen{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 /* katman sırası: karartma < panel; eski paneller (…ovl) alt çubuğun üstünde */
 html.nv .sheetwrap{z-index:70}
 html.nv .sheetwrap .scrim{z-index:0}
@@ -2859,8 +2870,8 @@ html.nv .sheetwrap:not(.open){display:none}
 
 html.nv .aifab{display:none!important}
 /* eski paneller Akış görünümünde: alttan açılan sayfa */
-html.nv [id$=ovl]{align-items:flex-end!important;justify-content:center!important;padding:0!important;background:rgba(10,10,16,.42)!important}
-html.nv [id$=ovl]>.card{width:100%!important;max-width:560px!important;max-height:88vh!important;overflow-y:auto!important;margin:0!important;border-radius:28px 28px 0 0!important;padding:22px 20px calc(22px + env(safe-area-inset-bottom))!important;box-shadow:0 -20px 50px -20px rgba(0,0,0,.4)!important;background:var(--surface)!important;animation:akSheet .42s cubic-bezier(.2,.9,.2,1) both!important}
+html.nv [id$=ovl]{align-items:center!important;justify-content:center!important;padding:20px!important;background:rgba(10,10,16,.42)!important}
+html.nv [id$=ovl]>.card{width:100%!important;max-width:560px!important;max-height:88vh!important;overflow-y:auto!important;margin:0!important;border-radius:28px!important;padding:22px 20px!important;box-shadow:0 20px 60px -20px rgba(0,0,0,.45)!important;background:var(--surface)!important;animation:akPop .22s ease both!important}@keyframes akPop{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
 html.nv [id$=ovl] h2{font-size:20px;letter-spacing:-.02em;margin:4px 0 14px;border:0;padding:0}
 html.nv [id$=ovl] .in,html.nv [id$=ovl] select,html.nv [id$=ovl] textarea{background:var(--surface2);border:1.5px solid transparent;border-radius:16px;padding:14px;color:var(--ink);font:inherit;font-size:16px;outline:none;width:100%;margin-bottom:10px;box-sizing:border-box}
 html.nv [id$=ovl] .in:focus{border-color:var(--accent)}
@@ -2887,4 +2898,20 @@ html.nv [id$=ovl] h2{padding-right:46px}
 html.nv,html.nv body{height:auto!important;min-height:100%;overflow:auto!important;overscroll-behavior-y:auto}
 html.nv #app{height:auto!important;overflow:visible!important}
 html.nv .screen{overflow:visible!important;height:auto!important}
+
+/* Pop-up modu: paneller ekranın ortasında açılır, alttan kayma yok */
+html.nv .sheetwrap.open{display:flex!important;align-items:center;justify-content:center;padding:20px}
+html.nv .sheetwrap .grab{display:none}
+html.nv .sheetwrap .sheet{position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;margin:0!important;width:100%;max-width:420px;max-height:86vh;border-radius:28px!important;padding:22px 20px!important;transform:scale(.94);opacity:0;transition:transform .22s ease,opacity .22s ease}
+html.nv .sheetwrap.open .sheet{transform:none;opacity:1}
+
+/* --- düzeltmeler --- */
+.ring circle{fill:none}
+html.nv .ring circle{fill:none}
+html.nv .ak-seclist{background:var(--surface);border-radius:22px;overflow:hidden;box-shadow:var(--shadow)}
+html.nv .ak-sec{display:flex;justify-content:space-between;align-items:center;width:100%;padding:16px 18px;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-size:15.5px;font-weight:600;text-align:left}
+html.nv .ak-sec:first-child{border-top:0}
+html.nv .ak-sec b{color:var(--mut);font-size:20px;font-weight:400}
+html.nv .ak-sec:active{background:var(--surface2)}
+html.nv .tl-week.cur .tl-head b{color:var(--acc)}
 </style></body></html>
