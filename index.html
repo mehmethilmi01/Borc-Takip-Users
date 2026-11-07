@@ -162,8 +162,8 @@ function akFlowBody(){
  <section class="hero stagger"><div class=ring><svg viewBox="0 0 120 120"><circle class=track cx=60 cy=60 r=50 /><circle class=bar cx=60 cy=60 r=50 stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}"/></svg><div class="pct num">${pct}%</div></div>
   <div><div class=lbl>Kalan bu hafta</div><div class="big num">${F(left)}</div>${next?`<span class=chip><i></i>${E(next.nm)}${next.d?' · '+fdShort(next.d):''}</span>`:'<span class=chip>Hepsi ödendi 🎉</span>'}</div></section>
  ${atCur?'':'<button class=ghost-pill onclick="akSt.wk=null;draw(1)">Güncel haftaya dön</button>'}
- <div class=sect><h2>Akış</h2><span class="mut num">${pc}/${n} tamam</span></div>
- ${n?`<div class=list>${items.slice().sort((a,b)=>(a.k||'9999').localeCompare(b.k||'9999')).map(i=>i.h).join('')}</div>`:'<div class="card empty">Bu hafta için ödeme yok</div>'}${billItems.length?`<div class=sect style="margin-top:22px"><h2>Faturalar</h2><span class="mut num">${billItems.filter(x=>x.paid).length}/${billItems.length} tamam</span></div><div class=list>${billItems.map(x=>x.h).join('')}</div>`:''}`}
+ <div class=sect><h2>Özet</h2><span class="mut num">${pc}/${n} tamam</span></div>
+ ${(n||billItems.length)?`<div class=list>${items.slice().sort((a,b)=>(a.k||'9999').localeCompare(b.k||'9999')).map(i=>i.h).join('')}${billItems.length?`<div class=lsub>Faturalar<span>${billItems.filter(x=>x.paid).length}/${billItems.length} tamam</span></div>${billItems.map(x=>x.h).join('')}`:''}</div>`:'<div class="card empty">Bu hafta için ödeme yok</div>'}`}
 
 /* 2) TAKVİM: ay özeti + haftalar zaman çizelgesi */
 function akCalBody(){
@@ -177,7 +177,7 @@ function akCalBody(){
    return `<section class="tl-week ${done?'done':''} ${cw&&cw.mi==mi&&cw.wi==wi?'cur':''}"><span class=tl-dot></span>
      <div class=tl-head><div><small>${w[0].split('(')[0].trim()}</small><b>${fdShort(iso(wd(w)))}</b></div><div class=tl-sum><b class=num>${F(wt)}</b><small class=num>ödenen ${F(wp)}</small></div></div>
      <div class=tl-sal>Maaş ${+w[1]?F(w[1]):'girilmedi'}</div>
-     <div class=list>${pay||'<div class=empty>Ödeme yok</div>'}</div>${blh?`<div class=tl-bh>Faturalar</div><div class=list>${blh}</div>`:''}</section>`}).join('');
+     <div class=list>${pay||'<div class=empty>Ödeme yok</div>'}${blh?`<div class=lsub>Faturalar</div>${blh}`:''}</div></section>`}).join('');
  return `<div class=mhead><button class=nav-arrow onclick="akMon(-1)">‹</button><b>${AK_LM[+ym.slice(5)-1]} ${ym.slice(0,4)}</b><button class=nav-arrow onclick="akMon(1)">›</button></div>
  <div class=mtot><div class=mt-cell><small>Toplam ödeme</small><b class=num>${F(T.tot)}</b></div><div class=mt-cell><small>Ödenen</small><b class=num style="color:var(--good)">${F(T.paid)}</b></div><div class=mt-cell><small>Kalan</small><b class=num>${F(T.left)}</b></div></div>
  <div class=mbar><i style="width:${pct}%"></i></div><div class=mbar-lbl>${pct}% ödendi</div>
@@ -316,7 +316,7 @@ function akRecvBody(){const l=S.recv.map((r,i)=>({...r,i}));
  return `<div class=sect><h2>Alacaklar</h2><button class=link onclick="openRecvP(null)">+ Ekle</button></div>${l.length?`<div class=list>${l.map(r=>`<div class="row ${r.paid?'paid':''}"><span class=check onclick="toggleRecv(${r.i})">${AK_CHK}</span><div class=meta onclick="openRecvP(${r.i})"><div class=nm>${E(r.name)}</div><div class=sub>${r.date?fdShort(r.date):''}${r.note?' · '+E(r.note):''}</div></div><div class="amt num">${F(r.amount)}</div></div>`).join('')}</div>`:'<div class="card empty">Alacak yok</div>'}`}
 
 /* 5) AYARLAR (işlevler aynı, görünüm Akış'a göre) */
-function akSkinCard(){return `<div class=ak-grp><h4>Tasarım</h4><div class=ak-seg>${[['akis','Akış'],['defter','Premium'],['klasik','Klasik']].map(([k,l])=>`<button class="${(M.skin||'akis')==k?'on':''}" onclick="setSkin('${k}')">${l}</button>`).join('')}</div></div>`}
+function akSkinCard(){return `<div class=ak-grp><h4>Tasarım</h4><div class=ak-seg>${[['akis','Platinium'],['defter','Premium'],['klasik','Klasik']].map(([k,l])=>`<button class="${(M.skin||'akis')==k?'on':''}" onclick="setSkin('${k}')">${l}</button>`).join('')}</div></div>`}
 
 /* alt paneller */
 function akSheet(html){let w=document.getElementById('akSW');
@@ -371,8 +371,8 @@ function akRender(){
  else if(tab=='g'){title='Grafik';body=akStatsBody()}
  else if(tab=='b'){title='Borçlar';body=akDebtBody()}
  else if(tab=='s'){title='Ayarlar';body=akSetList()}
- else{title='Akış';body=akFlowBody()}
- const tabs=[['o','Akış','<path d="M4 6h16M4 12h10M4 18h7"/>'],['a','Takvim','<rect x="3" y="5" width="18" height="16" rx="4"/><path d="M3 10h18M8 3v4M16 3v4"/>'],['+'],['g','Grafik','<path d="M5 20V11M12 20V5M19 20v-7"/>'],['b','Borçlar','<rect x="3" y="6" width="18" height="13" rx="4"/><path d="M3 11h18M7 15h3"/>']];
+ else{title='Özet';body=akFlowBody()}
+ const tabs=[['o','Özet','<path d="M4 6h16M4 12h10M4 18h7"/>'],['a','Takvim','<rect x="3" y="5" width="18" height="16" rx="4"/><path d="M3 10h18M8 3v4M16 3v4"/>'],['+'],['g','Grafik','<path d="M5 20V11M12 20V5M19 20v-7"/>'],['b','Borçlar','<rect x="3" y="6" width="18" height="13" rx="4"/><path d="M3 11h18M7 15h3"/>']];
  const bar=tabs.map(t=>t[0]=='+'?`<button class=fab onclick="akAdd()" aria-label="Ekle"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`:`<button class="tab ${tab==t[0]||(tab=='o'&&t[0]=='o')?'on':''}" onclick="akTab('${t[0]}')"><svg viewBox="0 0 24 24">${t[2]}</svg>${t[1]}</button>`).join('');
  const nb=unreadN();
  return `<header class=top><div class=brand><small>${fd(t0)}</small><h1>${title}</h1></div>
@@ -783,7 +783,7 @@ const hesap=`<div class=card><h2>Hesap ve Yedek</h2>
 <button class=add style="margin-top:10px;width:100%;color:var(--bad)" onclick="cloudLogout()">Çıkış yap</button></div>`;
 const bild=`<div class=card style="cursor:pointer" onclick="notifView=true;draw(1)"><h2>Bildirimler</h2><div class=mut>${NC.length} sistem bildirimi, ${S.customNotifs.length} kendi bildirimin. Aç, düzenle, sil.</div></div>`;
 const gorunum=`<div class=card><h2>Görünüm</h2>
-<div class=mut>Tasarım</div><div class=chips>${[['akis','Akış'],['defter','Premium'],['klasik','Klasik']].map(x=>`<button class="chip ${((M.skin||'akis')==x[0])?'on':''}" onclick="setSkin('${x[0]}')">${x[1]}</button>`).join('')}</div>
+<div class=mut>Tasarım</div><div class=chips>${[['akis','Platinium'],['defter','Premium'],['klasik','Klasik']].map(x=>`<button class="chip ${((M.skin||'akis')==x[0])?'on':''}" onclick="setSkin('${x[0]}')">${x[1]}</button>`).join('')}</div>
 <div class=mut style="margin-top:10px">Tema</div><div class=chips>${[['auto','Otomatik'],['light','Açık'],['dark','Koyu']].map(x=>`<button class="chip ${(M.theme||'auto')==x[0]?'on':''}" onclick="setTheme('${x[0]}')">${x[1]}</button>`).join('')}</div>
 <div class=mut style="margin-top:10px">Vurgu rengi</div><div class=chips>${Object.keys(SCHEMES).map(k=>`<button class="chip ${(M.scheme||'yesil')==k?'on':''}" onclick="setScheme('${k}')">${SCHEMES[k].n}</button>`).join('')}</div></div>`;
 const takvim=`<div class=card><h2>Takvim ve Hafta</h2>
@@ -1351,6 +1351,7 @@ const renderSec=()=>{const x=secsOf()[SEC];if(!x)return closeSec();const c=$('sc
 const openSec=i=>{if(typeof akClose==='function')akClose();SEC=i;renderSec();$('sovl').style.display='flex'};
 const closeSec=()=>{SEC=null;$('sovl').style.display='none'};
 const _dr2=draw;draw=function(r){_dr2(r);if(SEC!=null)renderSec();};
+const _drSkinGuard=draw;draw=function(r){_drSkinGuard(r);if(tab=='o')document.querySelectorAll('#app [onclick*="setSkin("]').forEach(b=>{const c=b.closest('.chips')||b.parentElement;const p=c&&c.previousElementSibling;if(p&&/Tasarım/.test(p.textContent))p.remove();if(c)c.remove()})};
 document.addEventListener('touchmove',e=>{if(!document.documentElement.classList.contains('lk'))return;if(e.touches.length>1)return;const dy=e.touches[0].clientY-ty,dx=e.touches[0].clientX-tx;if(Math.abs(dy)<14&&Math.abs(dx)<14)return;if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;let el=e.target;while(el&&el!==document.body){const cs=getComputedStyle(el);if(/(auto|scroll)/.test(cs.overflowY)&&el.scrollHeight>el.clientHeight){if((dy>0&&el.scrollTop<=0)||(dy<0&&el.scrollTop+el.clientHeight>=el.scrollHeight-1))e.preventDefault();return}el=el.parentElement}e.preventDefault()},{passive:false});
 const flatW=()=>{const a=[];S.m.forEach((m,mi)=>m.w.forEach((w,wi)=>a.push([mi,wi])));return a};
 const renderQS=()=>{const x=flatW()[QS],w=S.m[x[0]].w[x[1]];$('qslbl').textContent=w[0].split('(')[0].trim()+' · '+((w[0].match(/\((\d+\/\d+\/\d+)\)/)||[])[1]||'');$('qsamt').value=w[1]||''};
@@ -1527,7 +1528,7 @@ const kalanW=w=>kalan(w)+bRem(w),wtotW=w=>wtot(w)+bTot(w);
 const mkW=m=>m.w.reduce((s,w)=>s+kalanW(w),0),mtotW=m=>m.w.reduce((s,w)=>s+wtotW(w),0);
 const billsFor=(mi,wi)=>{const w=S.m[mi].w[wi],out=[];S.m.forEach((m,mj)=>S.bills.forEach(b=>{const key=b.id+'_'+ymOf(mj),inst=S.billPaid[key];if(!inst)return;const tw=m.w[billWI(mj,b.day)],late=!inst.paid&&isClosed(tw)&&!!OPENW;if(late?(w===OPENW):(tw===w))out.push({b,key,inst,late})}));return out};
 const billRow=x=>`<div class="p ${x.inst.paid?'ok':''}"><button class=chk onclick="tgBill('${x.key}')">${x.inst.paid?'✓':''}</button><span>${billIco(x.b.cat)} ${E(x.b.name)}${x.late?' <span class=bad style="font-size:12px">· gecikmiş</span>':''}</span><button class=billamt onclick="openBillAmt('${x.key}')">${x.inst.amount?F(x.inst.amount):'Tutar'}</button></div>`;
-const billRows=(mi,wi)=>{const l=billsFor(mi,wi);return l.length?'<div class=sec-h style="margin-top:18px"><b>Faturalar</b><span class=mut>'+l.filter(x=>x.inst.paid).length+'/'+l.length+' tamam</span></div><div class=dtledger>'+l.map(billRow).join('')+'</div>':''};
+const billRows=(mi,wi)=>{const l=billsFor(mi,wi);return l.length?'<div class=lsub>Faturalar<span>'+l.filter(x=>x.inst.paid).length+'/'+l.length+' tamam</span></div>'+l.map(billRow).join(''):''};
 /* uygulama açıkken kapanış saati geçince otomatik devir */
 setInterval(()=>{if(document.hidden)return;const a=document.activeElement;if(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))return;if(new Date().getHours()!=NOW.getHours()){refreshClock();draw()}},60000);
 
@@ -2326,7 +2327,7 @@ const cloudChangePw=async()=>{const g=id=>(document.getElementById(id)||{}).valu
 
 
 /* ===== Defter tasarımı ===== */
-const setSkin=k=>{M.skin=k;sm();applyScheme();draw()};
+const setSkin=k=>{M.skin=k;sm();applyScheme();if(typeof akClose==='function')akClose();draw()};
 function dtStats(over){return `<div class=dtgrid><div class=card><div class=mut>Toplam borç</div><div class=big style="font-size:22px">${F(tot())}</div></div><div class=card><div class=mut>Geciken</div><div class=big style="font-size:22px;color:${over?'var(--bad)':'var(--ink)'}">${F(over)}</div></div></div>`;}
 function ozetDefter(){ozet();
  const arrW=[];S.m.forEach((m,mi)=>m.w.forEach((w,wi)=>arrW.push({mi,wi,d:wd(w)})));
@@ -2339,7 +2340,7 @@ function ozetDefter(){ozet();
  const dl=Math.round((nx[2]-t0)/864e5);
  const when=dl==0?'Bugün':dl==1?'Yarın':dl<0?'Geçti':dl+' gün sonra';
  const firstOpen=arrW.find(x=>!isClosed(S.m[x.mi].w[x.wi]));const atCur=!firstOpen||(firstOpen.mi==nx[0]&&firstOpen.wi==nx[1]);
- const rows=w[2].map((p,pi)=>`<div class="pl dtrow ${p[3]?'ok':''}" data-mi="${nx[0]}" data-wi="${nx[1]}" data-pi="${pi}"><button class="chk ${p[3]?'on':''}" onclick="tg(${nx[0]},${nx[1]},${pi})">${p[3]?'✓':''}</button><div><div class=nm>${E(p[0]||'—')}</div><div class=mut style="font-size:12px">${E(p[5]||'')}${p[1]?' · '+new Date(p[1]+'T00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'short'}):''}</div></div><div class=amt>${F(p[3]?p[2]:remOf(p))}</div></div>`).join('');
+ const rows=w[2].map((p,pi)=>`<div class="pl dtrow ${p[3]?'ok':''}" data-mi="${nx[0]}" data-wi="${nx[1]}" data-pi="${pi}"><button class="chk ${p[3]?'on':''}" onclick="tg(${nx[0]},${nx[1]},${pi})">${p[3]?'✓':''}</button><div><div class=nm>${E(p[0]||'—')}</div><div class=mut style="font-size:12px">${E(p[5]||'')}${p[1]?' · '+new Date(p[1]+'T00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'short'}):''}</div></div><div class=amt>${F(p[3]?p[2]:remOf(p))}</div></div>`).join('')+billRows(nx[0],nx[1]);
  const salTxt=w[1]?('Maaş '+F(w[1])+(w[1]>=rem?' · artan '+F(w[1]-rem):' · açık '+F(rem-w[1]))):'Bu hafta maaş girilmedi';
  return head+`
  <div class=card style="padding:22px">
@@ -2350,7 +2351,7 @@ function ozetDefter(){ozet();
   <div class=dtnav><button class=dtarr onclick="goHW(-1)">‹</button><span class=mut>${new Date(nx[2]).toLocaleDateString('tr-TR',{day:'numeric',month:'long'})}</span><button class=dtarr onclick="goHW(1)">›</button></div>${atCur?'':'<div style="text-align:center;margin-top:12px"><button class=add style="padding:7px 14px;font-size:13px" onclick="resetHW()">Güncel haftaya dön</button></div>'}
  </div>
  <div class=sec-h><b>Ödemeler</b><span class=mut>${w[2].filter(p=>p[3]).length}/${w[2].length} tamam</span></div>
- <div class=dtledger>${rows||'<div class=mut style="padding:18px;text-align:center">Bu hafta için ödeme girilmemiş</div>'}</div>${billRows(nx[0],nx[1])}
+ <div class=dtledger>${rows||'<div class=mut style="padding:18px;text-align:center">Bu hafta için ödeme girilmemiş</div>'}</div>
  ${dtStats(over)}`;
 }
 
@@ -2373,7 +2374,7 @@ function ayDefter(){
    <summary><div><div class=nm>${E(w[0].split('(')[0].trim())}</div><div class=mut style="font-size:12px">${dts} · maaş ${F(w[1])}</div></div><div class=amt>${F(kalanW(w))}</div></summary>
    <div class=body>
     <div class=row style="justify-content:flex-end;margin-bottom:6px"><button class=add style="padding:6px 12px" onclick="openSalP(cur,${wi})">Maaş ✎</button></div>
-    <div class=dtledger>${w[2].map((p,pi)=>`<div class="pl dtrow ${p[3]?'ok':''}" data-mi="${cur}" data-wi="${wi}" data-pi="${pi}"><button class="chk ${p[3]?'on':''}" onclick="tg(cur,${wi},${pi})">${p[3]?'✓':''}</button><div onclick="openPEdit(${wi},${pi})" style="cursor:pointer"><div class=nm>${E(p[0]||'—')}</div><div class=mut style="font-size:12px">${E(p[5]||'')}${p[1]?' · '+fdShort(p[1]):''}${p[4]?' · '+E(p[4]):''}</div></div><div class=amt>${F(p[3]?p[2]:remOf(p))}</div></div>`).join('')}</div>${bl}
+    <div class=dtledger>${w[2].map((p,pi)=>`<div class="pl dtrow ${p[3]?'ok':''}" data-mi="${cur}" data-wi="${wi}" data-pi="${pi}"><button class="chk ${p[3]?'on':''}" onclick="tg(cur,${wi},${pi})">${p[3]?'✓':''}</button><div onclick="openPEdit(${wi},${pi})" style="cursor:pointer"><div class=nm>${E(p[0]||'—')}</div><div class=mut style="font-size:12px">${E(p[5]||'')}${p[1]?' · '+fdShort(p[1]):''}${p[4]?' · '+E(p[4]):''}</div></div><div class=amt>${F(p[3]?p[2]:remOf(p))}</div></div>`).join('')}${bl}</div>
     ${w[2].length||bl?'':'<div class=mut style="padding:8px 0">Ödeme yok</div>'}
    </div>
   </details>`}).join('');
@@ -2914,5 +2915,9 @@ html.nv .ak-sec:first-child{border-top:0}
 html.nv .ak-sec b{color:var(--mut);font-size:20px;font-weight:400}
 html.nv .ak-sec:active{background:var(--surface2)}
 html.nv .tl-week.cur .tl-head b{color:var(--acc)}
-html.nv .tl-bh{font-size:12px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:14px 4px 6px}
+html.nv .lsub,html.dt .lsub,.lsub{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:14px 16px 6px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);border-top:1px solid var(--line)}
+.lsub span{font-weight:600;letter-spacing:0;text-transform:none}
+
+/* kapalı alt paneller hiçbir tasarımda görünmesin */
+.sheetwrap:not(.open){display:none!important}
 </style></body></html>
