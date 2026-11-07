@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><title>Borç Takip</title>
+<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><title>Borç Takip</title><style>.ring circle{fill:none}</style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1f6f5c">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -152,8 +152,8 @@ function akFlowBody(){
  const atCur=!first||(first.mi==x.mi&&first.wi==x.wi);
  const w=x.w,items=[];let total=0,paid=0;
  w[2].forEach((p,pi)=>{total+=(+p[2]||0);paid+=akPaidOf(p);items.push({k:p[1]||'',h:akPayRow(x.mi,x.wi,pi,p),paid:!!p[3],nm:p[0]||'',d:p[1]||''})});
- const bl=billsFor(x.mi,x.wi);
- bl.forEach(b=>{const a=+b.inst.amount||0;total+=a;if(b.inst.paid)paid+=a;const bm=wd(w);items.push({k:iso(new Date(bm.getFullYear(),bm.getMonth(),b.b.day)),h:akBillRow(b),paid:!!b.inst.paid,nm:b.b.name,d:''})});
+ const bl=billsFor(x.mi,x.wi),billItems=[];
+ bl.forEach(b=>{const a=+b.inst.amount||0;total+=a;if(b.inst.paid)paid+=a;billItems.push({h:akBillRow(b),paid:!!b.inst.paid})});
  const left=kalanW(w),pct=total?Math.round(paid/total*100):0,C=2*Math.PI*50;
  const next=items.filter(i=>!i.paid).sort((a,b)=>(a.d||'9').localeCompare(b.d||'9'))[0];
  const cI0=first?arr.findIndex(y=>y.mi==first.mi&&y.wi==first.wi):-1,st0=Math.max(0,cI0<0?idx:Math.min(cI0,idx)),en0=Math.max(st0+6,idx+1),strip=arr.slice(st0,en0).map(y=>{const on=y.mi==x.mi&&y.wi==x.wi;return `<button class="wk ${on?'on':''}" onclick="akWk(${y.mi},${y.wi})"><small>${new Date(y.d).toLocaleDateString('tr-TR',{day:'numeric',month:'short'})} · kalan</small><b class=num>${F(kalanW(y.w))}</b></button>`}).join('');
@@ -163,7 +163,7 @@ function akFlowBody(){
   <div><div class=lbl>Kalan bu hafta</div><div class="big num">${F(left)}</div>${next?`<span class=chip><i></i>${E(next.nm)}${next.d?' · '+fdShort(next.d):''}</span>`:'<span class=chip>Hepsi ödendi 🎉</span>'}</div></section>
  ${atCur?'':'<button class=ghost-pill onclick="akSt.wk=null;draw(1)">Güncel haftaya dön</button>'}
  <div class=sect><h2>Akış</h2><span class="mut num">${pc}/${n} tamam</span></div>
- ${n?`<div class=list>${items.slice().sort((a,b)=>(a.k||'9999').localeCompare(b.k||'9999')).map(i=>i.h).join('')}</div>`:'<div class="card empty">Bu hafta için ödeme yok</div>'}`}
+ ${n?`<div class=list>${items.slice().sort((a,b)=>(a.k||'9999').localeCompare(b.k||'9999')).map(i=>i.h).join('')}</div>`:'<div class="card empty">Bu hafta için ödeme yok</div>'}${billItems.length?`<div class=sect style="margin-top:22px"><h2>Faturalar</h2><span class="mut num">${billItems.filter(x=>x.paid).length}/${billItems.length} tamam</span></div><div class=list>${billItems.map(x=>x.h).join('')}</div>`:''}`}
 
 /* 2) TAKVİM: ay özeti + haftalar zaman çizelgesi */
 function akCalBody(){
@@ -177,7 +177,7 @@ function akCalBody(){
    return `<section class="tl-week ${done?'done':''} ${cw&&cw.mi==mi&&cw.wi==wi?'cur':''}"><span class=tl-dot></span>
      <div class=tl-head><div><small>${w[0].split('(')[0].trim()}</small><b>${fdShort(iso(wd(w)))}</b></div><div class=tl-sum><b class=num>${F(wt)}</b><small class=num>ödenen ${F(wp)}</small></div></div>
      <div class=tl-sal>Maaş ${+w[1]?F(w[1]):'girilmedi'}</div>
-     <div class=list>${pay+blh||'<div class=empty>Ödeme yok</div>'}</div></section>`}).join('');
+     <div class=list>${pay||'<div class=empty>Ödeme yok</div>'}</div>${blh?`<div class=tl-bh>Faturalar</div><div class=list>${blh}</div>`:''}</section>`}).join('');
  return `<div class=mhead><button class=nav-arrow onclick="akMon(-1)">‹</button><b>${AK_LM[+ym.slice(5)-1]} ${ym.slice(0,4)}</b><button class=nav-arrow onclick="akMon(1)">›</button></div>
  <div class=mtot><div class=mt-cell><small>Toplam ödeme</small><b class=num>${F(T.tot)}</b></div><div class=mt-cell><small>Ödenen</small><b class=num style="color:var(--good)">${F(T.paid)}</b></div><div class=mt-cell><small>Kalan</small><b class=num>${F(T.left)}</b></div></div>
  <div class=mbar><i style="width:${pct}%"></i></div><div class=mbar-lbl>${pct}% ödendi</div>
@@ -1348,7 +1348,7 @@ if(t.includes('Bildirimler')){out.push({t,b:NP});return}
 out.push({t:SECI[t]?SECI[t]+' '+t:t,b:c.innerHTML})});return out};
 function ayar(){return `<h1>Ayarlar <span class=mut style="font-size:12px">v${VER}</span></h1>`+secsOf().map((x,i)=>`<div class=card style="padding:14px 12px;cursor:pointer" onclick="openSec(${i})"><div class=row><span>${x.t}</span><span class=mut>›</span></div></div>`).join('')}
 const renderSec=()=>{const x=secsOf()[SEC];if(!x)return closeSec();const c=$('scard'),st=c.scrollTop;$('stitle').textContent=x.t;$('sbody').innerHTML=x.b;c.scrollTop=st};
-const openSec=i=>{SEC=i;renderSec();$('sovl').style.display='flex'};
+const openSec=i=>{if(typeof akClose==='function')akClose();SEC=i;renderSec();$('sovl').style.display='flex'};
 const closeSec=()=>{SEC=null;$('sovl').style.display='none'};
 const _dr2=draw;draw=function(r){_dr2(r);if(SEC!=null)renderSec();};
 document.addEventListener('touchmove',e=>{if(!document.documentElement.classList.contains('lk'))return;if(e.touches.length>1)return;const dy=e.touches[0].clientY-ty,dx=e.touches[0].clientX-tx;if(Math.abs(dy)<14&&Math.abs(dx)<14)return;if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;let el=e.target;while(el&&el!==document.body){const cs=getComputedStyle(el);if(/(auto|scroll)/.test(cs.overflowY)&&el.scrollHeight>el.clientHeight){if((dy>0&&el.scrollTop<=0)||(dy<0&&el.scrollTop+el.clientHeight>=el.scrollHeight-1))e.preventDefault();return}el=el.parentElement}e.preventDefault()},{passive:false});
@@ -2914,4 +2914,5 @@ html.nv .ak-sec:first-child{border-top:0}
 html.nv .ak-sec b{color:var(--mut);font-size:20px;font-weight:400}
 html.nv .ak-sec:active{background:var(--surface2)}
 html.nv .tl-week.cur .tl-head b{color:var(--acc)}
+html.nv .tl-bh{font-size:12px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:14px 4px 6px}
 </style></body></html>
