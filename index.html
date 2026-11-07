@@ -138,7 +138,7 @@ function akMon(d){akSt.mi=Math.max(0,Math.min(S.m.length-1,(akSt.mi==null?akMont
 
 /* satırlar (tasarımın .row yapısı) */
 function akPayRow(mi,wi,pi,p){const paid=!!p[3];
- return `<div class="row pl ${paid?'paid':''}" data-mi="${mi}" data-wi="${wi}" data-pi="${pi}"><span class=check onclick="tg(${mi},${wi},${pi})">${AK_CHK}</span><div class=meta onclick="akEdit(${mi},${wi},${pi})"><div class=nm>${E(p[0]||'—')}</div><div class=sub>${E(p[5]||'')}${p[4]?' <span class=tag>'+E(p[4])+'</span>':''}${!paid&&akPaidOf(p)>0?' · kalan '+F(remOf(p)):''}</div></div><div class="amt num">${F(paid?p[2]:remOf(p))}</div></div>`}
+ return `<div class="row pl ${paid?'paid':''}" data-mi="${mi}" data-wi="${wi}" data-pi="${pi}"><span class=check onclick="tg(${mi},${wi},${pi})">${AK_CHK}</span><div class=meta onclick="akEdit(${mi},${wi},${pi})"><div class=nm>${E(p[0]||'—')}</div><div class=sub>${E(p[5]||'')}${p[4]?' <span class=tag>'+E(p[4])+'</span>':''}${!paid&&akPaidOf(p)>0?' · kalan '+F(remOf(p)):''}</div>${akMergeTxt(p)}</div><div class="amt num">${F(paid?p[2]:remOf(p))}</div></div>`}
 function akBillRow(b){const paid=!!b.inst.paid;
  return `<div class="row ${paid?'paid':''}"><span class=check onclick="tgBill('${b.key}')">${AK_CHK}</span><div class=meta><div class=nm>${billIco(b.b.cat)} ${E(b.b.name)}</div><div class=sub>Fatura${b.late?' · gecikmiş':''}</div></div><div class="amt num" onclick="openBillAmt('${b.key}')">${b.inst.amount?F(b.inst.amount):'Tutar'}</div></div>`}
 function akGroups(items){const g={};items.forEach(x=>{(g[x.k]=g[x.k]||[]).push(x.h)});
@@ -1027,7 +1027,7 @@ function rollOver(){const arr=[];S.m.forEach((m,mi)=>m.w.forEach((w,wi)=>arr.pus
 arr.forEach((ref,idx)=>{const wk=S.m[ref.mi].w[ref.wi];if(!isClosed(wk))return;const nxt=arr[idx+1];
 wk[2].slice().forEach(p=>{if(p[7]||p[3])return;const pa=paidOf(p),rm=remOf(p);if(rm<=0||!nxt)return;p[7]=1;const nw=S.m[nxt.mi].w[nxt.wi];const f=p[10],uR=f?Math.max(0,f.q-(f.qp||0)):0;
 const match=nw[2].find(q=>q[0]===p[0]);
-if(match){match[2]=(+match[2]||0)+rm;logEv(pid(p),p[0],'sonraki haftaya devredildi: '+F(rm));logEv(pid(match),match[0],'önceki haftadan devredildi: '+F(rm));match[9]=(+match[9]||0)+rm;match[3]=paidOf(match)>=(+match[2]||0)&&(+match[2]||0)>0?1:0;if(f&&match[10]&&match[10].u==f.u)match[10].q+=uR}
+if(match){match[13]=(match[13]||[]).concat([{k:'devir',a:rm}]);match[2]=(+match[2]||0)+rm;logEv(pid(p),p[0],'sonraki haftaya devredildi: '+F(rm));logEv(pid(match),match[0],'önceki haftadan devredildi: '+F(rm));match[9]=(+match[9]||0)+rm;match[3]=paidOf(match)>=(+match[2]||0)&&(+match[2]||0)>0?1:0;if(f&&match[10]&&match[10].u==f.u)match[10].q+=uR}
 else{const np=[p[0],iso(nxt.d),rm,0,p[4],p[5],0,0,null,rm];logEv(pid(p),p[0],'sonraki haftaya devredildi: '+F(rm));logEv(pid(np),p[0],'önceki haftadan devredildi: '+F(rm));if(f)np[10]={u:f.u,q:uR,qp:0};if(f&&p[12])np[12]=p[12];nw[2].push(np)}
 if(pa<=0){const i2=wk[2].indexOf(p);wk[2].splice(i2,1)}
 else{p[2]=pa;p[3]=1;if(f)f.q=f.qp||0}
@@ -1324,8 +1324,13 @@ el.textContent='Haftalık toplam: '+F(val);el.style.color=val<0?'var(--bad)':''}
 $('pkinfo').textContent=pkInfoBase()+` · Aktarılan ${F(sum)} · Kalan ${F(PK.rem-sum)}`;
 $('pkinfo').style.color=sum>PK.rem+0.001?'var(--bad)':''};
 const closePicker=()=>{$('pkovl').style.display='none';PK=null};
+const mergePay=(arr,np,excl,kind)=>{const nm=(np[0]||'').trim();const q=arr.find(x=>x!==excl&&(x[0]||'').trim()===nm&&((!x[10]&&!np[10])||(x[10]&&np[10]&&x[10].u==np[10].u)));if(!q)return {p:np,merged:false};q[2]=Math.round(((+q[2]||0)+(+np[2]||0))*100)/100;q[6]=(+q[6]||0)+(+np[6]||0);if(np[10]&&q[10]){q[10].q=Math.round(((+q[10].q||0)+(+np[10].q||0))*1000)/1000;q[10].qp=(+q[10].qp||0)+(+np[10].qp||0)}if(np[11]&&np[11].length)q[11]=(q[11]||[]).concat(np[11]);q[3]=(paidOf(q)>=q[2]&&q[2]>0)?1:0;q[13]=(q[13]||[]).concat([{k:kind,a:Math.round((+np[2]||0)*100)/100}]);return {p:q,merged:true}};
+const akMergeTxt=p=>{const parts=p[13]||[];if(!parts.length)return '';const L={aktarim:'aktarılan',devir:'devreden',bolme:'bölünen',hafta:'taşınan',birlesen:'birleşen'};const sum={};parts.forEach(x=>{sum[x.k]=(sum[x.k]||0)+(+x.a||0)});return `<div class="sub" style="font-size:12px">${Object.keys(sum).map(k=>L[k]+' '+F(sum[k])).join(' · ')}</div>`};
+const mergeInto=(q,np,kind)=>{q[2]=Math.round(((+q[2]||0)+(+np[2]||0))*100)/100;q[6]=(+q[6]||0)+(+np[6]||0);if(np[10]&&q[10]){q[10].q=Math.round(((+q[10].q||0)+(+np[10].q||0))*1000)/1000;q[10].qp=(+q[10].qp||0)+(+np[10].qp||0)}if(np[11]&&np[11].length)q[11]=(q[11]||[]).concat(np[11]);q[3]=(paidOf(q)>=q[2]&&q[2]>0)?1:0;q[13]=(q[13]||[]).concat([{k:kind,a:Math.round((+np[2]||0)*100)/100}]);return q};
+const histKind=p=>{const L=(S.hlog||{})[pid(p)];const ev=L&&L.e?L.e:[];for(const e of ev){const t=e.x||'';if(/aktarım/.test(t))return 'aktarim';if(/bölünerek|bölündü/.test(t))return 'bolme';if(/devredildi/.test(t))return 'devir';if(/hafta değiştirildi/.test(t))return 'hafta'}return 'birlesen'};
+const migrateDupPays=()=>{if(M.mdp1)return;let n=0;S.m.forEach(m=>m.w.forEach(w=>{const arr=w[2];for(let i=0;i<arr.length;i++){const a=arr[i],nm=(a[0]||'').trim();if(!nm)continue;for(let j=arr.length-1;j>i;j--){const b=arr[j];if((b[0]||'').trim()!==nm)continue;if(!((!a[10]&&!b[10])||(a[10]&&b[10]&&a[10].u==b[10].u)))continue;const k=histKind(b),amt=b[2];mergeInto(a,b,k);arr.splice(j,1);n++;logEv(pid(a),a[0],'birleştirildi (geçmişten): '+F(amt))}}}));M.mdp1=1;sm();if(n){save();draw(1);toast(n+' çift ödeme birleştirildi')}};
 const pkMove=k=>{const[nmi,nwi]=flatW()[k],{mi,wi,pi}=PK;const snap=JSON.stringify(S);
-const p=S.m[mi].w[wi][2].splice(pi,1)[0];const iso_=wkIso(S.m[nmi].w[nwi]);logEv(pid(p),p[0],'hafta değiştirildi → '+(iso_||'?'));if(iso_)p[1]=iso_;S.m[nmi].w[nwi][2].push(p);
+const p=S.m[mi].w[wi][2].splice(pi,1)[0];const iso_=wkIso(S.m[nmi].w[nwi]);logEv(pid(p),p[0],'hafta değiştirildi → '+(iso_||'?'));if(iso_)p[1]=iso_;const mgv=mergePay(S.m[nmi].w[nwi][2],p,null,'hafta');if(!mgv.merged)S.m[nmi].w[nwi][2].push(p);
 save();closePicker();draw();UNDO=snap;showUndo('Hafta değiştirildi')};
 const pkConfirm=()=>{if(!PK||PK.mode!='split')return;const fl=flatW();const parts=[];let sum=0;
 pkSync();fl.forEach(([nmi,nwi],k)=>{const v=Math.round((+(PK.vals[k]||0))*100)/100;if(v>0){parts.push([nmi,nwi,v]);sum+=v}});
@@ -1334,7 +1339,7 @@ const snap=JSON.stringify(S);const{mi,wi,pi}=PK;const orig=S.m[mi].w[wi][2][pi];
 let sumQ=0;
 parts.forEach(([nmi,nwi,v])=>{const np=[orig[0],wkIso(S.m[nmi].w[nwi])||orig[1],v,0,orig[4]||'',orig[5],0,0,null,0];
 if(PK.fx){const q=Math.round(v/PK.fx.rate*1000)/1000;sumQ+=q;np[10]={u:PK.fx.u,q,qp:0};np[12]={d:iso(bt0),r:PK.fx.rate}}
-S.m[nmi].w[nwi][2].push(np);logEv(pid(np),np[0],'bölünerek eklendi: '+F(np[2]))});
+const mg=mergePay(S.m[nmi].w[nwi][2],np,orig,'bolme');if(!mg.merged)S.m[nmi].w[nwi][2].push(np);logEv(pid(mg.p),mg.p[0],'bölünerek eklendi: '+F(v))});
 logEv(pid(orig),orig[0],'bölündü: '+F(sum));const newTL=Math.round((orig[2]-sum)*100)/100;
 if(PK.fx&&orig[10]){orig[10].q=Math.max(0,Math.round((orig[10].q-sumQ)*1000)/1000);orig[10].qp=Math.min(orig[10].qp||0,orig[10].q)}
 const paid=paidOf(orig);
@@ -1776,8 +1781,8 @@ const saveTransfer=()=>{if(!TR)return;const e=trErr();if(e)return toast(e);
  else{const nm=trNewName(),wk=S.m[TR.wk.mi].w[TR.wk.wi];tgt=nm;
   const np=[nm,wkIso(wk),a,0,'',src[5],0,0,null,0];
   if(TR.fx){np[10]={u:TR.u,q:units,qp:0};np[12]={d:iso(bt0),r:fxRate(TR.u)}}
-  const nid=pid(np);S.m[TR.wk.mi].w[TR.wk.wi][2].push(np);
-  logEv(nid,nm,'aktarımla eklendi: '+F(a)+' (kaynak: '+src[0]+')')}
+  const mg=mergePay(S.m[TR.wk.mi].w[TR.wk.wi][2],np,src,'aktarim');if(!mg.merged)S.m[TR.wk.mi].w[TR.wk.wi][2].push(np);
+  logEv(pid(mg.p),mg.p[0],'aktarımla eklendi: '+F(a)+' (kaynak: '+src[0]+')')}
  if(full){const arr=S.m[TR.mi].w[TR.wi][2],ix=arr.indexOf(src);if(ix>=0)arr.splice(ix,1)}
  else{const paidBefore=paidOf(src);
   if(TR.fx){src[10].q=Math.round(((+src[10].q||0)-units)*1000)/1000;src[10].qp=Math.min(+src[10].qp||0,src[10].q)}
@@ -2940,4 +2945,4 @@ html.nv .sheetwrap{z-index:70}
 .ak-sep{height:1px;background:var(--line);margin:14px 0}
 
 .fxsel{width:100%;padding:14px 16px;border-radius:16px;border:0;background:var(--surface);color:var(--ink);font:inherit;font-size:15px;font-weight:600;box-shadow:var(--shadow);margin-bottom:14px;-webkit-appearance:menulist}
-</style><script>(function(){var done=0;function reveal(){if(done++)return;requestAnimationFrame(function(){requestAnimationFrame(function(){document.documentElement.classList.remove('booting');var s=document.getElementById('bootsplash');if(s)s.remove()})})}if(document.readyState==='complete')reveal();else addEventListener('load',reveal);setTimeout(reveal,4000)})();</script></body></html>
+</style><script>(function(){var done=0;function reveal(){if(done++)return;requestAnimationFrame(function(){requestAnimationFrame(function(){try{if(typeof migrateDupPays==='function')migrateDupPays()}catch(e){}document.documentElement.classList.remove('booting');var s=document.getElementById('bootsplash');if(s)s.remove()})})}if(document.readyState==='complete')reveal();else addEventListener('load',reveal);setTimeout(reveal,4000)})();</script></body></html>
