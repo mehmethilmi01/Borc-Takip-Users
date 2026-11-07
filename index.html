@@ -1527,7 +1527,7 @@ const kalanW=w=>kalan(w)+bRem(w),wtotW=w=>wtot(w)+bTot(w);
 const mkW=m=>m.w.reduce((s,w)=>s+kalanW(w),0),mtotW=m=>m.w.reduce((s,w)=>s+wtotW(w),0);
 const billsFor=(mi,wi)=>{const w=S.m[mi].w[wi],out=[];S.m.forEach((m,mj)=>S.bills.forEach(b=>{const key=b.id+'_'+ymOf(mj),inst=S.billPaid[key];if(!inst)return;const tw=m.w[billWI(mj,b.day)],late=!inst.paid&&isClosed(tw)&&!!OPENW;if(late?(w===OPENW):(tw===w))out.push({b,key,inst,late})}));return out};
 const billRow=x=>`<div class="p ${x.inst.paid?'ok':''}"><button class=chk onclick="tgBill('${x.key}')">${x.inst.paid?'✓':''}</button><span>${billIco(x.b.cat)} ${E(x.b.name)}${x.late?' <span class=bad style="font-size:12px">· gecikmiş</span>':''}</span><button class=billamt onclick="openBillAmt('${x.key}')">${x.inst.amount?F(x.inst.amount):'Tutar'}</button></div>`;
-const billRows=(mi,wi)=>{const l=billsFor(mi,wi);return l.length?'<div class=mut style="margin:10px 0 2px;font-size:12px;font-weight:bold">🧾 Faturalar</div>'+l.map(billRow).join(''):''};
+const billRows=(mi,wi)=>{const l=billsFor(mi,wi);return l.length?'<div class=sec-h style="margin-top:18px"><b>Faturalar</b><span class=mut>'+l.filter(x=>x.inst.paid).length+'/'+l.length+' tamam</span></div><div class=dtledger>'+l.map(billRow).join('')+'</div>':''};
 /* uygulama açıkken kapanış saati geçince otomatik devir */
 setInterval(()=>{if(document.hidden)return;const a=document.activeElement;if(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))return;if(new Date().getHours()!=NOW.getHours()){refreshClock();draw()}},60000);
 
@@ -2339,7 +2339,7 @@ function ozetDefter(){ozet();
  const dl=Math.round((nx[2]-t0)/864e5);
  const when=dl==0?'Bugün':dl==1?'Yarın':dl<0?'Geçti':dl+' gün sonra';
  const firstOpen=arrW.find(x=>!isClosed(S.m[x.mi].w[x.wi]));const atCur=!firstOpen||(firstOpen.mi==nx[0]&&firstOpen.wi==nx[1]);
- const rows=w[2].map((p,pi)=>`<div class="pl dtrow ${p[3]?'ok':''}" data-mi="${nx[0]}" data-wi="${nx[1]}" data-pi="${pi}"><button class="chk ${p[3]?'on':''}" onclick="tg(${nx[0]},${nx[1]},${pi})">${p[3]?'✓':''}</button><div><div class=nm>${E(p[0]||'—')}</div><div class=mut style="font-size:12px">${E(p[5]||'')}${p[1]?' · '+new Date(p[1]+'T00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'short'}):''}</div></div><div class=amt>${F(p[3]?p[2]:remOf(p))}</div></div>`).join('')+billRows(nx[0],nx[1]);
+ const rows=w[2].map((p,pi)=>`<div class="pl dtrow ${p[3]?'ok':''}" data-mi="${nx[0]}" data-wi="${nx[1]}" data-pi="${pi}"><button class="chk ${p[3]?'on':''}" onclick="tg(${nx[0]},${nx[1]},${pi})">${p[3]?'✓':''}</button><div><div class=nm>${E(p[0]||'—')}</div><div class=mut style="font-size:12px">${E(p[5]||'')}${p[1]?' · '+new Date(p[1]+'T00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'short'}):''}</div></div><div class=amt>${F(p[3]?p[2]:remOf(p))}</div></div>`).join('');
  const salTxt=w[1]?('Maaş '+F(w[1])+(w[1]>=rem?' · artan '+F(w[1]-rem):' · açık '+F(rem-w[1]))):'Bu hafta maaş girilmedi';
  return head+`
  <div class=card style="padding:22px">
@@ -2350,7 +2350,7 @@ function ozetDefter(){ozet();
   <div class=dtnav><button class=dtarr onclick="goHW(-1)">‹</button><span class=mut>${new Date(nx[2]).toLocaleDateString('tr-TR',{day:'numeric',month:'long'})}</span><button class=dtarr onclick="goHW(1)">›</button></div>${atCur?'':'<div style="text-align:center;margin-top:12px"><button class=add style="padding:7px 14px;font-size:13px" onclick="resetHW()">Güncel haftaya dön</button></div>'}
  </div>
  <div class=sec-h><b>Ödemeler</b><span class=mut>${w[2].filter(p=>p[3]).length}/${w[2].length} tamam</span></div>
- <div class=dtledger>${rows||'<div class=mut style="padding:18px;text-align:center">Bu hafta için ödeme girilmemiş</div>'}</div>
+ <div class=dtledger>${rows||'<div class=mut style="padding:18px;text-align:center">Bu hafta için ödeme girilmemiş</div>'}</div>${billRows(nx[0],nx[1])}
  ${dtStats(over)}`;
 }
 
@@ -2373,7 +2373,7 @@ function ayDefter(){
    <summary><div><div class=nm>${E(w[0].split('(')[0].trim())}</div><div class=mut style="font-size:12px">${dts} · maaş ${F(w[1])}</div></div><div class=amt>${F(kalanW(w))}</div></summary>
    <div class=body>
     <div class=row style="justify-content:flex-end;margin-bottom:6px"><button class=add style="padding:6px 12px" onclick="openSalP(cur,${wi})">Maaş ✎</button></div>
-    <div class=dtledger>${w[2].map((p,pi)=>`<div class="pl dtrow ${p[3]?'ok':''}" data-mi="${cur}" data-wi="${wi}" data-pi="${pi}"><button class="chk ${p[3]?'on':''}" onclick="tg(cur,${wi},${pi})">${p[3]?'✓':''}</button><div onclick="openPEdit(${wi},${pi})" style="cursor:pointer"><div class=nm>${E(p[0]||'—')}</div><div class=mut style="font-size:12px">${E(p[5]||'')}${p[1]?' · '+fdShort(p[1]):''}${p[4]?' · '+E(p[4]):''}</div></div><div class=amt>${F(p[3]?p[2]:remOf(p))}</div></div>`).join('')}${bl}</div>
+    <div class=dtledger>${w[2].map((p,pi)=>`<div class="pl dtrow ${p[3]?'ok':''}" data-mi="${cur}" data-wi="${wi}" data-pi="${pi}"><button class="chk ${p[3]?'on':''}" onclick="tg(cur,${wi},${pi})">${p[3]?'✓':''}</button><div onclick="openPEdit(${wi},${pi})" style="cursor:pointer"><div class=nm>${E(p[0]||'—')}</div><div class=mut style="font-size:12px">${E(p[5]||'')}${p[1]?' · '+fdShort(p[1]):''}${p[4]?' · '+E(p[4]):''}</div></div><div class=amt>${F(p[3]?p[2]:remOf(p))}</div></div>`).join('')}</div>${bl}
     ${w[2].length||bl?'':'<div class=mut style="padding:8px 0">Ödeme yok</div>'}
    </div>
   </details>`}).join('');
