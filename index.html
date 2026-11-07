@@ -341,7 +341,7 @@ function akSpendRead(){const a=document.getElementById('akA');if(!a)return;ED.a=
 function akSpend(){
  akSheet(`<h3>Harcama ekle</h3>
   <div class=field><label>Tutar</label><input class="input big-input" id=akA inputmode=decimal placeholder="0" value="${E(ED.a||'')}"></div>
-  <div class=cats>${S.cats.map(c=>`<button class="${c==cat?'on':''}" onclick="akSpendRead();cat='${Q(c)}';akSpend()">${E(c)}</button>`).join('')}</div><br>
+  <div class=cats>${S.cats.map(c=>`<button class="${c==cat?'on':''}" onclick="akSpendRead();cat='${Q(c)}';akSpend()">${E(c)}</button>`).join('')}</div><br>${repChips().replace('onclick="repEx(','onclick="akClose();repEx(')}
   <div class=field><label>Not</label><input class=input id=akN value="${E(ED.n||'')}" placeholder="İsteğe bağlı"></div>
   <button class=btn onclick="akSpendRead();if(+ED.a>0){ED.d=iso(t0);akClose();addEx()}else toast('Tutar gir')">Kaydet</button><button class="btn ghost" onclick="akClose()">Vazgeç</button>`)}
 function akDebtNew(){DP.idx=null;DP.cat=DP.cat||S.dcats[0];
