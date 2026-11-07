@@ -320,7 +320,7 @@ function akSkinCard(){return `<div class=ak-grp><h4>Tasarım</h4><div class=ak-s
 
 /* alt paneller */
 function akSheet(html){let w=document.getElementById('akSW');
- if(!w){w=document.createElement('div');w.id='akSW';w.className='sheetwrap';w.innerHTML='<div class=scrim onclick="akClose()"></div><div class=sheet><div class=grab></div><div id=akSB></div></div>';document.body.appendChild(w)}
+ if(!w){w=document.createElement('div');w.id='akSW';w.className='sheetwrap';w.innerHTML='<div class=scrim onclick="akClose()"></div><div class=sheet><div class=grab></div><button class=xbtn aria-label="Kapat" onclick="akClose()">×</button><div id=akSB></div></div>';document.body.appendChild(w)}
  document.getElementById('akSB').innerHTML=html;w.classList.add('open')}
 function akClose(){akSecI=null;const w=document.getElementById('akSW');if(w)w.classList.remove('open')}
 function akAdd(){akSheet(`<h3>Ne eklemek istersin?</h3><div class=menu>
@@ -393,7 +393,9 @@ function akSetBody(){
  </div>
  <div class=ak-grp><h4>Hesap ve yedek</h4><div class=ak-list>
   <div class=ak-r2><span>Giriş yapan</span><b>${E((cloudUser&&cloudUser.username)||'Çevrimdışı')}</b></div>
-  <div class=ak-r2><span>Son yedek</span><b>${M.lb?new Date(M.lb).toLocaleString('tr-TR'):'—'}</b></div>
+  <div class=ak-r2><span>Son dosya yedeği</span><b>${M.lb?new Date(M.lb).toLocaleString('tr-TR'):'—'}</b></div>
+  <div class=ak-r2><span>Son bulut yedeği</span><b>${+localStorage.getItem('bt_cloud_last_backup')?new Date(+localStorage.getItem('bt_cloud_last_backup')).toLocaleString('tr-TR'):'Henüz alınmadı'}</b></div>
+  <button class=ak-r2 onclick="cloudManualBackup()"><span>☁️ Buluta yedekle</span></button>
   <button class=ak-r2 onclick="bak()"><span>Yedeği indir</span></button>
   <label class=ak-r2><span>Yedeği yükle</span><input type=file accept=".json,application/json" hidden onchange="rst(this.files[0])"></label>
   <button class=ak-r2 onclick="openNP()"><span>Bildirimler</span></button>
@@ -770,6 +772,7 @@ NP=notifPage(on,tb);
 const hesap=`<div class=card><h2>Hesap ve Yedek</h2>
 <div class=row><span>Giriş yapan</span><span class=n>${E((cloudUser&&cloudUser.username)||'Çevrimdışı')}</span></div>
 <div class=row><span>Son bulut yedeği</span><span class=n>${localStorage.getItem('bt_cloud_last_backup')?f(+localStorage.getItem('bt_cloud_last_backup')):'Henüz alınmadı'}</span></div>
+<button class=add style="margin-top:8px;width:100%" onclick="cloudManualBackup()">☁️ Buluta yedekle</button>
 <div class=row><span>Son manuel yedek</span><span class=n>${M.lb?f(M.lb):'Henüz alınmadı'}</span></div>
 <div class=row style="gap:8px;margin-top:12px"><button class=add style="flex:1" onclick="bak()">Yedeği indir</button><label class=add style="flex:1;text-align:center">Yedeği yükle<input type=file accept=".json,application/json" hidden onchange="rst(this.files[0])"></label></div>
 <details class=more><summary>Gelişmiş yedek seçenekleri</summary>
@@ -2295,6 +2298,7 @@ const cloudHideGate=()=>{['caPass','pwcur','pwnew','pwnew2'].forEach(id=>{const 
 const cloudUseLocal=()=>{cloudOffline=true;cloudHideGate();cloudShowBadge('Çevrimdışı · Bulut yedeği kapalı')};
 const cloudSubmit=async()=>{const username=(document.getElementById('caUser').value||'').trim();const password=document.getElementById('caPass').value||'';if(!/^[a-zA-Z0-9_.-]{3,24}$/.test(username))return cloudMsg('Kullanıcı adı 3-24 karakter olmalı (İngilizce harf, rakam, . _ -).');if(password.length<8)return cloudMsg('Şifre en az 8 karakter olmalı.');const b=document.getElementById('caSubmit');b.disabled=true;cloudMsg('Hesap kontrol ediliyor…');try{const path=cloudMode==='register'?'auth/register':'auth/login';const out=await cloudApi(path,{method:'POST',body:JSON.stringify({username,password})});cloudToken=out.token;cloudUser=out.user;window.CLOUD_MUST_CHANGE=!!out.user.mustChange;cloudEncKey=await cloudDeriveKey(password,cloudUser.backupSalt);localStorage.setItem('bt_cloud_token',cloudToken);localStorage.setItem('bt_cloud_user',JSON.stringify(cloudUser));localStorage.setItem('bt_cloud_enc_key',cloudEncKey);if(cloudMode==='register'){await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})});cloudMsg('Hesap oluşturuldu, ilk yedek buluta kaydedildi.');}else{cloudMsg('Bulut yedeği aranıyor…');const bk=await cloudApi('backup');if(bk.payload){cloudRestoring=true;S=await cloudDecrypt(bk.payload);await cloudRestoreImgs();norm(S);ensureRange();rollOver();genBills();save();cloudRestoring=false;draw(1);cloudMsg('Yedek geri yüklendi.');}else{await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})});cloudMsg('Bu hesapta yedek bulunamadı; bu cihazdaki veriler yedeklendi.');}}cloudHideGate();cloudShowBadge('☁ '+cloudUser.username+' · Senkron açık');setTimeout(()=>cloudMsg(''),1200);}catch(e){cloudRestoring=false;cloudMsg(e.message||'İşlem başarısız.');}finally{b.disabled=false;}};
 function cloudScheduleBackup(){if(!cloudToken||cloudOffline||cloudRestoring)return;if(cloudBackupTimer)clearTimeout(cloudBackupTimer);const last=+(localStorage.getItem('bt_cloud_last_backup')||0);const wait=Math.max(1400,last+864e5-Date.now());cloudBackupTimer=setTimeout(cloudUploadBackup,wait)}
+const cloudManualBackup=async()=>{if(!cloudToken||cloudOffline)return toast('Buluta yedeklemek için giriş yapmalısın');const b0=localStorage.getItem('bt_cloud_last_backup');toast('Buluta yedekleniyor…');await cloudUploadBackup();if(localStorage.getItem('bt_cloud_last_backup')!==b0)toast('Buluta yedeklendi ✓');draw()};
 const cloudUploadBackup=async()=>{if(!cloudToken||cloudOffline||cloudRestoring)return;try{cloudShowBadge('☁ Yedekleniyor…');await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})});localStorage.setItem('bt_cloud_last_backup',String(Date.now()));cloudShowBadge('☁ '+(cloudUser?.username||'Hesap')+' · Güncel');}catch(e){cloudShowBadge('☁ Yedekleme bekliyor');console.warn('Cloud backup:',e);toast('Senkron hatası: '+(e.message||'bilinmeyen'))}};
 const cloudInit=async()=>{const t=localStorage.getItem('bt_cloud_token');if(!t)document.getElementById('app').style.display='none';if(t){cloudToken=t;cloudEncKey=localStorage.getItem('bt_cloud_enc_key')||'';try{const me=await cloudApi('auth/me');cloudUser=me.user;window.CLOUD_MUST_CHANGE=!!me.user.mustChange;const bk=await cloudApi('backup');const cTs=bk.updatedAt?Date.parse(bk.updatedAt)||0:0;if(cTs)localStorage.setItem('bt_cloud_last_backup',String(cTs));const lTs=+(localStorage.getItem('butce_ts')||0);if(bk.payload&&(!lTs||cTs>lTs+5000)){cloudRestoring=true;S=await cloudDecrypt(bk.payload);await cloudRestoreImgs();norm(S);ensureRange();rollOver();genBills();localStorage.setItem(KEY,JSON.stringify(S));localStorage.setItem('butce_ts',String(cTs||Date.now()));cloudRestoring=false;}else if(bk.payload&&lTs>cTs+5000){cloudUploadBackup();}cloudHideGate();cloudShowBadge('☁ '+cloudUser.username+' · Senkron açık');draw(1);return;}catch(e){if(e instanceof TypeError||e.name==='AbortError'){cloudShowBadge('☁ Çevrimdışı · yerel veri');cloudHideGate();draw(1);return}localStorage.removeItem('bt_cloud_token');localStorage.removeItem('bt_cloud_user');localStorage.removeItem('bt_cloud_enc_key');cloudToken='';cloudEncKey='';document.documentElement.classList.remove('cl-in');}}
  document.getElementById('app').style.display='none';};
@@ -2920,4 +2924,13 @@ html.nv .lsub,html.dt .lsub,.lsub{display:flex;justify-content:space-between;ali
 
 /* kapalı alt paneller hiçbir tasarımda görünmesin */
 .sheetwrap:not(.open){display:none!important}
+
+/* katman sırası: pop-up'lar her zaman ayar panelinin üstünde */
+html.nv [id$=ovl]{z-index:90!important}
+html.nv .sheetwrap{z-index:70}
+/* pop-up kapatma düğmesi */
+[id$=ovl]>.card{position:relative}
+.ovlx{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;border:0;background:var(--line);color:var(--ink);font-size:14px;line-height:1;display:grid;place-items:center;cursor:pointer;z-index:2;padding:0}
+.sheetwrap .sheet{position:relative}
+.sheetwrap .sheet .ovlx{top:12px;right:12px}
 </style></body></html>
