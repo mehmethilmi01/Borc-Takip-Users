@@ -231,16 +231,18 @@ function akRangeOfView(v){
  if(v.mode=='m'){const r=rngOfMonth(v.k);return [r[0],r[1],monthLbl(v.k)]}
  if(v.mode=='w')return [v.s,v.e,wkLabel(v.s,v.e)];
  return [v.d,v.d,fd(new Date(v.d+'T00:00'))]}
-function akExpBlock(list,title){
+function akExpBlock(list,title,key){const open=!key||!!(akSt.open||{})[key];
  const cat=akSt.gcat;const map={};
  if(!cat)list.forEach(e=>{map[e.c]=(map[e.c]||0)+e.a});
  else list.forEach(e=>{if(e.c==cat){const k=e.s||cat;map[k]=(map[k]||0)+e.a}});
  const rows=(cat?list.filter(e=>e.c==cat):list).slice().sort((a,b)=>b.d.localeCompare(a.d)||(b.ts||0)-(a.ts||0));
  const total=rows.reduce((s,e)=>s+e.a,0);
  const back=cat?`<div class=sect><button class=link onclick="akSt.gcat=null;draw()">‹ Kategoriler</button><h2>${E(cat)}</h2></div>`:'';
+ if(key)return `${back}<div class=card>${akDonut(map,cat?null:(c=>`akSt.gcat='${Q(c)}';draw()`))}</div>`;
  return `${back}<div class=card>${akDonut(map,cat?null:(c=>`akSt.gcat='${Q(c)}';draw()`))}</div>
-  <div class=sect><h2>${title}</h2><span class="mut num">${F(total)}</span></div>
-  <div class=list>${rows.map(e=>`<div class=row onclick="openExEdit(${e.i})"><div class=meta><div class=nm>${E(e.c)}${e.s?' › '+E(e.s):''}</div><div class=sub>${fdShort(e.d)}${e.n?' · '+E(e.n):''}</div></div><div class="amt num">${F(e.a)}</div></div>`).join('')||'<div class=empty>Harcama yok</div>'}</div>`}
+  <div class=sect ${key?`style="cursor:pointer" onclick="akTogOpen('${key}')"`:''}><h2>${title}${key?(open?' ▾':' ›'):''}</h2><span class="mut num">${F(total)}</span></div>
+  ${open?`<div class=list>${rows.map(e=>`<div class=row onclick="openExEdit(${e.i})"><div class=meta><div class=nm>${E(e.c)}${e.s?' › '+E(e.s):''}</div><div class=sub>${fdShort(e.d)}${e.n?' · '+E(e.n):''}</div></div><div class="amt num">${F(e.a)}</div></div>`).join('')||'<div class=empty>Harcama yok</div>'}</div>`:''}`}
+const akTogOpen=k=>{akSt.open=akSt.open||{};akSt.open[k]=!akSt.open[k];draw()};
 function akExpBody(){
  const gp=akSt.gp||'a';
  const per=akModes(gp,[['g','Günlük'],['h','Haftalık'],['a','Aylık']],k=>`akSt.gp='${k}';akSt.gpath=[];akSt.gcat=null;draw()`);
@@ -248,7 +250,7 @@ function akExpBody(){
  if(path.length){
   const v=path[path.length-1],r=akRangeOfView(v),kids=akChildren(v);
   const back=`<div class=sect><button class=link onclick="akPop()">‹ Geri</button><h2>${E(r[2])}</h2></div>`;
-  const kidsH=kids.length?`<div class=list>${kids.map(k=>`<div class=row onclick="akPush(${Q(JSON.stringify(k.v))})"><div class=meta><div class=nm>${E(k.lbl)}${k.v.mode=='d'?curTag(k.v.d,k.v.d):curTag(k.v.s,k.v.e)}</div></div><div class="amt num">${F(k.amt)}</div></div>`).join('')}</div>`:'';
+  const kidsH=kids.length?`<div class=sect style="margin-top:18px"><h2>${v.mode=='m'?'Haftalar':'Günler'}</h2></div><div class=list>${kids.map(k=>`<div class=row onclick="akPush(${Q(JSON.stringify(k.v))})"><div class=meta><div class=nm>${E(k.lbl)}${k.v.mode=='d'?curTag(k.v.d,k.v.d):curTag(k.v.s,k.v.e)}</div></div><div class="amt num">${F(k.amt)}</div></div>`).join('')}</div>`:'';
   return per+back+akExpBlock(akRangeEx([r[0],r[1]]),'Harcamalar')+kidsH}
  const rg=rng(gp),list=akRangeEx(rg);
  let extra='';
@@ -262,7 +264,7 @@ function akExpBody(){
  if(gp=='g'){const wk=rng('h');
   extra=`<div class=sect><h2>Bu haftanın günleri</h2></div><div class=list>${weekDaysList(wk[0],wk[1]).map(d=>`<div class=row onclick="akPush(${Q(JSON.stringify({mode:'d',d}))})"><div class=meta><div class=nm>${fd(new Date(d+'T00:00'))}${curTag(d,d)}</div></div><div class="amt num">${F(daySum(d))}</div></div>`).join('')}</div>`}
  if(gp=='a'){const ms=monthsWithEx();extra+=`<div class=sect><h2>Aylar</h2></div><div class=list>${ms.map(([k])=>{const r=rngOfMonth(k);return `<div class=row onclick="akPush(${Q(JSON.stringify({mode:'m',k}))})"><div class=meta><div class=nm>${monthLbl(k)}${curTag(r[0],r[1])}</div></div><div class="amt num">${F(sumR(r[0],r[1]))}</div></div>`}).join('')||'<div class=empty>Henüz harcama yok</div>'}</div>`}
- return per+akExpBlock(list,gp=='g'?'Bugün':gp=='h'?'Bu hafta':'Bu ay')+extra}
+ return per+(gp=='g'?akExpBlock(list,'Bugün'):akExpBlock(list,'',gp))+extra}
 
 /* gelir ↔ ödeme: 12 ay (2 geri, 11 ileri) */
 function akIncBody(){
