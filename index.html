@@ -254,12 +254,7 @@ function akExpBody(){
   return per+back+akExpBlock(akRangeEx([r[0],r[1]]),'Harcamalar')+kidsH}
  const rg=rng(gp),list=akRangeEx(rg);
  let extra='';
- if(gp=='a'){
-  const vals=[],labs=[],ks=[];
-  for(let i=5;i>=0;i--){const d=new Date(bt0.getFullYear(),bt0.getMonth()-i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),r=rngOfMonth(k);vals.push(sumR(r[0],r[1]));labs.push(MTR[+k.slice(5,7)-1].slice(0,3));ks.push(k)}
-  extra=`<div class=sect><h2>Son 6 ay</h2><span class=mut>dokun, aç</span></div><div class=card>${akBarsSvg(vals,labs,i=>`akPush(${Q(JSON.stringify({mode:'m',k:ks[i]}))})`)}</div>`;
- }
- if(gp=='h'){const ym=iso(bt0).slice(0,7);
+  if(gp=='h'){const ym=iso(bt0).slice(0,7);
   extra=`<div class=sect><h2>Bu ayın haftaları</h2></div><div class=list>${weeksOfMonth(ym).map(([s,e])=>`<div class=row onclick="akPush(${Q(JSON.stringify({mode:'w',s,e}))})"><div class=meta><div class=nm>${wkLabel(s,e)}${curTag(s,e)}</div></div><div class="amt num">${F(sumR(s,e))}</div></div>`).join('')}</div>`}
  if(gp=='g'){const wk=rng('h');
   extra=`<div class=sect><h2>Bu haftanın günleri</h2></div><div class=list>${weekDaysList(wk[0],wk[1]).map(d=>`<div class=row onclick="akPush(${Q(JSON.stringify({mode:'d',d}))})"><div class=meta><div class=nm>${fd(new Date(d+'T00:00'))}${curTag(d,d)}</div></div><div class="amt num">${F(daySum(d))}</div></div>`).join('')}</div>`}
