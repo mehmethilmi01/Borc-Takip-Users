@@ -150,7 +150,7 @@ let QK={a:''};
 const qkPanel=()=>`<div class=qkbar>${S.cats.map((c,i)=>`<button class="qkc ${c==cat?'on':''}" title="${E(c)}" onclick="qkCat(${i})">${E(c.split(' ')[0])}</button>`).join('')}</div>`;
 const qkRefresh=()=>{const el=document.getElementById('qkcats');if(el)el.innerHTML=qkPanel()};
 const pickPop=(anchor,items,sel,onPick)=>{document.querySelectorAll('.qkpop').forEach(e=>e.remove());if(!anchor)return;const d=document.createElement('div');d.className='qkpop';const add=(label,j,on)=>{const b=document.createElement('button');b.className=on?'on':'';b.textContent=label;b.onclick=(ev)=>{ev.stopPropagation();d.remove();onPick(j)};d.appendChild(b)};add(cat,-1,!sel);items.forEach((x,j)=>add(x,j,x==sel));document.body.appendChild(d);let r=anchor.getBoundingClientRect();const w=d.offsetWidth,h=d.offsetHeight;const dn=h+14-r.top;if(dn>0){window.scrollBy(0,-dn);r=anchor.getBoundingClientRect()}let left=Math.max(8,Math.min(r.left+r.width/2-w/2,innerWidth-w-8));let top=r.top-h-6;if(top<8)top=r.bottom+6;d.style.left=left+'px';d.style.top=top+'px';const off=(ev)=>{if(!d.contains(ev.target)){d.remove();document.removeEventListener('pointerdown',off,true)}};setTimeout(()=>document.addEventListener('pointerdown',off,true),0)};
-const qkCat=i=>{cat=S.cats[i];csub=null;qkRefresh();const subs=subsOf(cat);if(!subs.length)return;pickPop(document.querySelectorAll('.qkc')[i],subs,csub,j=>{csub=j<0?null:subs[j];qkRefresh()})};
+const qkCat=i=>{cat=S.cats[i];csub=null;if(/motor/i.test(cat)){ED.a=QK.a||'';ED.n='';QK.a='';return motoLogSheet()}qkRefresh();const subs=subsOf(cat);if(!subs.length)return;pickPop(document.querySelectorAll('.qkc')[i],subs,csub,j=>{csub=j<0?null:subs[j];qkRefresh()})};
 const qkSet=j=>{const l=subsOf(cat);csub=(+j>=0&&l[+j])?l[+j]:null;qkRefresh()};
 const qkSave=()=>{const a=+QK.a;if(!a)return toast('Tutar gir');ED.a=a;ED.n='';ED.d=iso(t0);ED.ds=null;QK.a='';addEx()};
 const fixedNow=i=>{const f=(S.fixed||[])[i];if(!f)return;cat=f.c;csub=null;ED.a=+f.a;ED.n=(f.n||'').trim();ED.d=iso(t0);ED.ds=f.ds||null;const n0=S.ex.length;addEx();if(S.ex.length>n0)toast('Sabit harcama eklendi')};
@@ -344,7 +344,7 @@ function akPay(){QD.c=QD.c||S.dcats[0];QD.d=QD.d||iso(t0);QD.t=QD.t||'1';
   <input type=hidden id=qcu value="">
   <button class=btn onclick="akPayRead();addQuick();akClose()">Kaydet</button><button class="btn ghost" onclick="akClose()">Vazgeç</button>`)}
 function akSpendRead(){const a=document.getElementById('akA');if(!a)return;ED.a=a.value;ED.n=document.getElementById('akN').value}
-const akCatTap=i=>{akSpendRead();cat=S.cats[i];csub=null;akSpend();const subs=subsOf(cat);if(!subs.length)return;pickPop(document.querySelectorAll('#akSW .cats button')[i],subs,csub,j=>{csub=j<0?null:subs[j];akSpend()})};
+const akCatTap=i=>{akSpendRead();cat=S.cats[i];csub=null;if(/motor/i.test(cat)){akClose();return motoLogSheet()}akSpend();const subs=subsOf(cat);if(!subs.length)return;pickPop(document.querySelectorAll('#akSW .cats button')[i],subs,csub,j=>{csub=j<0?null:subs[j];akSpend()})};
 function akSpend(){
  akSheet(`<h3>Harcama ekle</h3>
   <div class=field><label>Tutar</label><input class="input big-input" id=akA inputmode=decimal placeholder="0" value="${E(ED.a||'')}"></div>
