@@ -1046,7 +1046,7 @@ arr.splice(i,1);n++}}));
 x.m.forEach(m=>m.w.forEach(w=>w[2].forEach(p=>{while(p.length<5)p.push('');if(!p[5]){p[5]=guess(p[0]);n++}if(p[6]==null)p[6]=p[3]?(+p[2]||0):0;if(p[7]==null)p[7]=0;if(p[9]==null)p[9]=0;
 if(/ \(devir\)$/.test(p[0]||'')){p[0]=p[0].replace(/ \(devir\)$/,'');if(!p[9])p[9]=+p[2]||0;n++}})));
 x.debts.forEach(d=>{if(!d.cat){d.cat=guess(d.name);n++}});
-(x.ex||[]).forEach(e=>{if(e.ts){const nd=bizISO(e.ts);if(nd!=e.d){e.d=nd;n++}}});return n};
+(x.ex||[]).forEach(e=>{if(e.ts&&!e.d){e.d=bizISO(e.ts);n++}});return n};
 const ld=x=>{if(!x||!Array.isArray(x.m)||!x.m.length)throw 0;const im=x._imgs;delete x._imgs;if(!x.docs&&S.docs)x.docs=S.docs;if(!x.docCats&&S.docCats){x.docCats=S.docCats;x.docCatsV=S.docCatsV;x.docBank=S.docBank;x.docBankV=S.docBankV}S=x;if(im){DC={};Object.entries(im).forEach(([k,v])=>idbPut(k,v))}const n=norm(S);ensureRange();rollOver();genBills();save();draw(1);toast(n?`Yedek yüklendi, ${n} ödemenin kategorisi otomatik algılandı`:'Yedek yüklendi')};
 const rst=f=>{if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);ask('Mevcut veriler yedekle değiştirilsin mi?',()=>ld(x))}catch(e){toast('Geçersiz yedek dosyası')}};r.readAsText(f)};
 const bt=m=>{const t=$('bt');if(m=='g'){t.value=JSON.stringify(S);t.select()}else if(m=='c'){t.select();try{document.execCommand('copy');if(navigator.clipboard)navigator.clipboard.writeText(t.value).catch(()=>{});M.lb=Date.now();sm();toast('Kopyalandı')}catch(e){toast('Metni seçip elle kopyala')}}else{try{const x=JSON.parse(t.value);ask('Mevcut veriler yapıştırılan yedekle değiştirilsin mi?',()=>ld(x))}catch(e){toast('Geçersiz yedek metni')}}};
