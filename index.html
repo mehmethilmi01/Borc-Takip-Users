@@ -400,7 +400,7 @@ function motoSetupHTML(){
 const motoModel=k=>{const d=Object.assign({},akSt.motoDraft||(S.moto&&S.moto.m)||{});if(k=='nmax155'){d.preset='nmax155';d.marka='Yamaha';d.model='NMAX 155'}else{d.preset='';if(d.marka==='Yamaha'&&d.model==='NMAX 155'){d.marka='';d.model=''}}d.renk=d.renk||MOTO_CATALOG[0].renk;akSt.motoDraft=d;draw()};
 const motoPick=c=>{const g=id=>{const e=document.getElementById(id);return e?e.value:undefined};const cur=Object.assign({},akSt.motoDraft||(S.moto&&S.moto.m)||{});const f={marka:g('mM'),model:g('mMo'),yil:g('mY'),km:g('mK')};Object.keys(f).forEach(k=>{if(f[k]!==undefined)cur[k]=f[k]});cur.renk=c;akSt.motoDraft=cur;draw()};
 const motoSave=()=>{const g=id=>{const e=document.getElementById(id);return e?e.value:''};const cur=akSt.motoDraft||(S.moto&&S.moto.m)||{};const marka=g('mM').trim(),model=g('mMo').trim();if(!marka||!model)return toast('Marka ve model gir');S.moto={m:{preset:'',marka,model,yil:+g('mY')||'',km:+g('mK')||0,kmAt:iso(t0),renk:cur.renk||'#1d3f8f'},p:(S.moto&&S.moto.p)||{},log:(S.moto&&S.moto.log)||[]};akSt.motoEdit=0;akSt.motoDraft=null;save();draw()};
-const motoOpen=k=>{if(MOTO_MOVED)return;akSt.motoPart=k;draw();scrollTo(0,0)};
+const motoOpen=k=>{if(MOTO_MOVED)return;akSt.motoPart=k;draw(1);setTimeout(()=>scrollTo(0,0),50)};
 const motoSavePart=k=>{const d=document.getElementById('mpD').value,km=+document.getElementById('mpK').value||0,n=document.getElementById('mpN').value.trim();if(!d)return toast('Tarih gir');
  S.moto.p=S.moto.p||{};S.moto.p[k]={d,km,n};S.moto.log=S.moto.log||[];S.moto.log.unshift({k,d,km,n});save();toast(motoPartLbl[k]+' kaydedildi');draw()};
 const motoKmSave=()=>{S.moto.m.km=+document.getElementById('mkK').value||0;S.moto.m.kmAt=iso(t0);save();draw()};
@@ -489,7 +489,7 @@ function akMotorBody(){
  if(!S.moto||!S.moto.m||akSt.motoEdit)return motoSetupHTML();
  if(akSt.motoPart)return motoDetail(akSt.motoPart);
  const m=S.moto.m;const greet=!akSt.motoSeen;akSt.motoSeen=1;if(greet){MOTO_POS=MOTO_KEYS[0];void 0}
- const log=(S.moto.log||[]).slice(0,15).map((x,i)=>`<div class=row><div onclick="akSt.motoPart='${x.k}';draw();scrollTo(0,0)" style="cursor:pointer;flex:1;min-width:0"><b>${motoPartLbl[x.k]}</b><div class=mut>${fd(new Date(x.d+'T00:00'))} · ${motoKmFmt(x.km)} km</div></div><div><button class=bnic onclick="motoLogEdit(${i})" aria-label="Düzenle">✎</button><button class=bnic del onclick="motoLogDel(${i})" aria-label="Sil">🗑</button></div></div>`).join('')||'<div class=empty>Henüz bakım kaydı yok</div>';
+ const log=(S.moto.log||[]).slice(0,15).map((x,i)=>`<div class=row><div onclick="akSt.motoPart='${x.k}';draw(1);setTimeout(()=>scrollTo(0,0),50)" style="cursor:pointer;flex:1;min-width:0"><b>${motoPartLbl[x.k]}</b><div class=mut>${fd(new Date(x.d+'T00:00'))} · ${motoKmFmt(x.km)} km</div></div><div><button class=bnic onclick="motoLogEdit(${i})" aria-label="Düzenle">✎</button><button class=bnic del onclick="motoLogDel(${i})" aria-label="Sil">🗑</button></div></div>`).join('')||'<div class=empty>Henüz bakım kaydı yok</div>';
  return `<div style="padding:0">${motoSceneHTML(m.renk||'#1d3f8f',greet)}</div>${motoSigCard()}
  <div class=mut style="text-align:center;font-size:12px;margin:-4px 0 12px">Sürükleyerek döndür · Noktalara dokun</div>
  <div class=card><div><b>${E(m.marka)} ${E(m.model)}</b></div><div class=mut>${m.yil||''} · ${motoKmFmt(m.km)} km</div>
