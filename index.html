@@ -418,7 +418,7 @@ function akRecvBody(){const l=S.recv.map((r,i)=>({...r,i}));
  return `<div class=sect><h2>Alacaklar</h2><button class=link onclick="openRecvP(null)">+ Ekle</button></div>${l.length?`<div class=list>${l.map(r=>`<div class="row ${r.paid?'paid':''}"><span class=check onclick="toggleRecv(${r.i})">${AK_CHK}</span><div class=meta onclick="openRecvP(${r.i})"><div class=nm>${E(r.name)}</div><div class=sub>${r.date?fdShort(r.date):''}${r.note?' · '+E(r.note):''}</div></div><div class="amt num">${F(r.amount)}</div></div>`).join('')}</div>`:'<div class="card empty">Alacak yok</div>'}`}
 
 /* 5) AYARLAR (işlevler aynı, görünüm Akış'a göre) */
-function akSkinCard(){return `<div class=ak-grp><h4>Tasarım</h4><div class=ak-seg></div></div>`}
+function akSkinCard(){return `<div class=ak-grp><h4>🎨 Tasarım</h4><div class=ak-seg></div></div>`}
 
 /* alt paneller */
 function akSheet(html){let w=document.getElementById('akSW');
@@ -665,11 +665,11 @@ function akSetBody(){
  const adm=window.IS_ADMIN;
  const cats=(list,kind)=>list.map((c,i)=>`<span class=ak-tag>${E(c)}<button onclick="editCat('${kind}',${i})">✎</button><button onclick="${kind=='cat'?'delCat':'delDcat'}(${i})">×</button></span>`).join('')+`<button class=ak-tag onclick="openCatP('${kind}',null)">+ Ekle</button>`;
  return `
- <div class=ak-grp><h4>Görünüm</h4>
+ <div class=ak-grp><h4>👁️ Görünüm</h4>
   <div class=ak-seg>${th.map(([k,l])=>`<button class="${(M.theme||'auto')==k?'on':''}" onclick="setTheme('${k}')">${l}</button>`).join('')}</div>
   <div class=ak-sw>${ac.map(k=>`<button class="${(M.scheme||'mercan')==k?'on':''}" style="background:${SCHEMES[k].l[0]}" onclick="setScheme('${k}')" aria-label="${SCHEMES[k].n}"></button>`).join('')}</div>
  </div>
- <div class=ak-grp><h4>Hesap ve yedek</h4><div class=ak-list>
+ <div class=ak-grp><h4>☁️ Hesap ve yedek</h4><div class=ak-list>
   <div class=ak-r2><span>Giriş yapan</span><b>${E((cloudUser&&cloudUser.username)||'Çevrimdışı')}</b></div>
   <div class=ak-r2><span>Son dosya yedeği</span><b>${M.lb?new Date(M.lb).toLocaleString('tr-TR'):'—'}</b></div>
   <div class=ak-r2><span>Son bulut yedeği</span><b>${+localStorage.getItem('bt_cloud_last_backup')?new Date(+localStorage.getItem('bt_cloud_last_backup')).toLocaleString('tr-TR'):'Henüz alınmadı'}</b></div>
@@ -680,22 +680,23 @@ function akSetBody(){
   
   <button class=ak-r2 onclick="cloudLogout()"><span style="color:var(--bad)">Çıkış yap</span></button>
  </div></div>
- <div class=ak-grp><h4>Takvim ve hafta</h4><div class=ak-list>
+ <div class=ak-grp><h4>📅 Takvim ve hafta</h4><div class=ak-list>
   <button class=ak-r2 onclick="extendYear(1)"><span>+1 yıl ileri ekle</span></button>
   <button class=ak-r2 onclick="extendYear(-1)"><span>+1 yıl geri ekle</span></button>
   <div class=ak-r2><span>Hafta kapanış saati</span><input class=ak-in2 type=number min=0 max=23 value="${M.ch==null?17:M.ch}" onchange="setCh(this.value)"></div>
  </div></div>
- <div class=ak-grp><h4>Kategoriler</h4><div class=ak-tags>${cats(S.cats,'cat')}</div><div class=ak-sep></div><div class=ak-tags>${cats(S.dcats,'dcat')}</div></div>
- <div class=ak-grp><h4>Faturalar</h4><div class=ak-list>${S.bills.map((b,i)=>`<div class=ak-r2 onclick="openBillP(${i})"><span>${billIco(b.cat)} ${E(b.name)} <small>${b.fixed?F(b.amount):'değişken'} · ${b.day}'i</small></span><button class=ak-x onclick="event.stopPropagation();delBill(${i})">×</button></div>`).join('')||'<div class=ak-empty>Fatura yok</div>'}<button class=ak-r2 onclick="openBillP(null)"><span>+ Fatura ekle</span></button></div></div>
- <div class=ak-grp><h4>Sabit harcamalar</h4><div class=ak-list>${(S.fixed||[]).map((f,i)=>`<div class=ak-r2><span>${E(f.n||f.c)} <small>${F(f.a)}</small></span><button class=ak-x onclick="delFixed(${i})">×</button></div>`).join('')||'<div class=ak-empty>Yok</div>'}<button class=ak-r2 onclick="openFixedP()"><span>+ Sabit harcama</span></button></div></div>
- <div class=ak-grp><h4>Harcama limitleri</h4><div class=ak-list>${S.cats.map((c,i)=>`<div class=ak-r2><span>${E(c)}</span><input class=ak-in2 type=number inputmode=decimal placeholder="Limit" value="${S.limits[c]||''}" onchange="setLim(${i},this.value)"></div>`).join('')}</div></div>
- <div class=ak-grp><h4>Kurlar</h4><div class=ak-list>${Object.keys(FXU).map(u=>`<div class=ak-r2><span>${FXU[u][0]} ${FXU[u][1]}</span><input class=ak-in2 type=number inputmode=decimal value="${fxRate(u)||''}" onchange="setFx('${u}',this.value)"></div>`).join('')}<div class=ak-r2><span>Son güncelleme</span><b>${M.rates&&M.rates.t?new Date(M.rates.t).toLocaleString('tr-TR'):'—'}</b></div>
+ <div class=ak-grp><h4>🏷️ Kategoriler</h4><div class=ak-tags>${cats(S.cats,'cat')}</div><div class=ak-sep></div><div class=ak-tags>${cats(S.dcats,'dcat')}</div></div>
+ <div class=ak-grp><h4>🧾 Faturalar</h4><div class=ak-list>${S.bills.map((b,i)=>`<div class=ak-r2 onclick="openBillP(${i})"><span>${billIco(b.cat)} ${E(b.name)} <small>${b.fixed?F(b.amount):'değişken'} · ${b.day}'i</small></span><button class=ak-x onclick="event.stopPropagation();delBill(${i})">×</button></div>`).join('')||'<div class=ak-empty>Fatura yok</div>'}<button class=ak-r2 onclick="openBillP(null)"><span>+ Fatura ekle</span></button></div></div>
+ <div class=ak-grp><h4>📌 Sabit harcamalar</h4><div class=ak-list>${(S.fixed||[]).map((f,i)=>`<div class=ak-r2><span>${E(f.n||f.c)} <small>${F(f.a)}</small></span><button class=ak-x onclick="delFixed(${i})">×</button></div>`).join('')||'<div class=ak-empty>Yok</div>'}<button class=ak-r2 onclick="openFixedP()"><span>+ Sabit harcama</span></button></div></div>
+ <div class=ak-grp><h4>🚦 Harcama limitleri</h4><div class=ak-list>${S.cats.map((c,i)=>`<div class=ak-r2><span>${E(c)}</span><input class=ak-in2 type=number inputmode=decimal placeholder="Limit" value="${S.limits[c]||''}" onchange="setLim(${i},this.value)"></div>`).join('')}</div></div>
+ <div class=ak-grp><h4>💱 Kurlar</h4><div class=ak-list>${Object.keys(FXU).map(u=>`<div class=ak-r2><span>${FXU[u][0]} ${FXU[u][1]}</span><input class=ak-in2 type=number inputmode=decimal value="${fxRate(u)||''}" onchange="setFx('${u}',this.value)"></div>`).join('')}<div class=ak-r2><span>Son güncelleme</span><b>${M.rates&&M.rates.t?new Date(M.rates.t).toLocaleString('tr-TR'):'—'}</b></div>
   <button class=ak-r2 onclick="refreshRates(true)"><span>Kurları güncelle</span></button></div></div>
- <div class=ak-grp><h4>Güvenlik</h4><div class=ak-list>
+ <div class=ak-grp><h4>🔒 Güvenlik</h4><div class=ak-list>
   <button class=ak-r2 onclick="togLock()"><span>PIN kilidi</span><b>${M.pin?'Açık':'Kapalı'}</b></button>
   ${M.pin?`<button class=ak-r2 onclick="openPinP()"><span>PIN'i değiştir</span></button><button class=ak-r2 onclick="togBio()"><span>Parmak izi</span><b>${M.bio?'Açık':'Kapalı'}</b></button>`:''}
  </div></div>
- <div class=ak-grp><h4>Diğer</h4><div class=ak-list>
+ <div class=ak-grp><h4>📣 Güncelleme ve Duyuru</h4>${ADMIN?adminCard().replace(/<h2>[\s\S]*?<\/h2>/,''):'<div class=mut>Bu bölüm yalnızca yönetici uygulamasında görünür.</div>'}</div>
+ <div class=ak-grp><h4>⚙️ Diğer</h4><div class=ak-list>
   <button class=ak-r2 onclick="openGuide()"><span>📖 Rehber</span></button>
   <button class=ak-r2 onclick="pdfRapor()"><span>📄 PDF rapor</span></button>
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
