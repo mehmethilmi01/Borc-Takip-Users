@@ -153,7 +153,7 @@ const pickPop=(anchor,items,sel,onPick)=>{document.querySelectorAll('.qkpop').fo
 const qkCat=i=>{cat=S.cats[i];csub=null;if(/motor/i.test(cat)){ED.a=QK.a||'';ED.n='';QK.a='';return motoLogSheet()}qkRefresh();const subs=subsOf(cat);if(!subs.length)return;pickPop(document.querySelectorAll('.qkc')[i],subs,csub,j=>{csub=j<0?null:subs[j];qkRefresh()})};
 const qkSet=j=>{const l=subsOf(cat);csub=(+j>=0&&l[+j])?l[+j]:null;qkRefresh()};
 const qkSave=()=>{const a=+QK.a;if(!a)return toast('Tutar gir');ED.a=a;ED.n='';ED.d=iso(t0);ED.ds=null;QK.a='';addEx()};
-const fixedNow=i=>{const f=(S.fixed||[])[i];if(!f)return;cat=f.c;csub=null;ED.a=+f.a;ED.n=(f.n||'').trim();ED.d=iso(t0);ED.ds=f.ds||null;const n0=S.ex.length;addEx();if(S.ex.length>n0)toast('Sabit harcama eklendi')};
+const fixedNow=i=>{const f=(S.fixed||[])[i];if(!f)return;cat=f.c;csub=null;ED.a=+f.a;ED.n='';ED.d=iso(t0);ED.ds=f.ds||null;const n0=S.ex.length;addEx();if(S.ex.length>n0)toast('Sabit harcama eklendi')};
 function akFlowBody(){
  const x=akCur();if(!x)return '<div class="card empty">Henüz hafta yok</div>';
  const arr=akWeeks(),idx=arr.findIndex(y=>y.mi==x.mi&&y.wi==x.wi),first=arr.find(y=>!isClosed(y.w));
