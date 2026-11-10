@@ -204,8 +204,13 @@ const wkMon=()=>{const dw=(bt0.getDay()+6)%7;const m=new Date(bt0);m.setDate(bt0
 const wkDays=()=>{const m=wkMon();return [...Array(7)].map((_,i)=>{const d=new Date(m);d.setDate(m.getDate()+i);return iso(d)})};
 const wkData=()=>{S.wg=S.wg||{};return S.wg[iso(wkMon())]||null};
 const wkEns=()=>{S.wg=S.wg||{};const k=iso(wkMon());S.wg[k]=S.wg[k]||{t:0,g:[]};return S.wg[k]};
-const wkSaveT=id=>{const v=Math.round(+document.getElementById(id).value||0);if(v<=0)return toast('Hedef gir');wkEns().t=v;save();draw()};
-const wkEditT=()=>{const D=wkData()||{t:0};akSheet(`<h3>Haftalık hedef</h3><input id=wkT2 class=in inputmode=numeric value="${D.t||''}"><button class=btnp style="margin-top:10px" onclick="wkSaveT('wkT2');akClose()">Kaydet</button>`)};
+const wkNextWeek=()=>{const arr=akWeeks();const ci=arr.findIndex(y=>!isClosed(y.w));if(ci<0||ci+1>=arr.length)return null;return arr[ci+1]};
+const wkAutoTotal=()=>{const n=wkNextWeek();return n?wtotW(n.w):0};
+const wkTarget=D=>D?(D.tAuto?wkAutoTotal():(+D.t||0)):0;
+const wkEnsureWeek=()=>{S.wg=S.wg||{};const k=iso(wkMon());if(!S.wg[k]){S.wg[k]={t:0,g:[],tAuto:true,autoAt:Date.now()};save()}};
+const wkSaveT=id=>{const v=Math.round(+document.getElementById(id).value||0);if(v<=0)return toast('Hedef gir');const D=wkEns();D.t=v;D.tAuto=false;save();draw()};
+const wkAutoOn=()=>{const D=wkEns();D.tAuto=true;save();draw()};
+const wkEditT=()=>{const D=wkData()||{t:0,tAuto:true};const cur=wkTarget(D);akSheet(`<h3>Haftalık hedef</h3><div class=mut style="margin-bottom:8px">${D.tAuto?'Otomatik: sıradaki haftanın toplam borcu. Borç eklenip düzenlendikçe güncellenir.':'Elle girilmiş hedef.'}</div><input id=wkT2 class=in inputmode=numeric value="${cur||''}"><button class=btnp style="margin-top:10px" onclick="wkSaveT('wkT2');akClose()">Kaydet (elle)</button>${D.tAuto?'':`<button class=add style="margin-top:8px;width:100%" onclick="wkAutoOn();akClose()">Otomatiğe dön</button>`}`)};
 const wkTog=()=>{S.wkOpen=!(S.wkOpen!==false);save();draw()};
 const wkDayGain=d=>{const D=wkData();return D?(D.g||[]).filter(x=>x.d==d).reduce((s,x)=>s+(+x.a||0),0):0};
 const wkDayExp=d=>(S.ex||[]).filter(e=>e.d==d).reduce((s,e)=>s+(+e.a||0),0);
@@ -215,18 +220,18 @@ const wkAutoZero=()=>{const today=iso(bt0);let ch=false;
  if(S.ex&&S.ex.some(e=>e.auto===1&&+e.a===0)){S.ex=S.ex.filter(e=>!(e.auto===1&&+e.a===0));ch=true}
  if(S.cats&&S.cats.includes('🧾 Günlük')&&!(S.ex||[]).some(e=>e.c==='🧾 Günlük')){S.cats=S.cats.filter(c=>c!=='🧾 Günlük');ch=true}
  const D=wkData();
- if(D&&D.t){const days=wkDays();D.g=D.g||[];for(const d of days){if(d>=today)break;if(!D.g.some(x=>x.d==d)){D.g.push({d,a:0,auto:1});ch=true}}}
+ if(D&&(D.tAuto||D.t)){const days=wkDays();D.g=D.g||[];for(const d of days){if(d>=today)break;if(!D.g.some(x=>x.d==d)){D.g.push({d,a:0,auto:1});ch=true}}}
  if(ch)save()};
-const wkAlerts=()=>{if(bt0.getDay()!==1)return[];const D=wkData();if(D&&D.t)return[];const id='wk_'+iso(bt0);if((M.dis||{})[id]==iso(t0))return[];return[['🎯 Yeni hafta: haftalık hedefini gir',"wkEditT()",id]]};
+const wkAlerts=()=>{if(bt0.getDay()!==1)return[];const D=wkData();if(!D||!D.tAuto||new Date().getHours()<8)return[];const id='wk_'+iso(bt0);if((M.dis||{})[id]==iso(t0))return[];return[['🎯 Bu haftanın hedefi otomatik girildi: '+F(wkTarget(D))+' (düzenlemek için dokun)',"wkEditT()",id]]};
 const wkHide=()=>{S.wkHidden=true;save();draw()};
 const wkShow=()=>{S.wkHidden=false;save();draw()};
-const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=ghost-pill onclick="wkShow()">🎯 Haftalık hedef kartını göster</button></div>`;const open=S.wkOpen!==false;const days=wkDays();const D=wkData();const hasT=!!(D&&D.t);
- const head=`<div class=row><h2 onclick="wkTog()" style="border:0;margin:0;cursor:pointer;flex:1">🎯 Haftalık hedef <span class=mut style="font-size:14px">${open?'▾':'▸'}</span></h2><div style="display:flex;gap:6px;align-items:center"><button class=add onclick="wkEditT()">${hasT?'Hedef: '+F(D.t):'+ Hedef gir'}</button><button class=bnic onclick="wkHide()" aria-label="Gizle">✕</button></div></div>`;
+const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=ghost-pill onclick="wkShow()">🎯 Haftalık hedef kartını göster</button></div>`;const open=S.wkOpen!==false;const days=wkDays();const D=wkData();const T=wkTarget(D);const hasT=!!D&&(D.tAuto||T>0);
+ const head=`<div class=row><h2 onclick="wkTog()" style="border:0;margin:0;cursor:pointer;flex:1">🎯 Haftalık hedef <span class=mut style="font-size:14px">${open?'▾':'▸'}</span></h2><div style="display:flex;gap:6px;align-items:center"><button class=add onclick="wkEditT()">${hasT?'Hedef: '+F(T):'+ Hedef gir'}</button><button class=bnic onclick="wkHide()" aria-label="Gizle">✕</button></div></div>`;
  if(!open)return `<div class=card style="margin:12px 0">${head}</div>`;
  if(!hasT)return `<div class=card style="margin:12px 0">${head}<div class=mut style="margin-top:8px">Bu hafta için hedef tutarı gir.</div></div>`;
  const g=D.g||[];const got=g.reduce((s,x)=>s+(+x.a||0),0);
  const exp=(S.ex||[]).filter(e=>days.includes(e.d)).reduce((s,e)=>s+(+e.a||0),0);
- const eff=D.t+exp;const rem=eff-got;const ti=days.indexOf(iso(bt0));const left=Math.max(0,6-Math.max(0,ti));
+ const eff=T+exp;const rem=eff-got;const ti=days.indexOf(iso(bt0));const left=Math.max(0,6-Math.max(0,ti));
  const per=left>0&&rem>0?Math.ceil(rem/left):0;
  const pct=eff>0?Math.max(0,Math.min(100,Math.round(got/eff*100))):0;
  const st=rem<=0?'Hedef tamam 🎉':left>0?`Kalan ${left} günde günlük: ${F(per)}`:`Hafta bitti, kalan ${F(rem)}`;
@@ -234,7 +239,7 @@ const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=
  const cols=days.map((d,i)=>{const gg=wkDayGain(d);const future=ti<0||i>=ti;const up=future?(per>0?F(per):'—'):F(gg);const h=per7>0?Math.min(100,Math.round(gg/per7*100)):0;return `<div class="wkd${d==iso(bt0)?' today':''}" onclick="wkDayPop('${d}')"><small class=wkup>${up}</small><div class=wkb><i style="height:${h}%"></i></div><small>${WK_DAYS[i]}</small></div>`}).join('');
  return `<div class=card style="margin:12px 0">${head}
  <div style="height:10px;border-radius:6px;background:var(--line);overflow:hidden;margin:10px 0 8px"><div style="height:100%;width:${pct}%;background:var(--acc);transition:width .3s"></div></div>
- <div class=row><span class=mut>Hedef</span><b class=num>${F(D.t)}</b></div>
+ <div class=row><span class=mut>Hedef${D.tAuto?' (otomatik)':''}</span><b class=num>${F(T)}</b></div>
  <div class=row><span class=mut>Harcama (hedefe eklendi)</span><b class=num>${F(exp)}</b></div>
  <div class=row><span class=mut>Kazanılan</span><b class="num ok">${F(got)}</b></div>
  <div class=row><span class=mut>Kalan</span><b class=num>${F(Math.max(0,rem))}</b></div>
@@ -1279,7 +1284,7 @@ const addEx=()=>{if(/motor/i.test(cat||''))return motoLogSheet();const a=+ED.a;i
  S.ex.push({d:ED.d||iso(bt0),c:cat,s:csub||null,a,n:ED.n,ts:Date.now(),ds:ED.ds||undefined});
  if(ED.ds)debtAdj(ED.ds,a);
  ED={a:'',d:iso(bt0),n:'',ds:ED.ds||null};save();draw()};
-function draw(reset){wbFill();try{wkAutoZero()}catch(e){};const y=window.scrollY;
+function draw(reset){wbFill();try{wkEnsureWeek();wkAutoZero()}catch(e){};const y=window.scrollY;
 document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==tab));
 document.getElementById('app').innerHTML=akRender();if(tab=='h'||tab=='b')renderSearch();
 if(reset){if(gw!==null){const e=document.getElementById('w'+gw);if(e){e.scrollIntoView();gw=null}else window.scrollTo(0,0)}else window.scrollTo(0,0)}else window.scrollTo(0,y)}
