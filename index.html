@@ -231,12 +231,12 @@ const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=
  if(!hasT)return `<div class=card style="margin:12px 0">${head}<div class=mut style="margin-top:8px">Bu hafta için hedef tutarı gir.</div></div>`;
  const g=D.g||[];const got=g.reduce((s,x)=>s+(+x.a||0),0);
  const exp=(S.ex||[]).filter(e=>days.includes(e.d)).reduce((s,e)=>s+(+e.a||0),0);
- const eff=T+exp;const rem=eff-got;const ti=days.indexOf(iso(bt0));const left=ti<0?0:7-ti;
+ const eff=T+exp;const rem=eff-got;const ti=days.indexOf(iso(bt0));const entered=d=>g.some(x=>x.d==d&&!x.auto);const openDays=days.filter((d,i)=>ti>=0&&i>=ti&&!entered(d));const left=openDays.length;
  const per=left>0&&rem>0?Math.round(rem/left):0;
  const pct=eff>0?Math.max(0,Math.min(100,Math.round(got/eff*100))):0;
  const st=rem<=0?'Hedef tamam 🎉':left>0?`Kalan ${left} günde günlük: ${F(per)}`:`Hafta bitti, kalan ${F(rem)}`;
  const per7=eff/7;
- const cols=days.map((d,i)=>{const gg=wkDayGain(d);const future=ti<0||i>=ti;const up=future?(per>0?F(per):'—'):F(gg);const h=per7>0?Math.min(100,Math.round(gg/per7*100)):0;return `<div class="wkd${d==iso(bt0)?' today':''}" onclick="wkDayPop('${d}')"><small class=wkup>${up}</small><div class=wkb><i style="height:${h}%"></i></div><small>${WK_DAYS[i]}</small></div>`}).join('');
+ const cols=days.map((d,i)=>{const gg=wkDayGain(d);const up=openDays.includes(d)?(per>0?F(per):'—'):F(gg);const h=per7>0?Math.min(100,Math.round(gg/per7*100)):0;return `<div class="wkd${d==iso(bt0)?' today':''}" onclick="wkDayPop('${d}')"><small class=wkup>${up}</small><div class=wkb><i style="height:${h}%"></i></div><small>${WK_DAYS[i]}</small></div>`}).join('');
  return `<div class=card style="margin:12px 0">${head}
  <div style="height:10px;border-radius:6px;background:var(--line);overflow:hidden;margin:10px 0 8px"><div style="height:100%;width:${pct}%;background:var(--acc);transition:width .3s"></div></div>
  <div class=row><span class=mut>Hedef${D.tAuto?' (otomatik)':''}</span><b class=num>${F(T)}</b></div>
