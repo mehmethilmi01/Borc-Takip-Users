@@ -404,7 +404,9 @@ const motoOpen=k=>{if(MOTO_MOVED)return;akSt.motoPart=k;draw()};
 const motoSavePart=k=>{const d=document.getElementById('mpD').value,km=+document.getElementById('mpK').value||0,n=document.getElementById('mpN').value.trim();if(!d)return toast('Tarih gir');
  S.moto.p=S.moto.p||{};S.moto.p[k]={d,km,n};S.moto.log=S.moto.log||[];S.moto.log.unshift({k,d,km,n});save();toast(motoPartLbl[k]+' kaydedildi');draw()};
 const motoKmSave=()=>{S.moto.m.km=+document.getElementById('mkK').value||0;S.moto.m.kmAt=iso(t0);save();draw()};
-const motoLogDel=idx=>{const x=(S.moto&&S.moto.log||[])[idx];if(!x)return;if(!confirm('Bu bakım kaydı silinsin mi? Bağlı harcama varsa o da silinir.'))return;const M2=S.moto;
+const askSure=(msg,fn)=>{window.__sureFn=fn;akSheet(`<h3>Emin misin?</h3><div class=mut style="margin-bottom:14px">${E(msg)}</div><div style="display:flex;gap:8px"><button class=add style="flex:1" onclick="akClose()">Vazgeç</button><button class=btnp style="flex:1" onclick="akClose();if(window.__sureFn)window.__sureFn()">Sil</button></div>`)};
+const motoLogDel=idx=>{const x=(S.moto&&S.moto.log||[])[idx];if(!x)return;askSure('Bu bakım kaydı silinsin mi? Bağlı harcama varsa o da silinir.',()=>motoLogDo(idx));return};
+const motoLogDo=idx=>{const x=(S.moto&&S.moto.log||[])[idx];if(!x)return;const M2=S.moto;
  if(x.gid){const ei=S.ex.findIndex(e=>e.gid==x.gid);if(ei>=0)S.ex.splice(ei,1);motoUnlog(x.gid)}
  else{M2.log.splice(idx,1);const k=x.k;const last=M2.log.filter(y=>y.k==k).sort((a,b)=>b.d.localeCompare(a.d))[0];if(last)M2.p[k]={d:last.d,km:last.km,n:last.n};else if(M2.p)delete M2.p[k];if(M2.m&&x.km===M2.m.km){const lk=M2.log.filter(y=>y.km>0).sort((a,b)=>b.d.localeCompare(a.d))[0];if(lk){M2.m.km=lk.km;M2.m.kmAt=lk.d}}}
  save();draw()};
@@ -431,7 +433,7 @@ const motoSigRead=async inp=>{const f=inp.files[0];if(!f)return;const msg=docume
   motoSigFill(x);msg.textContent='Bilgiler dolduruldu, kontrol edip kaydet.'
  }catch(e){msg.textContent='Okunamadı: '+(e.message||'hata')+'. Bilgileri elle gir.'}};
 const motoSigSave=()=>{const sirket=document.getElementById('sgS').value.trim(),bas=document.getElementById('sgB').value,bit=document.getElementById('sgE').value,no=document.getElementById('sgN').value.trim();if(!bas||!bit)return toast('Başlangıç ve bitiş tarihi gir');S.moto=S.moto||{};S.moto.sig={sirket,bas,bit,no};save();toast('Poliçe kaydedildi');draw()};
-const motoSigDel=()=>{if(!confirm('Poliçe silinsin mi?'))return;delete S.moto.sig;save();draw()};
+const motoSigDel=()=>askSure('Poliçe silinsin mi?',()=>{delete S.moto.sig;save();draw()});
 const motoSigDue=()=>{const g=S.moto&&S.moto.sig;if(!g||!g.bit)return[];const d=Math.round((new Date(g.bit+'T00:00')-bt0)/864e5);if(d!==7&&d!==1)return[];const id='sig_'+d;if((M.dis||{})[id]==iso(t0))return[];return[['🛡️ Sigorta poliçesi '+(d===1?'yarın':'1 hafta sonra')+' bitiyor'+(g.sirket?' ('+g.sirket+')':''),"tab='mt';draw(1)",id]]};
 const motoPSync=k=>{const M2=S.moto;M2.p=M2.p||{};const last=M2.log.filter(y=>y.k==k).sort((a,b)=>b.d.localeCompare(a.d))[0];if(last)M2.p[k]={d:last.d,km:last.km,n:last.n,gid:last.gid};else delete M2.p[k]};
 const motoLogEdit=idx=>{const x=(S.moto&&S.moto.log||[])[idx];if(!x)return;const ex=x.gid?S.ex.find(e=>e.gid==x.gid):null;const grp=x.gid?S.moto.log.filter(y=>y.gid==x.gid):[x];const parts=grp.map(y=>motoPartLbl[y.k]||y.k).join(', ');akSheet(`<h3>Bakım kaydını düzenle</h3><div class=field><label>Parçalar</label><div class=mut>${E(parts)}</div></div><div class=field><label>Tarih</label><input type=date id=meD class=in value="${x.d}"></div><div class=field><label>Kilometre</label><input id=meK class=in inputmode=numeric value="${x.km||''}"></div><div class=field><label>Tutar ₺ ${ex?'':'(bağlı harcama yok)'}</label><input id=meA class=in inputmode=decimal value="${ex?ex.a:''}" ${ex?'':'disabled'}></div><div class=field><label>Not</label><input id=meN class=in value="${E(x.n||'')}"></div><div class=mut style="margin:6px 0 10px">Aynı anda girilen parçalar birlikte güncellenir.</div><button class=btnp onclick="motoLogUpd(${idx});akClose()">Kaydet</button>`)};
@@ -467,7 +469,7 @@ function akMotorBody(){
  if(!S.moto||!S.moto.m||akSt.motoEdit)return motoSetupHTML();
  if(akSt.motoPart)return motoDetail(akSt.motoPart);
  const m=S.moto.m;const greet=!akSt.motoSeen;akSt.motoSeen=1;if(greet){MOTO_POS=MOTO_KEYS[0];void 0}
- const log=(S.moto.log||[]).slice(0,15).map(x=>`<div class=row><div><b>${motoPartLbl[x.k]}</b><div class=mut>${fd(new Date(x.d+'T00:00'))} · ${motoKmFmt(x.km)} km</div></div></div>`).join('')||'<div class=empty>Henüz bakım kaydı yok</div>';
+ const log=(S.moto.log||[]).slice(0,15).map((x,i)=>`<div class=row><div><b>${motoPartLbl[x.k]}</b><div class=mut>${fd(new Date(x.d+'T00:00'))} · ${motoKmFmt(x.km)} km</div></div><div><button class=bnic onclick="motoLogEdit(${i})" aria-label="Düzenle">✎</button><button class=bnic del onclick="motoLogDel(${i})" aria-label="Sil">🗑</button></div></div>`).join('')||'<div class=empty>Henüz bakım kaydı yok</div>';
  return `<div style="padding:0">${motoSceneHTML(m.renk||'#1d3f8f',greet)}</div>${motoSigCard()}
  <div class=mut style="text-align:center;font-size:12px;margin:-4px 0 12px">Sürükleyerek döndür · Noktalara dokun</div>
  <div class=card><div><b>${E(m.marka)} ${E(m.model)}</b></div><div class=mut>${m.yil||''} · ${motoKmFmt(m.km)} km</div>
