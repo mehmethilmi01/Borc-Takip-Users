@@ -416,19 +416,21 @@ function akDebtBody(){if(akSt.cat)return akCatBody();
  const l=Object.entries(g).filter(([c,x])=>x.t-x.o>0).sort((a,b)=>(b[1].t-b[1].o)-(a[1].t-a[1].o));
  const left=tot2-pd+dtot();
  const cats=l.map(([c,x])=>`<button class=debt onclick="akSt.cat='${Q(c)}';draw()"><div class=info><b>${E(c)}</b><small>${x.c} ödeme kaldı</small><div class=bar><i style="width:${x.t?Math.round(x.o/x.t*100):0}%"></i></div></div><div class="rem num">${F(x.t-x.o)}</div></button>`).join('');
- const deb=S.debts.map((d,i)=>`<div class="row pl ${d.paid?'paid':''}" data-dtid="${d.id}"><span class=check onclick="dtTog(${i})">${AK_CHK}</span><div class=meta onclick="openDebtP(${i})"><div class=nm>${E(d.name)}</div><div class=sub>${E(d.cat)}${d.fx?' · '+fxLbl(d.fx.u,d.fx.q):''}</div></div><div class="amt num">${F(d.amount)}</div></div>`).join('');
+ const deb=S.debts.map((d,i)=>!showPaidItem(d)?'':`<div class="row pl ${d.paid?'paid':''}" data-dtid="${d.id}"><span class=check onclick="dtTog(${i})">${AK_CHK}</span><div class=meta onclick="openDebtP(${i})"><div class=nm>${E(d.name)}</div><div class=sub>${E(d.cat)}${d.fx?' · '+fxLbl(d.fx.u,d.fx.q):''}</div></div><div class="amt num">${F(d.amount)}</div></div>`).join('');
  return `<section class="card stagger"><div class=lbl>Kalan toplam borç</div><div class="big num" style="font-size:30px;margin-top:4px">${F(left)}</div><div class=bar style="height:6px;border-radius:9px;background:var(--surface2);margin-top:14px;overflow:hidden"><i style="display:block;height:100%;width:${tot2?Math.round(pd/tot2*100):0}%;background:var(--good);border-radius:9px"></i></div></section>
  <div class=sect><h2>Kategoriler</h2></div>${cats||'<div class="card empty">Kalan borç yok</div>'}
  <div class=sect><h2>Tarihsiz borçlar</h2><button class=link onclick="openDebtP(null)">+ Ekle</button></div>
  <div class=list>${deb||'<div class=empty>Tarihsiz borç yok</div>'}</div>
- ${akFxBody()}${akRecvBody()}`}
+ ${akFxBody()}${akRecvBody()}${akHistBody()}`}
 function akFxBody(){const g={};
  S.m.forEach(m=>m.w.forEach(w=>w[2].forEach(p=>{const f=p[10];if(!f||p[3]||remOf(p)<=0)return;const o=g[f.u]=g[f.u]||{q:0,t:0};o.q+=Math.max(0,f.q-(f.qp||0));o.t+=remOf(p)})));
  S.debts.forEach(d=>{if(!d.fx||d.paid||!d.amount)return;const o=g[d.fx.u]=g[d.fx.u]||{q:0,t:0};o.q+=d.fx.q;o.t+=+d.amount});
  const ks=Object.keys(g);if(!ks.length)return '';
  return `<div class=sect><h2>Döviz ve altın</h2></div><div class=list>${ks.map(u=>`<div class=row><div class=meta><div class=nm>${fxLbl(u,g[u].q)}</div><div class=sub>kur ${fxRate(u)?F2(fxRate(u))+' ₺':'yok'}</div></div><div class="amt num">${F(g[u].t)}</div></div>`).join('')}</div>`}
-function akRecvBody(){const l=S.recv.map((r,i)=>({...r,i}));
- return `<div class=sect><h2>Alacaklar</h2><button class=link onclick="openRecvP(null)">+ Ekle</button></div>${l.length?`<div class=list>${l.map(r=>`<div class="row ${r.paid?'paid':''}"><span class=check onclick="toggleRecv(${r.i})">${AK_CHK}</span><div class=meta onclick="openRecvP(${r.i})"><div class=nm>${E(r.name)}</div><div class=sub>${r.date?fdShort(r.date):''}${r.note?' · '+E(r.note):''}</div></div><div class="amt num">${F(r.amount)}</div></div>`).join('')}</div>`:'<div class="card empty">Alacak yok</div>'}`}
+function akHistBody(){const h=S.hist||[];const open=!!akSt.hist;
+ return `<div class=sect style="cursor:pointer" onclick="akSt.hist=!akSt.hist;draw()"><h2>Geçmiş ${open?'▾':'▸'}</h2></div>${open?(h.length?`<div class=list>${h.slice().reverse().map(x=>`<div class=row><div class=meta><div class=nm>${E(x.n)}</div><div class=sub>${x.k=='recv'?'Alacak':'Tarihsiz borç'} · ${new Date(x.t).toLocaleDateString('tr-TR',{day:'numeric',month:'short',year:'numeric'})}${x.no?' · '+E(x.no):''}</div></div><div class="amt num">${F(x.a)}</div></div>`).join('')}</div>`:'<div class=empty>Geçmiş kaydı yok</div>'):''}`}
+function akRecvBody(){const l=S.recv.map((r,i)=>({...r,i})).filter(showPaidItem);
+ return `<div class=sect><h2>Alacaklar</h2><button class=link onclick="openRecvP(null)">+ Ekle</button></div>${l.length?`<div class=list>${l.map(r=>`<div class="row ${r.paid?'paid':''}"><span class=check onclick="toggleRecv(${r.i})">${AK_CHK}</span><div class=meta onclick="openRecvP(${r.i})"><div class=nm>${E(r.name)}</div><div class=sub>${r.date?fdShort(r.date):''}${r.note?' · '+E(r.note):''}</div></div><div class="amt num">${F(r.amount)}</div><button class=x onclick="event.stopPropagation();delRecv(${r.i})">×</button></div>`).join('')}</div>`:'<div class="card empty">Alacak yok</div>'}`}
 
 /* 5) AYARLAR (işlevler aynı, görünüm Akış'a göre) */
 function akSkinCard(){return `<div class=ak-grp><h4>🎨 Tasarım</h4><div class=ak-seg></div></div>`}
@@ -786,7 +788,9 @@ const logEv=(id,name,text)=>{if(!id)return;S.hlog=S.hlog||{};const o=S.hlog[id]=
 const showLog=(id,name)=>{const L=id?(S.hlog||{})[id]:null;const e=L?L.e.slice().reverse():[];
  let o=document.getElementById('hlogovl');if(!o){o=document.createElement('div');o.id='hlogovl';o.style.cssText='display:none;position:fixed;inset:0;background:#0008;z-index:13;align-items:center;justify-content:center;padding:20px';document.body.appendChild(o)}
  o.innerHTML=`<div class=card style="max-width:380px;margin:0;width:94%;max-height:86vh;overflow-y:auto"><h2 style="margin-bottom:8px">📜 ${E((L&&L.n)||name||'Kayıt')} · geçmiş</h2>${e.length?e.map(x=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div class=mut style="font-size:12px">${fmtTs(x.t)}</div><div>${E(x.x)}</div></div>`).join(''):'<div class=mut>Henüz kayıt yok. Bu borçta bundan sonra yapılan her işlem burada tarih ve saatiyle görünür.</div>'}<div class=row style="margin-top:10px"><button class=add onclick="document.getElementById('hlogovl').style.display='none'">Kapat</button></div></div>`;o.style.display='flex'};
-const dtTog=i=>{const d=S.debts[i];if(!d)return;d.paid=d.paid?0:1;logEv(d.id,d.name,d.paid?'ödendi olarak işaretlendi':'ödenmedi olarak geri alındı');save();draw()};
+const histAdd=(kind,x)=>{S.hist=S.hist||[];S.hist.push({k:kind,n:x.name,a:+x.amount||0,c:x.cat||'',d:x.date||'',no:x.note||'',t:Date.now()});if(S.hist.length>500)S.hist.splice(0,S.hist.length-500)};
+const showPaidItem=x=>!x.paid||!x.paidAt||(Date.now()-x.paidAt)<86400000;
+const dtTog=i=>{const d=S.debts[i];if(!d)return;d.paid=d.paid?0:1;d.paidAt=d.paid?Date.now():null;if(d.paid&&!d.keep)histAdd('debt',d);logEv(d.id,d.name,d.paid?'ödendi olarak işaretlendi':'ödenmedi olarak geri alındı');save();draw()};
 
 const recordRates=()=>{M.rh=M.rh||{};const k=iso(T());const cur=Object.assign({},M.rh[k]||{});
  Object.keys(FXU).forEach(u=>{const v=fxRate(u);if(v>0)cur[u]=v});M.rh[k]=cur;
@@ -1488,7 +1492,7 @@ const closeRecvP=()=>{const o=document.getElementById('rvovl');if(o)o.style.disp
 const saveRecvP=()=>{const n=(document.getElementById('rvn').value||'').trim(),a=+document.getElementById('rva').value;if(!n||!a)return toast('Ad ve tutar gerekli');
 const o={name:n,amount:a,date:document.getElementById('rvd').value||'',note:(document.getElementById('rvo').value||'').trim(),paid:RV!=null?!!S.recv[RV].paid:false};
 if(RV!=null)S.recv[RV]=o;else S.recv.push(o);save();closeRecvP();draw();toast('Alacak kaydedildi')};
-const toggleRecv=i=>{S.recv[i].paid=S.recv[i].paid?false:true;save();draw()};
+const toggleRecv=i=>{const r=S.recv[i];r.paid=r.paid?false:true;r.paidAt=r.paid?Date.now():null;if(r.paid)histAdd('recv',r);save();draw()};
 const delRecv=i=>{const snap=JSON.stringify(S);S.recv.splice(i,1);save();draw();UNDO=snap;showUndo('Alacak silindi')};
 
 
