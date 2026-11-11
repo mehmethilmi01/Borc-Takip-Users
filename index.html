@@ -229,13 +229,14 @@ const wkHoldEnd=()=>clearTimeout(window.__wkT);
 const wkDayClick=d=>{if(window.__wkLong){window.__wkLong=false;return}wkDayPop(d)};
 const wkHide=()=>{S.wkHidden=true;save();draw()};
 const wkShow=()=>{S.wkHidden=false;save();draw()};
+const WK_SIG=180;const wkTev=G=>G>=12000?Math.round((G-G/1.2)*0.2*100)/100:0;
 const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=ghost-pill onclick="wkShow()">🎯 Haftalık hedef kartını göster</button></div>`;const open=S.wkOpen!==false;const days=wkDays();const D=wkData();const T=wkTarget(D);const hasT=!!D&&(D.tAuto||T>0);
  const head=`<div class=row><h2 onclick="wkTog()" style="border:0;margin:0;cursor:pointer;flex:1">🎯 Haftalık hedef <span class=mut style="font-size:14px">${open?'▾':'▸'}</span></h2><div style="display:flex;gap:6px;align-items:center"><button class=add onclick="wkEditT()">${hasT?'Hedef: '+F(T):'+ Hedef gir'}</button><button class=bnic onclick="wkHide()" aria-label="Gizle">✕</button></div></div>`;
  if(!open)return `<div class=card style="margin:12px 0">${head}</div>`;
  if(!hasT)return `<div class=card style="margin:12px 0">${head}<div class=mut style="margin-top:8px">Bu hafta için hedef tutarı gir.</div></div>`;
  const g=D.g||[];const got=g.reduce((s,x)=>s+(+x.a||0),0);
  const exp=(S.ex||[]).filter(e=>days.includes(e.d)).reduce((s,e)=>s+(+e.a||0),0);
- const eff=T+exp;const rem=eff-got;const ti=days.indexOf(iso(bt0));const izin=D.izin||[];const entered=d=>g.some(x=>x.d==d&&!x.auto);const openDays=days.filter((d,i)=>ti>=0&&i>=ti&&!entered(d)&&!izin.includes(d));const left=openDays.length;
+ const tev=wkTev(got);const eff=T+exp+WK_SIG+tev;const rem=eff-got;const ti=days.indexOf(iso(bt0));const izin=D.izin||[];const entered=d=>g.some(x=>x.d==d&&!x.auto);const openDays=days.filter((d,i)=>ti>=0&&i>=ti&&!entered(d)&&!izin.includes(d));const left=openDays.length;
  const per=left>0&&rem>0?Math.round(rem/left):0;
  const pct=eff>0?Math.max(0,Math.min(100,Math.round(got/eff*100))):0;
  const st=rem<=0?'Hedef tamam 🎉':left>0?`Kalan ${left} günde günlük: ${F(per)}`:`Hafta bitti, kalan ${F(rem)}`;
@@ -244,7 +245,7 @@ const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=
  return `<div class=card style="margin:12px 0">${head}
  <div style="height:10px;border-radius:6px;background:var(--line);overflow:hidden;margin:10px 0 8px"><div style="height:100%;width:${pct}%;background:var(--acc);transition:width .3s"></div></div>
  <div class=row><span class=mut>Hedef${D.tAuto?' (otomatik)':''}</span><b class=num>${F(T)}</b></div>
- <div class=row><span class=mut>Harcama (hedefe eklendi)</span><b class=num>${F(exp)}</b></div>
+ <div class=row><span class=mut>Harcama (hedefe eklendi)</span><b class=num>${F(exp)}</b></div><div class=row><span class=mut>Sigorta</span><b class=num>${F(WK_SIG)}</b></div>${tev>0?`<div class=row><span class=mut>Tevkifat (KDV'nin %20'si)</span><b class=num>${F(tev)}</b></div>`:''}
  <div class=row><span class=mut>Kazanılan</span><b class="num ok">${F(got)}</b></div>
  <div class=row><span class=mut>Kalan</span><b class=num>${F(Math.max(0,rem))}</b></div>
  <div class=mut style="margin:6px 0 10px">${st}</div>
@@ -270,6 +271,7 @@ function akFlowBody(){
  ${(n||billItems.length)?`<div class=list>${items.slice().sort((a,b)=>(a.k||'9999').localeCompare(b.k||'9999')).map(i=>i.h).join('')}${billItems.length?`<div class=lsub>Faturalar<span>${billItems.filter(x=>x.paid).length}/${billItems.length} tamam</span></div>${billItems.map(x=>x.h).join('')}`:''}</div>`:'<div class="card empty">Bu hafta için ödeme yok</div>'}`}
 
 /* 2) TAKVİM: ay özeti + haftalar zaman çizelgesi */
+function akWkPayAdd(mi,wi){QDW={mi,wi};const w=S.m[mi].w[wi];QD.d=iso(wd(w));QD.c=QD.c||S.dcats[0];akPay()}
 function akCalBody(){
  const mi=akSt.mi==null?akMonthIdx():akSt.mi;akSt.mi=mi;const cw=akWeeks().find(y=>!isClosed(y.w));
  const m=S.m[mi],ym=ymOf(mi),T=akMonthTot(mi),pct=T.tot?Math.round(T.paid/T.tot*100):0;
@@ -279,7 +281,7 @@ function akCalBody(){
    const wp=w[2].reduce((s,p)=>s+akPaidOf(p),0)+bl.reduce((s,b)=>s+(b.inst.paid?(+b.inst.amount||0):0),0);
    const done=wt>0&&wp>=wt;
    return `<section class="tl-week ${done?'done':''} ${cw&&cw.mi==mi&&cw.wi==wi?'cur':''}"><span class=tl-dot></span>
-     <div class=tl-head><div><small>${w[0].split('(')[0].trim()}</small><b>${fdShort(iso(wd(w)))}</b></div><div class=tl-sum><b class=num>${F(wt)}</b><small class=num>ödenen ${F(wp)}</small></div></div>
+     <div class=tl-head><div><small>${w[0].split('(')[0].trim()}</small><b>${fdShort(iso(wd(w)))}</b></div><div class=tl-sum><b class=num>${F(wt)}</b><small class=num style="color:var(--good)">ödenen ${F(wp)}</small><small class=num style="color:var(--bad)">kalan ${F(Math.max(0,wt-wp))}</small></div></div>
      <div class=tl-sal>Maaş ${+w[1]?F(w[1]):'girilmedi'}</div>
      <div class=list>${pay||'<div class=empty>Ödeme yok</div>'}${blh?`<div class=lsub>Faturalar</div>${blh}`:''}</div></section>`}).join('');
  return `<div class=mhead><button class=nav-arrow onclick="akMon(-1)">‹</button><b>${AK_LM[+ym.slice(5)-1]} ${ym.slice(0,4)}</b><button class=nav-arrow onclick="akMon(1)">›</button></div>
@@ -425,7 +427,7 @@ function akSheet(html){let w=document.getElementById('akSW');
  if(!w){w=document.createElement('div');w.id='akSW';w.className='sheetwrap';w.innerHTML='<div class=scrim onclick="akClose()"></div><div class=sheet><div class=grab></div><button class=xbtn aria-label="Kapat" onclick="akClose()">×</button><div id=akSB></div></div>';document.body.appendChild(w)}
  document.getElementById('akSB').innerHTML=html;w.classList.add('open')}
 function akClose(){akSecI=null;const w=document.getElementById('akSW');if(w)w.classList.remove('open')}
-function akAdd(){akSheet(`<h3>Ne eklemek istersin?</h3><div class=menu>
+function akAdd(){QDW=null;akSheet(`<h3>Ne eklemek istersin?</h3><div class=menu>
  <button onclick="akClose();akPay()"><i>🧾</i>Ödeme<small class=mut style="margin-left:auto">tarihli</small></button>
  <button onclick="akClose();akSpend()"><i>💸</i>Harcama<small class=mut style="margin-left:auto">bugün</small></button>
  <button onclick="akClose();akDebtNew()"><i>🤝</i>Tarihsiz borç<small class=mut style="margin-left:auto">vergi vb.</small></button></div>`)}
@@ -434,6 +436,7 @@ function akPay(){QD.c=QD.c||S.dcats[0];QD.d=QD.d||iso(t0);QD.t=QD.t||'1';
  akSheet(`<h3>Ödeme ekle</h3>
   <div class=field><label>Ad</label><input class=input id=qn value="${E(QD.n||'')}"></div>
   <div class=cats>${S.dcats.map(c=>`<button class="${c==QD.c?'on':''}" onclick="akPayRead();QD.c='${Q(c)}';akPay()">${E(c)}</button>`).join('')}</div><br>
+  <div class=field><label>Birim</label><select class=input id=qu><option value=TRY>₺ Türk Lirası</option>${Object.keys(FXU).map(x=>`<option value="${x}">${FXU[x][0]} ${FXU[x][1]}</option>`).join('')}</select></div>
   <div class=field><label>Tutar</label><input class="input big-input" id=qa inputmode=decimal placeholder="0" value="${E(QD.a||'')}"></div>
   <div class=field style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div style="display:flex;flex-direction:column;gap:6px"><label>Tarih</label><input class=input id=qd type=date value="${QD.d}"></div><div style="display:flex;flex-direction:column;gap:6px"><label>Taksit</label><input class=input id=qt inputmode=numeric value="${E(QD.t)}"></div></div>
   <div class=field><label>Not</label><input class=input id=qnote value="${E(QD.note||'')}"></div>
@@ -1253,26 +1256,28 @@ if(changed)save()}
 const rm=(w,p)=>{const snap=JSON.stringify(S);const xr=S.m[cur].w[w][2][p];if(xr)logEv(pid(xr),xr[0],'silindi: '+F(xr[2]));S.m[cur].w[w][2].splice(p,1);save();draw();UNDO=snap;showUndo('Ödeme silindi')};
 const ad=w=>{const a=S.m[cur].w[w][2];const lastDate=a.length?a[a.length-1][1]:'';a.push(['',lastDate,0,0,'',dcat]);save();draw()};
 const pickWeekFor=td=>{const arr=[];S.m.forEach((m,mi)=>m.w.forEach((w,wi)=>arr.push({mi,wi,w,d:wd(w)})));let h=null;arr.forEach(x=>{if(x.d<=td)h=x});return h||arr[0]};
+let QDW=null;
 const addQuick=()=>{const n=($('qn').value||'').trim(),c=QD.c,d=$('qd').value||iso(t0),cu=($('qcu').value||'').trim().split(/[\s;]+/).map(x=>+x.replace(',','.')).filter(x=>x>0),amt=cu.length?cu.reduce((s,x)=>s+x,0):+$('qa').value,cnt=cu.length?cu.length:Math.max(1,parseInt($('qt').value)||1),note=($('qnote').value||'').trim();
+const FXS=($('qu')&&$('qu').value)||'TRY',FXR=FXS!=='TRY'?fxRate(FXS):0;if(FXS!=='TRY'&&!FXR)return toast('Önce Ayarlar > Kurlar bölümünden kuru güncelle');
+const FQ=FXS!=='TRY'?{u:FXS,q:amt,r:FXR}:null;let amtTL=FQ?Math.round(amt*FXR*100)/100:amt;if(FQ&&cnt>1&&QDW)return toast('Haftaya taksit eklenemez, tek ödeme gir');
 if(!n||!amt)return toast('Ad ve tutar gerekli');if(QD.fx&&!fxRate(QD.fx))return toast('Önce Ayarlar > Kurlar bölümünden kuru güncelle');
 if(!S.m.length)return toast('Hafta bulunamadı');
 const target=new Date(d+'T00:00');
 ensureCovers(target);
 if(cnt>1){const endT=new Date(target.getFullYear(),target.getMonth()+cnt-1,1);ensureCovers(endT)}
 const base=QD.fx?Math.round(amt/cnt*1000)/1000:Math.floor(amt/cnt),rem=QD.fx?Math.round((amt-base*cnt)*1000)/1000:amt-base*cnt;let added=0,fmi=null,fwi=null;
-if(cnt==1){
-const arr=[];S.m.forEach((m,mi)=>m.w.forEach((w,wi)=>arr.push({mi,wi,d:wd(w)})));
-const ref=pickWeekFor(target);S.m[ref.mi].w[ref.wi][2].push(mkP(n,iso(ref.d),amt,note,c));added=1;fmi=ref.mi;fwi=ref.wi;
+if(cnt==1||QDW){
+const ref=QDW?{mi:QDW.mi,wi:QDW.wi,d:wd(S.m[QDW.mi].w[QDW.wi])}:pickWeekFor(target);const newP=mkP(n,iso(ref.d),amtTL,note,c);if(FQ){newP[10]={u:FQ.u,q:FQ.q,qp:0};newP[12]={d:iso(bt0),r:FQ.r}}S.m[ref.mi].w[ref.wi][2].push(newP);added=1;fmi=ref.mi;fwi=ref.wi;
 }else{
 let baseMi=S.m.findIndex(m=>{const d0=wd(m.w[0]);return d0.getFullYear()==target.getFullYear()&&d0.getMonth()==target.getMonth()});
 if(baseMi<0){let bd=Infinity;S.m.forEach((m,i)=>{const dd=Math.abs(wd(m.w[0])-target);if(dd<bd){bd=dd;baseMi=i}})}
 for(let i=0;i<cnt;i++){const mi=baseMi+i;
 const y=wd(S.m[mi].w[0]).getFullYear(),mo=wd(S.m[mi].w[0]).getMonth(),td=new Date(y,mo,target.getDate());
 const pw=pickWeekFor(td);const wi=pw.wi,pmi=pw.mi;
-const ref=wd(pw.w),a2=cu.length?cu[i]:(i==cnt-1?base+rem:base),nm=`${n} (${i+1}/${cnt})`;
-pw.w[2].push(mkP(nm,iso(ref),a2,note,c));added++;if(fmi===null){fmi=pmi;fwi=wi}}
+const ref=wd(pw.w),qI=FQ?(i==cnt-1?Math.round((FQ.q-Math.floor(FQ.q/cnt*1000)/1000*(cnt-1))*1000)/1000:Math.floor(FQ.q/cnt*1000)/1000):0,a2=FQ?Math.round(qI*FQ.r*100)/100:(cu.length?cu[i]:(i==cnt-1?base+rem:base)),nm=`${n} (${i+1}/${cnt})`;
+const npI=mkP(nm,iso(ref),a2,note,c);if(FQ){npI[10]={u:FQ.u,q:qI,qp:0};npI[12]={d:iso(bt0),r:FQ.r}}pw.w[2].push(npI);added++;if(fmi===null){fmi=pmi;fwi=wi}}
 }
-save();QD={n:'',c,d:iso(t0),a:'',t:'1',note:'',fx:''};
+save();QD={n:'',c,d:iso(t0),a:'',t:'1',note:'',fx:''};QDW=null;
 closeAddP();toast(added>1?added+' taksit eklendi':'Ödeme eklendi');
 cur=fmi;gw=fwi;tab='a';draw(1)};
 const motoUnlog=gid=>{const M2=S.moto;if(!M2||!M2.log)return;const rem=M2.log.filter(x=>x.gid==gid);if(!rem.length)return;M2.log=M2.log.filter(x=>x.gid!=gid);M2.p=M2.p||{};[...new Set(rem.map(x=>x.k))].forEach(k=>{const last=M2.log.filter(x=>x.k==k).sort((a,b)=>b.d.localeCompare(a.d))[0];if(last)M2.p[k]={d:last.d,km:last.km,n:last.n,gid:last.gid};else delete M2.p[k]});if(M2.m&&rem.some(x=>x.km===M2.m.km)){const lk=M2.log.filter(x=>x.km>0).sort((a,b)=>b.d.localeCompare(a.d))[0];if(lk){M2.m.km=lk.km;M2.m.kmAt=lk.d}}};
@@ -1507,7 +1512,7 @@ const addFormHTML=()=>`<div class=row style="gap:6px"><input id=qn class=in plac
 <div class=row><input id=qcu class=in placeholder="Eşit değilse taksit tutarları: 5000 5000 7500" value="${E(QD.u||'')}" oninput="QD.u=this.value" style="width:100%"></div>
 <div class=mut style="font-size:11px">Taksit sayısı girersen tutar taksitlere bölünüp ilgili haftalara yayılır.</div>`;
 const openAddP=()=>{$('addbody').innerHTML=addFormHTML();$('addovl').style.display='flex'};
-const closeAddP=()=>{$('addovl').style.display='none'};
+const closeAddP=()=>{QDW=null;$('addovl').style.display='none'};
 
 
 /* v6.4: uzun basışta metin seçimi ve tarayıcı menüsünü kapat */
