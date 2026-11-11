@@ -206,7 +206,7 @@ const wkDays=()=>{const m=wkMon();return [...Array(7)].map((_,i)=>{const d=new D
 const wkData=()=>{S.wg=S.wg||{};return S.wg[iso(wkMon())]||null};
 const wkEns=()=>{S.wg=S.wg||{};const k=iso(wkMon());S.wg[k]=S.wg[k]||{t:0,g:[]};return S.wg[k]};
 const wkGoalWeek=()=>{const nm=wkMon();nm.setDate(nm.getDate()+7);const tg=new Date(nm);tg.setDate(nm.getDate()+(3-nm.getDay()+7)%7);const k=iso(tg);for(const m of S.m)for(const w of m.w)if(iso(wd(w))==k)return w;return null};
-const wkAutoTotal=()=>{const w=wkGoalWeek();return w?wtotW(w):0};
+const wkAutoTotal=()=>{const w=wkGoalWeek();return w?kalanW(w):0};
 const wkTarget=D=>D?(D.tAuto?wkAutoTotal():(+D.t||0)):0;
 const wkEnsureWeek=()=>{S.wg=S.wg||{};const k=iso(wkMon());if(!S.wg[k]){S.wg[k]={t:0,g:[],tAuto:true,autoAt:Date.now()};save()}};
 const wkSaveT=id=>{const v=Math.round(+document.getElementById(id).value||0);if(v<=0)return toast('Hedef gir');const D=wkEns();D.t=v;D.tAuto=false;save();draw()};
