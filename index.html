@@ -245,7 +245,7 @@ const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=
  return `<div class=card style="margin:12px 0">${head}
  <div style="height:10px;border-radius:6px;background:var(--line);overflow:hidden;margin:10px 0 8px"><div style="height:100%;width:${pct}%;background:var(--acc);transition:width .3s"></div></div>
  <div class=row><span class=mut>Hedef${D.tAuto?' (otomatik)':''}</span><b class=num>${F(T)}</b></div>
- <div class=row><span class=mut>Harcama (hedefe eklendi)</span><b class=num>${F(exp)}</b></div><div class=row><span class=mut>Sigorta</span><b class=num>${F(WK_SIG)}</b></div>${tev>0?`<div class=row><span class=mut>Tevkifat (KDV'nin %20'si)</span><b class=num>${F(tev)}</b></div>`:''}
+ <div class=row style="cursor:pointer" onclick="akSt.wkAdd=!akSt.wkAdd;draw()"><span class=mut>Hedefe Eklenen ${akSt.wkAdd?'▾':'▸'}</span><b class=num>${F(exp+WK_SIG+tev)}</b></div>${akSt.wkAdd?`<div class=row><span class=mut>Harcama</span><b class=num>${F(exp)}</b></div><div class=row><span class=mut>Sigorta</span><b class=num>${F(WK_SIG)}</b></div>${tev>0?`<div class=row><span class=mut>Tevkifat (KDV'nin %20'si)</span><b class=num>${F(tev)}</b></div>`:''}`:''}
  <div class=row><span class=mut>Kazanılan</span><b class="num ok">${F(got)}</b></div>
  <div class=row><span class=mut>Kalan</span><b class=num>${F(Math.max(0,rem))}</b></div>
  <div class=mut style="margin:6px 0 10px">${st}</div>
