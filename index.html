@@ -235,7 +235,7 @@ const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=
  if(!open)return `<div class=card style="margin:12px 0">${head}</div>`;
  if(!hasT)return `<div class=card style="margin:12px 0">${head}<div class=mut style="margin-top:8px">Bu hafta için hedef tutarı gir.</div></div>`;
  const g=D.g||[];const got=g.reduce((s,x)=>s+(+x.a||0),0);
- const exp=(S.ex||[]).filter(e=>days.includes(e.d)).reduce((s,e)=>s+(+e.a||0),0);
+ const exp=(S.ex||[]).filter(e=>days.includes(e.d)&&!e.lid).reduce((s,e)=>s+(+e.a||0),0);
  const tev=wkTev(got);const eff=T+exp+WK_SIG+tev;const rem=eff-got;const ti=days.indexOf(iso(bt0));const izin=D.izin||[];const entered=d=>g.some(x=>x.d==d&&!x.auto);const openDays=days.filter((d,i)=>ti>=0&&i>=ti&&!entered(d)&&!izin.includes(d));const left=openDays.length;
  const per=left>0&&rem>0?Math.round(rem/left):0;
  const pct=eff>0?Math.max(0,Math.min(100,Math.round(got/eff*100))):0;
