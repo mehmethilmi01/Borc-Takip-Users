@@ -300,13 +300,15 @@ function akDonut(obj,onc){const en=Object.entries(obj).filter(x=>x[1]>0).sort((a
 function akBarsSvg(vals,labs,onc){const mx=Math.max(1,...vals),W=300,H=120,bw=30,gap=(W-bw*vals.length)/Math.max(1,vals.length-1);
  return `<svg viewBox="0 0 ${W} ${H+20}" width="100%">${vals.map((v,i)=>{const h=v/mx*H,x=vals.length>1?i*(bw+gap):(W-bw)/2;return `<g ${onc?`style="cursor:pointer" onclick="${onc(i)}"`:''}><rect x="${x}" y="${H-h}" width="${bw}" height="${Math.max(h,2)}" rx="9" fill="${i==vals.length-1?'var(--accent)':'var(--line)'}"/><text x="${x+bw/2}" y="${H+15}" text-anchor="middle" font-size="10" fill="var(--mut)">${labs[i]}</text></g>`}).join('')}</svg>`}
 function akModes(cur,list,fn){return `<div class="cats ak-modes">${list.map(x=>`<button class="${x[0]==cur?'on':''}" onclick="${fn(x[0])}">${x[1]}</button>`).join('')}</div>`}
+const purgeBillEx=()=>{if(!S.ex)return;const n=S.ex.length;S.ex=S.ex.filter(e=>!(e.lid&&e.auto===1));if(S.ex.length!==n)save()};
+const billsCard=()=>{const mi=akSt.mi==null?akMonthIdx():akSt.mi;const ym=ymOf(mi);const rows=(S.bills||[]).map(b=>{const i=S.billPaid[b.id+'_'+ym]||{amount:0,paid:0};return {b,amt:+i.amount||0,paid:!!i.paid}});if(!rows.length)return '';const tot=rows.reduce((s,r)=>s+r.amt,0),pd=rows.filter(r=>r.paid).reduce((s,r)=>s+r.amt,0);return `<div class=card style="margin:12px 0"><div class=row><button class=nav-arrow onclick="akMon(-1)">‹</button><h2 style="border:0;margin:0;font-size:16px">🧾 Faturalar · ${AK_LM[+ym.slice(5)-1]} ${ym.slice(0,4)}</h2><button class=nav-arrow onclick="akMon(1)">›</button></div><div class=row style="margin-top:4px"><span class=mut>Ödenen</span><b class=num>${F(pd)} / ${F(tot)}</b></div>${rows.map(r=>`<div class=row style="padding:6px 0"><span class="${r.paid?'ok':''}">${billIco(r.b.cat)} ${E(r.b.name)}</span><b class=num>${F(r.amt)}${r.paid?' ✓':''}</b></div>`).join('')}</div>`};
 function akStatsBody(){
  const gm=akSt.gm||'b';
  const head=akModes(gm,[['b','Borç'],['e','Harcama'],['f','Döviz']],k=>`akSt.gm='${k}';akSt.gpath=[];akSt.gcat=null;akSt.gbc=null;draw()`);
  if(gm=='i')return head+akIncBody();
  if(gm=='f')return head+akFxChart();
- if(gm=='b')return head+akDebtChart();
- return head+akExpBody();
+ if(gm=='b')return head+billsCard()+akDebtChart();
+ return head+billsCard()+akExpBody();
 }
 function akDebtChart(){
  const dg={};S.m.forEach(m=>m.w.forEach(w=>w[2].forEach(p=>{if(!p[2]||remOf(p)<=0)return;const c=p[5]||'📌 Diğer';dg[c]=(dg[c]||0)+remOf(p)})));
@@ -1157,7 +1159,7 @@ if(DP.idx!=null){const d=S.debts[DP.idx];const ch=[];if(d.name!=nm)ch.push('ad: 
  d.name=nm;d.cat=DP.cat;d.amount=amt;if(fx)d.fx=fx;else delete d.fx;logEv(d.id,d.name,'güncellendi'+(ch.length?' · '+ch.join(', '):''));toast('Borç güncellendi')}
 else{const id='dt'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);S.debts.push({id,name:nm,cat:DP.cat,amount:amt,paid:0,fx:fx||undefined});logEv(id,nm,'eklendi: '+F(amt)+(fx?' ('+fxLbl(fx.u,fx.q)+')':'')+' · kategori '+DP.cat);toast('Borç eklendi')}
 save();closeDebtP();draw()};
-const tgBill=key=>{const i=S.billPaid[key];if(i.paid){i.paid=0;unlogExpense(i.lid);i.lid=null}else{const bid=key.slice(0,key.lastIndexOf('_')),b=S.bills.find(x=>x.id==bid);i.paid=1;i.lid=logExpense(b?b.name:'Fatura',i.amount||0,null)}save();draw()};
+const tgBill=key=>{const i=S.billPaid[key];if(i.lid){unlogExpense(i.lid);i.lid=null}i.paid=i.paid?0:1;save();draw()};
 const edBill=(key,v)=>{S.billPaid[key].amount=v;save();draw()};
 const tgOld=(mi,w,p)=>{const x=S.m[mi].w[w][2][p];if(x[3]){x[3]=0;x[6]=0;if(x[10])x[10].qp=0;unlogExpense(x[8]);x[8]=null}else{x[3]=1;x[6]=+x[2]||0;if(x[10])x[10].qp=x[10].q;x[8]=(x[5]&&x[5].includes('Fatura'))?logExpense(x[0]||'Ödeme',x[6],x[5]):null}save();draw()};
 const billCat=()=>S.cats.find(c=>c.includes('Fatura'))||S.cats[0];
@@ -1295,7 +1297,7 @@ const addEx=()=>{if(/motor/i.test(cat||''))return motoLogSheet();const a=+ED.a;i
  S.ex.push({d:ED.d||iso(bt0),c:cat,s:csub||null,a,n:ED.n,ts:Date.now(),ds:ED.ds||undefined});
  if(ED.ds)debtAdj(ED.ds,a);
  ED={a:'',d:iso(bt0),n:'',ds:ED.ds||null};save();draw()};
-function draw(reset){wbFill();try{wkEnsureWeek();wkAutoZero()}catch(e){};const y=window.scrollY;
+function draw(reset){wbFill();try{wkEnsureWeek();wkAutoZero();purgeBillEx()}catch(e){};const y=window.scrollY;
 document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==tab));
 document.getElementById('app').innerHTML=akRender();if(tab=='h'||tab=='b')renderSearch();
 if(reset){if(gw!==null){const e=document.getElementById('w'+gw);if(e){e.scrollIntoView();gw=null}else window.scrollTo(0,0)}else window.scrollTo(0,0)}else window.scrollTo(0,y)}
