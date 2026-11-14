@@ -501,26 +501,28 @@ const pdfShow=()=>{const P=PDFP;if(!P)return;
  const totalPlan=P.rows.reduce((s,r)=>s+(+r.a||0),0);
  const totalAct=act.reduce((s,r)=>s+(+P.rows[r.i].a||0),0);
  const activeIdx=new Set(act.map(r=>r.i));
- const bdg=(t,bg,fg)=>`<span style="display:inline-block;background:${bg};color:${fg};border-radius:12px;padding:3px 10px;font-size:12px;font-weight:600;margin:2px 4px 2px 0">${t}</span>`;
+ const INFO_BG='#e4eefb',INFO_FG='#1d4f91';
+ const chip=(t,bg,fg)=>`<span style="display:inline-block;background:${bg};color:${fg};border-radius:12px;padding:3px 10px;font-size:12px;font-weight:600;margin:2px 4px 2px 0;white-space:nowrap">${t}</span>`;
  const tile=(lbl,val,clr)=>`<div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px"><div style="font-size:12px;color:var(--mut)">${lbl}</div><div style="font-size:17px;font-weight:700;color:${clr||'var(--ink)'};margin-top:3px">${val}</div></div>`;
  const sec=t=>`<div style="font-size:12px;font-weight:700;color:var(--mut);letter-spacing:.4px;margin:16px 0 8px">${t}</div>`;
+ const amtBox=(id,val,onch)=>`<div style="position:relative;width:118px;flex:none"><input class="input n" id=${id} inputmode=decimal value="${val}" style="width:100%;text-align:right;padding-right:26px" onchange="${onch}"><span style="position:absolute;right:9px;top:50%;transform:translateY(-50%);color:var(--mut);pointer-events:none">₺</span></div>`;
  const rowsHtml=P.rows.map((r,i)=>{const d=pdfDate(P,i);const on=activeIdx.has(i);
-  let sub;
+  let meta;
   if(on){const pw=pickWeekFor(new Date(d+'T00:00'));const tot=wtotW(pw.w)+act.filter(q=>{const qw=pickWeekFor(new Date(q.d+'T00:00'));return qw.mi===pw.mi&&qw.wi===pw.wi}).reduce((s,q)=>s+(+P.rows[q.i].a||0),0);
-   sub=`Hafta çarşambası ${wd(pw.w).toLocaleDateString('tr-TR',{day:'numeric',month:'short'})} · haftanın toplamı <b style="color:var(--acc)">${F(tot)}</b>`}
-  else sub=bdg('geçmiş, eklenmez','var(--line)','var(--mut)');
-  return `<div style="display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line)">
+   meta=`<div style="margin-top:6px">${chip('Çarşamba '+wd(pw.w).toLocaleDateString('tr-TR',{day:'numeric',month:'short'}),INFO_BG,INFO_FG)}${chip('Hafta toplamı '+F(tot),'var(--ok)','var(--acc)')}</div>`}
+  else meta=`<div style="margin-top:6px">${chip('Geçmiş, eklenmez','var(--line)','var(--mut)')}</div>`;
+  return `<div style="display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line);${on?'':'opacity:.6'}">
    <div style="width:4px;align-self:stretch;border-radius:4px;background:${on?'var(--acc)':'var(--line)'}"></div>
-   <div style="flex:1;min-width:0"><div style="font-weight:600">${i+1}. taksit · ${fmtD(d)}</div><div style="font-size:12px;color:var(--mut);margin-top:3px">${sub}</div></div>
-   <input class="input n" id=pdfR${i} inputmode=decimal value="${r.a||''}" style="width:108px;text-align:right" onchange="pdfEdit()"></div>`}).join('');
+   <div style="flex:1;min-width:0"><div style="font-weight:600">${i+1}. taksit · ${fmtD(d)}</div>${meta}</div>
+   ${amtBox('pdfR'+i,r.a||'','pdfEdit()')}</div>`}).join('');
  const cats=S.dcats.map(c=>`<option value="${E(c)}" ${c===P.c?'selected':''}>${E(c)}</option>`).join('');
  const info=[
-   act.length?bdg('İlk: '+fmtD(act[0].d),'var(--ok)','var(--acc)'):'',
-   act.length?bdg('Son: '+fmtD(act[act.length-1].d),'var(--ok)','var(--acc)'):'',
-   P.faiz?bdg('Faiz %'+String(P.faiz).replace('.',','),'var(--in)','#7a5a00'):'',
-   P.borc?bdg('Bugünkü borç '+F(P.borc),'var(--in)','#7a5a00'):'',
-   !P.hasDates?bdg('Tarihsiz plan, tarihleri siz belirlersiniz','var(--in)','#7a5a00'):''].join('');
- akSheet(`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">Okunan plan</h3>${bdg('Okundu','var(--ok)','var(--acc)')}</div>
+   act.length?chip('İlk taksit: '+fmtD(act[0].d),INFO_BG,INFO_FG):'',
+   act.length?chip('Son taksit: '+fmtD(act[act.length-1].d),INFO_BG,INFO_FG):'',
+   P.faiz?chip('Faiz %'+String(P.faiz).replace('.',','),INFO_BG,INFO_FG):'',
+   P.borc?chip('Bugünkü borç '+F(P.borc),INFO_BG,INFO_FG):'',
+   !P.hasDates?chip('Tarihsiz plan: tarihleri siz belirlersiniz',INFO_BG,INFO_FG):''].join('');
+ akSheet(`<h3 style="margin:0">Okunan plan</h3>
  <div style="margin:10px 0 2px">${info}</div>
  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
    ${tile('Kredi tutarı',F(P.kredi||0))}
@@ -531,7 +533,7 @@ const pdfShow=()=>{const P=PDFP;if(!P)return;
  ${sec('BORÇ BİLGİLERİ')}
  <div class=field><label>Borç adı</label><input class=input id=pdfN value="${E(P.n)}" onchange="pdfEdit()"></div>
  <div class=field><label>Kategori</label><select class=input id=pdfC onchange="pdfEdit()">${cats}</select></div>
- <div class=field><label>Kredi tutarı</label><input class=input id=pdfK inputmode=decimal value="${P.kredi||''}" onchange="pdfEdit()"></div>
+ <div class=field><label>Kredi tutarı</label><div style="position:relative"><input class=input id=pdfK inputmode=decimal value="${P.kredi||''}" onchange="pdfEdit()" style="padding-right:30px"><span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--mut);pointer-events:none">₺</span></div></div>
  ${P.hasDates?'':`<div class=field><label>İlk taksit tarihi (aylık üretilir)</label><input class=input type=date id=pdfS value="${P.start}" onchange="pdfEdit()"></div>`}
  <label style="display:flex;gap:8px;align-items:center;margin:10px 0 0;color:var(--ink)"><input type=checkbox id=pdfPast ${P.incPast?'checked':''} onchange="pdfEdit()"> Geçmiş taksitleri de ekle</label>
  ${sec('TAKSİTLER')}
@@ -823,7 +825,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='6.74';
+const KEY='butce_v3';const VER='6.75';
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -1846,7 +1848,8 @@ const wtot=w=>w[2].reduce((s,p)=>s+(+p[2]||0),0);
 const FXU={USD:['💵','Dolar'],EUR:['💶','Euro'],GBP:['💷','Sterlin'],GRA:['🥇','gr Altın'],CEY:['🪙','Çeyrek Altın'],YAR:['🪙','Yarım Altın'],TAM:['🪙','Tam Altın'],GUM:['🥈','gr Gümüş']};
 const fxRate=u=>+((M.rates||{})[u])||0;
 const F2=v=>(+v||0).toLocaleString('tr-TR',{maximumFractionDigits:2});
-const fxLbl=(u,q)=>FXU[u]?FXU[u][0]+' '+(+q).toLocaleString('tr-TR',{maximumFractionDigits:3})+' '+FXU[u][1]:'';
+const FXSYM={USD:'$',EUR:'€',GBP:'£',TRY:'₺'};
+const fxLbl=(u,q)=>FXU[u]?FXU[u][0]+' '+(+q).toLocaleString('tr-TR',{maximumFractionDigits:3})+(FXSYM[u]?' '+FXSYM[u]:'')+' '+FXU[u][1]:'';
 const mkP=(n,d,a,note,c)=>{const p=[n,d,a,0,note,c,0,0,null,0,null,null,null];const id=pid(p);
  let amt=a,fx=null,cr=null;
  if(QD.fx){const r=fxRate(QD.fx);recordRates();amt=Math.round(a*r);fx={u:QD.fx,q:a,qp:0};cr={d:iso(bt0),r}}
