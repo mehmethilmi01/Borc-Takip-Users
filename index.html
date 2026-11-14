@@ -454,47 +454,80 @@ const pdfLines=async file=>{await loadScript(PDF_JS+'pdf.min.js',()=>!!window.pd
  for(let i=1;i<=doc.numPages;i++){const c=await (await doc.getPage(i)).getTextContent();let line='',lastY=null;c.items.forEach(it=>{const y=Math.round(it.transform[5]);if(lastY!==null&&Math.abs(y-lastY)>2){out.push(line.trim());line=''}line+=it.str+' ';lastY=y});out.push(line.trim())}
  return out.filter(Boolean)};
 const imgLines=async file=>{await loadScript(OCR_JS,()=>!!window.Tesseract);const r=await window.Tesseract.recognize(file,'tur+eng');return r.data.text.split('\n').map(x=>x.trim()).filter(Boolean)};
-const docLines=file=>/pdf/i.test(file.type)||/\.pdf$/i.test(file.name)?pdfLines(file):imgLines(file);
-const trNum=s=>{const v=parseFloat(s.replace(/\./g,'').replace(',','.'));return isNaN(v)?0:v};
-const AMT_RE=/\d{1,3}(?:\.\d{3})*,\d{2}|\d+,\d{2}/g;
+const docLines=file=>(/pdf/i.test(file.type)||/\.pdf$/i.test(file.name))?pdfLines(file):imgLines(file);
+const NUM_RE=/^\d{1,3}(?:\.\d{3})+(?:,\d+)?$|^\d+(?:,\d+)?$/;
 const DATE_RE=/(\d{2})[.\/](\d{2})[.\/](\d{4})/;
-const pdfParse=lines=>{const rows=[];let kredi=0,toplam=0;
- lines.forEach(l=>{const low=l.toLocaleLowerCase('tr-TR');const dm=l.match(DATE_RE);
-  const am=(l.match(AMT_RE)||[]).map(trNum);
-  if(!kredi&&/kredi/.test(low)&&am.length)kredi=am[0];
-  if(!toplam&&/toplam/.test(low)&&/geri|ödeme|odeme/.test(low)&&am.length)toplam=am[am.length-1];
-  if(dm&&am.length){const after=l.slice(dm.index+dm[0].length);const aa=(after.match(AMT_RE)||[]).map(trNum);
-    const a=aa.length?aa[0]:am[0];rows.push({d:`${dm[3]}-${dm[2]}-${dm[1]}`,a})}
+const tnum=s=>parseFloat(s.replace(/\./g,'').replace(',','.'))||0;
+const dIso=m=>`${m[3]}-${m[2]}-${m[1]}`;
+const pad2=n=>String(n).padStart(2,'0');
+const addMonths=(s,k)=>{const [y,mo,d]=s.split('-').map(Number);const t=new Date(y,mo-1+k,d);return `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`};
+const fmtD=s=>s?new Date(s+'T00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'short',year:'numeric'}):'-';
+// başlık satırından sütun sırasını çıkarır: Sıra ve Tarih sayısal sütun değildir, "Ödeme Tarihi" de tarih sütunudur
+const headerCols=h=>{const skip=new Set(['sıra','tarih']);const w=h.trim().split(/\s+/);const labels=[];let sira=false;
+ for(let i=0;i<w.length;i++){const x=w[i].toLocaleLowerCase('tr-TR');if(x==='sıra'){sira=true;continue}
+  if(skip.has(x))continue;if(x==='ödeme'&&/^tarihi$/i.test(w[i+1]||'')){i++;continue}labels.push(x)}
+ const t=labels.indexOf('taksit'),a=labels.indexOf('anapara');
+ return {taksit:t>=0?t:0,anapara:a>=0?a:1,sira}};
+// başlık yoksa: aynı tutarın en çok tekrar ettiği sütun taksittir (sıfırlar sayılmaz)
+const modeCol=rows=>{const n=Math.min(...rows.map(r=>r.v.length));let best=0,bi=0;for(let k=0;k<n;k++){const f={};rows.forEach(r=>{const v=r.v[k];if(v)f[v]=(f[v]||0)+1});const mx=Math.max(0,...Object.values(f));if(mx>best){best=mx;bi=k}}return bi};
+const pdfParse=lines=>{
+ const hIdx=lines.findIndex(l=>/taksit/i.test(l)&&/anapara|faiz|bakiye|kalan/i.test(l));
+ const cols=hIdx>=0?headerCols(lines[hIdx]):null;
+ const low=lines.join(' ').toLocaleLowerCase('tr-TR');
+ const fm=low.match(/faiz oran[^\d]*?(\d+(?:,\d+)?)/);const bm=low.match(/bugünkü kredi borcu[^\d]*?(\d[\d.]*,\d+)/);
+ const raw=[];let summary=null;
+ lines.forEach((l,li)=>{if(li===hIdx)return;
+  const dm=l.match(DATE_RE);
+  let vals=l.split(/\s+/).filter(t=>NUM_RE.test(t));
+  let sira=false;
+  if(vals.length>=4&&/^\d{1,3}$/.test(vals[0])&&((cols&&cols.sira)||(!cols&&!dm))){vals=vals.slice(1);sira=true}
+  if((dm||sira)&&vals.length>=3)raw.push({d:dm?dIso(dm):null,v:vals});
+  else if(!dm&&!sira&&vals.length>=4)summary=vals;
  });
- return {kredi,toplam,rows}};
+ const idxT=cols?cols.taksit:(raw.length?modeCol(raw):0);
+ const idxA=cols?cols.anapara:idxT+1;
+ const rows=raw.map(r=>({d:r.d,a:r.v[idxT]!==undefined?tnum(r.v[idxT]):0,ap:r.v[idxA]!==undefined?tnum(r.v[idxA]):0})).filter(r=>r.a>0);
+ return {rows,summaryTotal:summary&&summary[idxT]!==undefined?tnum(summary[idxT]):0,summaryAnapara:summary&&summary[idxA]!==undefined?tnum(summary[idxA]):0,faiz:fm?tnum(fm[1]):0,borc:bm?tnum(bm[1]):0,hasDates:rows.some(r=>r.d)}};
+const planBuild=(lines,name,c)=>{const p=pdfParse(lines);
+ let rows=p.rows.filter((r,i,arr)=>!r.d||arr.findIndex(x=>x.d===r.d)===i);
+ if(p.hasDates)rows=rows.slice().sort((x,y)=>(x.d||'').localeCompare(y.d||''));
+ const today=iso(bt0);
+ return {n:name,c:c||S.dcats[0],rows,hasDates:p.hasDates,start:addMonths(today,1),incPast:false,
+  kredi:p.summaryAnapara||rows.reduce((s,r)=>s+r.ap,0),faiz:p.faiz,borc:p.borc}};
+const pdfDate=(P,i)=>P.hasDates?P.rows[i].d:addMonths(P.start,i);
+const pdfActive=P=>P.rows.map((r,i)=>({i,a:r.a,d:pdfDate(P,i)})).filter(r=>P.incPast||r.d>=iso(bt0));
 const pdfShow=()=>{const P=PDFP;if(!P)return;
- P.rows.forEach(r=>ensureCovers(new Date(r.d+'T00:00')));
- const rowsHtml=P.rows.map((r,i)=>{const t=new Date(r.d+'T00:00');const pw=pickWeekFor(t);
-  const tot=wtotW(pw.w)+P.rows.filter(q=>{const qw=pickWeekFor(new Date(q.d+'T00:00'));return qw.mi===pw.mi&&qw.wi===pw.wi}).reduce((s,q)=>s+(+q.a||0),0);
-  return `<div class=row><div class=meta><div class=nm>${i+1}. taksit · ${t.toLocaleDateString('tr-TR',{day:'numeric',month:'short',year:'numeric'})}</div><div class=sub>Hafta çarşambası ${wd(pw.w).toLocaleDateString('tr-TR',{day:'numeric',month:'short'})} · o haftanın toplam ödemesi ${F(tot)}</div></div><input class="input n" id=pdfR${i} inputmode=decimal value="${r.a||''}" style="width:110px" onchange="pdfEdit()"></div>`}).join('');
+ const act=pdfActive(P);act.forEach(r=>ensureCovers(new Date(r.d+'T00:00')));
+ const totalPlan=P.rows.reduce((s,r)=>s+(+r.a||0),0);
+ const totalAct=act.reduce((s,r)=>s+(+P.rows[r.i].a||0),0);
+ const activeIdx=new Set(act.map(r=>r.i));
+ const rowsHtml=P.rows.map((r,i)=>{const d=pdfDate(P,i);const on=activeIdx.has(i);
+  let sub='';
+  if(on){const pw=pickWeekFor(new Date(d+'T00:00'));const tot=wtotW(pw.w)+act.filter(q=>{const qw=pickWeekFor(new Date(q.d+'T00:00'));return qw.mi===pw.mi&&qw.wi===pw.wi}).reduce((s,q)=>s+(+P.rows[q.i].a||0),0);
+   sub=`Hafta çarşambası ${wd(pw.w).toLocaleDateString('tr-TR',{day:'numeric',month:'short'})} · o haftanın toplam ödemesi ${F(tot)}`}
+  else sub='Geçmiş taksit, eklenmez';
+  return `<div class=row style="${on?'':'opacity:.5'}"><div class=meta><div class=nm>${i+1}. taksit · ${fmtD(d)}</div><div class=sub>${sub}</div></div><input class="input n" id=pdfR${i} inputmode=decimal value="${r.a||''}" style="width:110px" onchange="pdfEdit()"></div>`}).join('');
  const cats=S.dcats.map(c=>`<option value="${E(c)}" ${c===P.c?'selected':''}>${E(c)}</option>`).join('');
- akSheet(`<h3>Okunan plan</h3><div class=mut>Okunanları kontrol edin, yanlışları düzeltin, sonra onaylayın.</div>
+ akSheet(`<h3>Okunan plan</h3>
+ <div class=mut>Taksit sayısı (plan): ${P.rows.length} · eklenecek: ${act.length}<br>İlk taksit: ${act[0]?fmtD(act[0].d):'-'} · Son taksit: ${act.length?fmtD(act[act.length-1].d):'-'}<br>Toplam geri ödeme (plan): ${F(totalPlan)} · eklenecek toplam: ${F(totalAct)}${P.faiz?'<br>Faiz oranı: %'+String(P.faiz).replace('.',','):''}${P.borc?'<br>Bugünkü kredi borcu: '+F(P.borc):''}</div>
  <div class=field><label>Borç adı</label><input class=input id=pdfN value="${E(P.n)}" onchange="pdfEdit()"></div>
  <div class=field><label>Kategori</label><select class=input id=pdfC onchange="pdfEdit()">${cats}</select></div>
  <div class=field><label>Kredi tutarı</label><input class=input id=pdfK inputmode=decimal value="${P.kredi||''}" onchange="pdfEdit()"></div>
- <div class=field><label>Toplam geri ödeme</label><input class=input id=pdfT inputmode=decimal value="${P.toplam||''}" onchange="pdfEdit()"></div>
- <div class=mut>Taksit sayısı: ${P.rows.length} · her taksit kendi tutarıyla eklenir</div>
- <div class=list>${rowsHtml||'<div class=empty>Tarih ve tutar bulunamadı. Bu planı elle girin.</div>'}</div>
- <button class=btn onclick="pdfConfirm()" ${P.rows.length?'':'disabled'}>Onayla, hepsini ekle</button><button class="btn ghost" onclick="akClose()">Vazgeç</button>`)};
-const pdfEdit=()=>{const P=PDFP;if(!P)return;P.n=($('pdfN').value||'').trim()||P.n;P.c=$('pdfC').value||P.c;P.kredi=+$('pdfK').value||0;P.toplam=+$('pdfT').value||0;
+ ${P.hasDates?'':`<div class=field><label>İlk taksit tarihi (PDF'de tarih yok, aylık üretilir)</label><input class=input type=date id=pdfS value="${P.start}" onchange="pdfEdit()"></div>`}
+ <label class=mut style="display:flex;gap:8px;align-items:center"><input type=checkbox id=pdfPast ${P.incPast?'checked':''} onchange="pdfEdit()"> Geçmiş taksitleri de ekle</label>
+ <div class=list style="margin-top:10px">${rowsHtml||'<div class=empty>Tutar bulunamadı. Bu planı elle girin.</div>'}</div>
+ <button class=btn onclick="pdfConfirm()" ${act.length?'':'disabled'}>Onayla, ${act.length} taksiti ekle</button><button class="btn ghost" onclick="akClose()">Vazgeç</button>`)};
+const pdfEdit=()=>{const P=PDFP;if(!P)return;P.n=($('pdfN').value||'').trim()||P.n;P.c=$('pdfC').value||P.c;P.kredi=+$('pdfK').value||0;P.incPast=$('pdfPast').checked;
+ if(!P.hasDates&&$('pdfS').value)P.start=$('pdfS').value;
  P.rows.forEach((r,i)=>{const el=$('pdfR'+i);if(el)r.a=+el.value||0});pdfShow()};
 const pdfPick=async file=>{if(!file)return;akSheet('<h3>Okunuyor…</h3><div class=mut>PDF veya fotoğraf okunuyor, lütfen bekleyin</div>');
- try{const p=pdfParse(await docLines(file));
-  const seen=new Set();const rows=p.rows.filter(r=>seen.has(r.d)?false:(seen.add(r.d),true)).sort((a,b)=>a.d.localeCompare(b.d));
-  PDFP={n:file.name.replace(/\.[a-z0-9]+$/i,''),c:QD.c||S.dcats[0],kredi:p.kredi,toplam:p.toplam,rows};
-  pdfShow();
- }catch(e){akSheet(`<h3>Okunamadı</h3><div class=mut>${E(e.message)}</div><button class="btn ghost" onclick="akClose()">Kapat</button>`)}};
+ try{PDFP=planBuild(await docLines(file),file.name.replace(/\.[a-z0-9]+$/i,''),QD.c);pdfShow()}
+ catch(e){akSheet(`<h3>Okunamadı</h3><div class=mut>${E(e.message)}</div><button class="btn ghost" onclick="akClose()">Kapat</button>`)}};
 const akPdfOpen=()=>{akSheet(`<h3>Kredi planı yükle</h3><div class=mut>Ödeme planının PDF'ini ya da fotoğrafını seçin. Okunanları kontrol edip onaylayabilirsiniz.</div><input type=file id=pdfIn accept="application/pdf,image/*" class=input style="margin-top:10px" onchange="pdfPick(this.files[0])"><button class="btn ghost" style="margin-top:10px" onclick="akPay()">Geri</button>`)};
-const pdfConfirm=()=>{const P=PDFP;if(!P||!P.rows.length)return toast('Eklenecek taksit yok');if(P.rows.some(r=>!(r.a>0)))return toast('Tutarı 0 olan taksit var');
- let added=0;
- P.rows.forEach((r,i)=>{const t=new Date(r.d+'T00:00');ensureCovers(t);const pw=pickWeekFor(t);
-  pw.w[2].push(mkP(`${P.n||'Kredi'} (${i+1}/${P.rows.length})`,iso(wd(pw.w)),r.a,'PDF planı',P.c));added++});
- save();PDFP=null;akClose();draw();toast(added+' taksit eklendi')};
+const pdfConfirm=()=>{const P=PDFP;const act=P?pdfActive(P):[];if(!act.length)return toast('Eklenecek taksit yok');if(act.some(r=>!(+P.rows[r.i].a>0)))return toast('Tutarı 0 olan taksit var');
+ act.forEach((r,k)=>{const t=new Date(r.d+'T00:00');ensureCovers(t);const pw=pickWeekFor(t);
+  pw.w[2].push(mkP(`${P.n||'Kredi'} (${k+1}/${act.length})`,iso(wd(pw.w)),+P.rows[r.i].a,'PDF planı',P.c))});
+ save();PDFP=null;akClose();draw();toast(act.length+' taksit eklendi')};
 
 function akPay(){QD.c=QD.c||S.dcats[0];QD.d=QD.d||iso(t0);QD.t=QD.t||'1';
  akSheet(`<h3>Ödeme ekle</h3>
