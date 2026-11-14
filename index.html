@@ -501,22 +501,42 @@ const pdfShow=()=>{const P=PDFP;if(!P)return;
  const totalPlan=P.rows.reduce((s,r)=>s+(+r.a||0),0);
  const totalAct=act.reduce((s,r)=>s+(+P.rows[r.i].a||0),0);
  const activeIdx=new Set(act.map(r=>r.i));
+ const bdg=(t,bg,fg)=>`<span style="display:inline-block;background:${bg};color:${fg};border-radius:12px;padding:3px 10px;font-size:12px;font-weight:600;margin:2px 4px 2px 0">${t}</span>`;
+ const tile=(lbl,val,clr)=>`<div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px"><div style="font-size:12px;color:var(--mut)">${lbl}</div><div style="font-size:17px;font-weight:700;color:${clr||'var(--ink)'};margin-top:3px">${val}</div></div>`;
+ const sec=t=>`<div style="font-size:12px;font-weight:700;color:var(--mut);letter-spacing:.4px;margin:16px 0 8px">${t}</div>`;
  const rowsHtml=P.rows.map((r,i)=>{const d=pdfDate(P,i);const on=activeIdx.has(i);
-  let sub='';
+  let sub;
   if(on){const pw=pickWeekFor(new Date(d+'T00:00'));const tot=wtotW(pw.w)+act.filter(q=>{const qw=pickWeekFor(new Date(q.d+'T00:00'));return qw.mi===pw.mi&&qw.wi===pw.wi}).reduce((s,q)=>s+(+P.rows[q.i].a||0),0);
-   sub=`Hafta çarşambası ${wd(pw.w).toLocaleDateString('tr-TR',{day:'numeric',month:'short'})} · o haftanın toplam ödemesi ${F(tot)}`}
-  else sub='Geçmiş taksit, eklenmez';
-  return `<div class=row style="${on?'':'opacity:.5'}"><div class=meta><div class=nm>${i+1}. taksit · ${fmtD(d)}</div><div class=sub>${sub}</div></div><input class="input n" id=pdfR${i} inputmode=decimal value="${r.a||''}" style="width:110px" onchange="pdfEdit()"></div>`}).join('');
+   sub=`Hafta çarşambası ${wd(pw.w).toLocaleDateString('tr-TR',{day:'numeric',month:'short'})} · haftanın toplamı <b style="color:var(--acc)">${F(tot)}</b>`}
+  else sub=bdg('geçmiş, eklenmez','var(--line)','var(--mut)');
+  return `<div style="display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line)">
+   <div style="width:4px;align-self:stretch;border-radius:4px;background:${on?'var(--acc)':'var(--line)'}"></div>
+   <div style="flex:1;min-width:0"><div style="font-weight:600">${i+1}. taksit · ${fmtD(d)}</div><div style="font-size:12px;color:var(--mut);margin-top:3px">${sub}</div></div>
+   <input class="input n" id=pdfR${i} inputmode=decimal value="${r.a||''}" style="width:108px;text-align:right" onchange="pdfEdit()"></div>`}).join('');
  const cats=S.dcats.map(c=>`<option value="${E(c)}" ${c===P.c?'selected':''}>${E(c)}</option>`).join('');
- akSheet(`<h3>Okunan plan</h3>
- <div class=mut>Taksit sayısı (plan): ${P.rows.length} · eklenecek: ${act.length}<br>İlk taksit: ${act[0]?fmtD(act[0].d):'-'} · Son taksit: ${act.length?fmtD(act[act.length-1].d):'-'}<br>Toplam geri ödeme (plan): ${F(totalPlan)} · eklenecek toplam: ${F(totalAct)}${P.faiz?'<br>Faiz oranı: %'+String(P.faiz).replace('.',','):''}${P.borc?'<br>Bugünkü kredi borcu: '+F(P.borc):''}</div>
+ const info=[
+   act.length?bdg('İlk: '+fmtD(act[0].d),'var(--ok)','var(--acc)'):'',
+   act.length?bdg('Son: '+fmtD(act[act.length-1].d),'var(--ok)','var(--acc)'):'',
+   P.faiz?bdg('Faiz %'+String(P.faiz).replace('.',','),'var(--in)','#7a5a00'):'',
+   P.borc?bdg('Bugünkü borç '+F(P.borc),'var(--in)','#7a5a00'):'',
+   !P.hasDates?bdg('Tarihsiz plan, tarihleri siz belirlersiniz','var(--in)','#7a5a00'):''].join('');
+ akSheet(`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">Okunan plan</h3>${bdg('Okundu','var(--ok)','var(--acc)')}</div>
+ <div style="margin:10px 0 2px">${info}</div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+   ${tile('Kredi tutarı',F(P.kredi||0))}
+   ${tile('Toplam geri ödeme',F(totalPlan))}
+   ${tile('Eklenecek taksit',act.length+' / '+P.rows.length)}
+   ${tile('Eklenecek toplam',F(totalAct),'var(--acc)')}
+ </div>
+ ${sec('BORÇ BİLGİLERİ')}
  <div class=field><label>Borç adı</label><input class=input id=pdfN value="${E(P.n)}" onchange="pdfEdit()"></div>
  <div class=field><label>Kategori</label><select class=input id=pdfC onchange="pdfEdit()">${cats}</select></div>
  <div class=field><label>Kredi tutarı</label><input class=input id=pdfK inputmode=decimal value="${P.kredi||''}" onchange="pdfEdit()"></div>
- ${P.hasDates?'':`<div class=field><label>İlk taksit tarihi (PDF'de tarih yok, aylık üretilir)</label><input class=input type=date id=pdfS value="${P.start}" onchange="pdfEdit()"></div>`}
- <label class=mut style="display:flex;gap:8px;align-items:center"><input type=checkbox id=pdfPast ${P.incPast?'checked':''} onchange="pdfEdit()"> Geçmiş taksitleri de ekle</label>
- <div class=list style="margin-top:10px">${rowsHtml||'<div class=empty>Tutar bulunamadı. Bu planı elle girin.</div>'}</div>
- <button class=btn onclick="pdfConfirm()" ${act.length?'':'disabled'}>Onayla, ${act.length} taksiti ekle</button><button class="btn ghost" onclick="akClose()">Vazgeç</button>`)};
+ ${P.hasDates?'':`<div class=field><label>İlk taksit tarihi (aylık üretilir)</label><input class=input type=date id=pdfS value="${P.start}" onchange="pdfEdit()"></div>`}
+ <label style="display:flex;gap:8px;align-items:center;margin:10px 0 0;color:var(--ink)"><input type=checkbox id=pdfPast ${P.incPast?'checked':''} onchange="pdfEdit()"> Geçmiş taksitleri de ekle</label>
+ ${sec('TAKSİTLER')}
+ <div>${rowsHtml||'<div class=empty>Tutar bulunamadı. Bu planı elle girin.</div>'}</div>
+ <div style="display:flex;gap:8px;margin-top:16px"><button class=btn style="flex:2" onclick="pdfConfirm()" ${act.length?'':'disabled'}>Onayla, ${act.length} taksiti ekle</button><button class="btn ghost" style="flex:1" onclick="akClose()">Vazgeç</button></div>`)};
 const pdfEdit=()=>{const P=PDFP;if(!P)return;P.n=($('pdfN').value||'').trim()||P.n;P.c=$('pdfC').value||P.c;P.kredi=+$('pdfK').value||0;P.incPast=$('pdfPast').checked;
  if(!P.hasDates&&$('pdfS').value)P.start=$('pdfS').value;
  P.rows.forEach((r,i)=>{const el=$('pdfR'+i);if(el)r.a=+el.value||0});pdfShow()};
@@ -803,7 +823,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='6.73';
+const KEY='butce_v3';const VER='6.74';
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
