@@ -58,7 +58,7 @@ html.lk,html.lk body{overflow:hidden;overscroll-behavior:none}
 .toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:20px;z-index:10;max-width:80%;animation:tin .2s ease}
 @keyframes tin{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
 html,body{overscroll-behavior-y:contain}
-#ptr{position:fixed;top:0;left:50%;z-index:9999;transform:translate(-50%,-60px);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:20px;padding:6px 14px;font-size:13px;opacity:0;pointer-events:none;box-shadow:0 2px 8px #0002;margin-top:env(safe-area-inset-top,0px)}
+#ptr{position:fixed;top:0;left:50%;z-index:9999;transform:translate(-50%,-60px);background:none;border:0;box-shadow:none;padding:0;border-radius:0;font-size:30px;font-weight:700;line-height:1;pointer-events:none;color:var(--mut);opacity:0}
 #docovl,#docvovl,#docfovl{display:none;position:fixed;inset:0;background:#0008;align-items:center;justify-content:center;padding:20px}
 #docovl{z-index:8}
 #docatovl{display:none;position:fixed;inset:0;background:#0008;z-index:10;align-items:center;justify-content:center;padding:20px}
@@ -882,7 +882,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='6.85';
+const KEY='butce_v3';const VER='6.86';
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -1785,6 +1785,7 @@ const ptSet=(d,txt)=>{const e=ptEl();if(!e)return;e.textContent=txt||'';e.style.
 const PT_THR=100;
 const ptScrolled=el=>{for(let n=el;n&&n!==document.body;n=n.parentElement){if(!n||n.nodeType!==1)continue;const cs=getComputedStyle(n);if(/auto|scroll/.test(cs.overflowY)&&n.scrollTop>0)return true}return false};
 const ptColor=c=>{const e=ptEl();if(e)e.style.color=c||''};
+document.addEventListener('touchmove',e=>{const w=document.getElementById('akSW');if(w&&w.classList.contains('open')&&!(e.target&&e.target.closest&&e.target.closest('.sheet')))e.preventDefault()},{passive:false});
 document.addEventListener('touchstart',e=>{ptY=null;ptD=0;ptColor('');
  if(window.scrollY<=0&&!document.documentElement.classList.contains('lk')&&!ptScrolled(e.target))ptY=e.touches[0].clientY},{passive:true});
 document.addEventListener('touchmove',e=>{if(ptY===null)return;
