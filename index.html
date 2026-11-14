@@ -447,19 +447,12 @@ function akAdd(){QDW=null;akSheet(`<h3>Ne eklemek istersin?</h3><div class=menu>
 function akPayRead(){const g=id=>document.getElementById(id);if(!g('qn'))return;QD.n=g('qn').value;QD.a=g('qa').value;QD.d=g('qd').value;QD.t=g('qt').value;QD.note=g('qnote').value}
 let PDFP=null;
 const PDF_JS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
-const OCR_JS='https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js';
-const loadScript=(src,ready)=>new Promise((res,rej)=>{if(ready())return res();const s=document.createElement('script');s.src=src;s.onload=()=>res();s.onerror=()=>rej(new Error('Kütüphane yüklenemedi, internet bağlantınızı kontrol edin'));document.head.appendChild(s)});
-const pdfLines=async file=>{await loadScript(PDF_JS+'pdf.min.js',()=>!!window.pdfjsLib);window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDF_JS+'pdf.worker.min.js';
- const doc=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;const out=[];
- for(let i=1;i<=doc.numPages;i++){const c=await (await doc.getPage(i)).getTextContent();let line='',lastY=null;c.items.forEach(it=>{const y=Math.round(it.transform[5]);if(lastY!==null&&Math.abs(y-lastY)>2){out.push(line.trim());line=''}line+=it.str+' ';lastY=y});out.push(line.trim())}
- return out.filter(Boolean)};
-const imgLines=async file=>{await loadScript(OCR_JS,()=>!!window.Tesseract);const r=await window.Tesseract.recognize(file,'tur+eng');return r.data.text.split('\n').map(x=>x.trim()).filter(Boolean)};
-const docLines=file=>(/pdf/i.test(file.type)||/\.pdf$/i.test(file.name))?pdfLines(file):imgLines(file);
+const docLines=file=>pdfLines(file);
 // OCR hatalarını toleranslı okuyan yardımcılar
-const normTok=t=>t.replace(/^[|:;,\[\(\]\)]+|[|:;,\[\(\]\)]+$/g,'').replace(/(?<=\d)[Oo]|[Oo](?=\d)/g,'0').replace(/(?<=\d)[lI](?=\d)/g,'1');
+const normTok=t=>t.replace(/,\./g,',').replace(/^[|:;,\[\(\]\)]+|[|:;,\[\(\]\)]+$/g,'').replace(/(?<=\d)[Oo]|[Oo](?=\d)/g,'0').replace(/(?<=\d)[lI](?=\d)/g,'1');
 const fixDigits=t=>/\d/.test(t)&&/^[\dBbSsZzGgOoIl.,]+$/.test(t)&&t.length>=4?t.replace(/B/g,'8').replace(/[Ss]/g,'5').replace(/[Zz]/g,'2').replace(/[Gg]/g,'6'):t;
-const NUM_OK=t=>/^\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?$|^\d+(?:,\d{1,2})?$|^\d+\.\d{2}$/.test(t);
-const tnum=t=>{if(t.includes(','))return parseFloat(t.replace(/\./g,'').replace(',','.'))||0;if(/^\d+\.\d{2}$/.test(t))return parseFloat(t)||0;return parseFloat(t.replace(/\./g,''))||0};
+const NUM_OK=t=>/^\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?$|^\d+(?:,\d{1,2})?$|^\d+\.\d{1,2}$/.test(t);
+const tnum=t=>{if(t.includes(','))return parseFloat(t.replace(/\./g,'').replace(',','.'))||0;if(/^\d+\.\d{1,2}$/.test(t))return parseFloat(t)||0;return parseFloat(t.replace(/\./g,''))||0};
 const DATE_RE=/(\d{2})[.\/](\d{2})[.\/](\d{4})/;
 const dIso=m=>`${m[3]}-${m[2]}-${m[1]}`;
 const pad2=n=>String(n).padStart(2,'0');
@@ -476,19 +469,25 @@ const pdfParse=lines=>{
  const cols=hIdx>=0?headerCols(lines[hIdx]):null;
  const low=lines.join(' ').toLocaleLowerCase('tr-TR');
  const fm=low.match(/faiz oran[^\d]*?(\d+(?:,\d+)?)/);const bm=low.match(/bugünkü kredi borcu[^\d]*?(\d[\d.]*,\d+)/);
- // her satırı tokenlara ayır
- const info=lines.map((l,li)=>{const dm=l.match(DATE_RE);const toks=l.split(/\s+/).map(normTok).map(fixDigits).filter(Boolean);const nums=toks.filter(NUM_OK);return {li,dm,nums}});
- const cand=info.filter(x=>x.li!==hIdx&&x.nums.length>=3&&(x.dm||/^\d{1,3}$/.test(x.nums[0])));
- // sıra sütunu var mı: adaylar 1,2,3... diye gidiyorsa veya başlıkta "Sıra" varsa
- const seqOk=cand.length>=2&&cand.every((c,k)=>!c.dm&&c.nums[0]===String(k+1));
- const siraCol=!!((cols&&cols.sira)||seqOk);
- const raw=[];let lastDataLi=-1;
- info.forEach(x=>{if(x.li===hIdx)return;let vals=x.nums;let sira=false;
-  if(siraCol&&vals.length>=4&&/^\d{1,3}$/.test(vals[0])){vals=vals.slice(1);sira=true}
-  if((x.dm||sira)&&vals.length>=3){raw.push({d:x.dm?dIso(x.dm):null,v:vals});lastDataLi=x.li}
- });
+ const info=lines.map((l,li)=>{const dm=l.match(DATE_RE);const toks=l.split(/\s+/).map(normTok).map(fixDigits).filter(Boolean);const nums=toks.filter(NUM_OK);return {li,dm,nums}}).filter(x=>x.li!==hIdx&&x.nums.length>=3);
+ const dated=info.filter(x=>x.dm);
+ const lastDatedLi=dated.length?dated[dated.length-1].li:-1;
+ // sıra sütunu: başlıkta varsa ya da 1,2,3... dizisi okunduysa
+ const siraSeq=info.filter(x=>!x.dm&&/^\d{1,3}$/.test(x.nums[0])&&x.nums.length>=4);
+ const siraCol=!!((cols&&cols.sira)||(siraSeq.length>=2&&siraSeq.every((c,k)=>c.nums[0]===String(k+1))));
+ // tarihli satırlar
+ const raw=[];
+ dated.forEach(x=>{let v=x.nums;if(siraCol&&v.length>=4&&/^\d{1,3}$/.test(v[0]))v=v.slice(1);if(v.length>=3)raw.push({d:dIso(x.dm),v})});
+ // tarihsiz tablo satırları: tarihli satırlardan önce ve dizi kontrolü ile
+ let undated=info.filter(x=>!x.dm&&x.li>=0&&(dated.length===0||x.li<lastDatedLi));
+ undated=undated.map(x=>{let v=x.nums;if(siraCol&&v.length>=4&&/^\d{1,3}$/.test(v[0]))v=v.slice(1);return {li:x.li,v}}).filter(x=>x.v.length>=3);
+ // sondaki toplam satırı: diğer satırların ilk sütun toplamına eşitse
  let summary=null;
- info.forEach(x=>{if(x.li===hIdx||x.dm||x.li<=lastDataLi||x.nums.length<4)return;summary=x.nums});
+ const lastUndatedLi=undated.length?undated[undated.length-1].li:-1;
+ const afterTable=info.filter(x=>!x.dm&&x.li>lastDatedLi&&x.nums.length>=4);
+ if(dated.length&&afterTable.length)summary=afterTable[afterTable.length-1].nums;
+ if(!dated.length&&undated.length>=2){const last=undated[undated.length-1];const others=undated.slice(0,-1);const sum=others.reduce((s,r)=>s+tnum(r.v[0]),0);if(Math.abs(tnum(last.v[0])-sum)<1){summary=last.v;undated=others}}
+ undated.forEach(x=>raw.push({d:null,v:x.v}));
  const idxT=cols?cols.taksit:(raw.length?modeCol(raw):0);
  const idxA=cols?cols.anapara:idxT+1;
  const rows=raw.map(r=>({d:r.d,a:r.v[idxT]!==undefined?tnum(r.v[idxT]):0,ap:r.v[idxA]!==undefined?tnum(r.v[idxA]):0})).filter(r=>r.a>0);
@@ -545,15 +544,18 @@ const pdfShow=()=>{const P=PDFP;if(!P)return;
  <label style="display:flex;gap:8px;align-items:center;margin:10px 0 0;color:var(--ink)"><input type=checkbox id=pdfPast ${P.incPast?'checked':''} onchange="pdfEdit()"> Geçmiş taksitleri de ekle</label>
  ${sec('TAKSİTLER')}
  <div>${rowsHtml}</div>
+ <button class="btn ghost" style="margin-top:10px" onclick="pdfAddRow()">+ Taksit satırı ekle</button>
  <div style="display:flex;gap:8px;margin-top:16px"><button class=btn style="flex:2" onclick="pdfConfirm()" ${act.length?'':'disabled'}>${act.length?'Onayla, '+act.length+' taksiti ekle':(P.hasDates?'Eklenecek taksit yok':'Önce ilk taksit tarihini girin')}</button><button class="btn ghost" style="flex:1" onclick="akClose()">Vazgeç</button></div>`)};
 const pdfEdit=()=>{const P=PDFP;if(!P)return;P.n=($('pdfN').value||'').trim()||P.n;P.c=$('pdfC').value||P.c;P.kredi=+$('pdfK').value||0;P.incPast=$('pdfPast').checked;
  if(!P.hasDates&&$('pdfS'))P.start=$('pdfS').value||'';
  P.rows.forEach((r,i)=>{const el=$('pdfR'+i);if(el)r.a=+el.value||0});pdfShow()};
-const pdfPick=async file=>{if(!file)return;akSheet('<h3>Okunuyor…</h3><div class=mut>PDF veya fotoğraf okunuyor, lütfen bekleyin</div>');
+const pdfPick=async file=>{if(!file)return;if(!(/pdf/i.test(file.type)||/\.pdf$/i.test(file.name)))return akSheet(`<h3>Desteklenmeyen dosya</h3><div class=mut>Lütfen ödeme planını PDF olarak seçin.</div><button class="btn ghost" onclick="akPdfOpen()">Tekrar seç</button>`);akSheet('<h3>Okunuyor…</h3><div class=mut>PDF okunuyor, lütfen bekleyin</div>');
  try{const base=file.name.replace(/\.[a-z0-9]+$/i,'');const generic=/^(screenshot|img|image|dsc|scan|whatsapp|pdf|odeme)/i.test(base)||/^[\d_\- ]+$/.test(base);
   PDFP=planBuild(await docLines(file),generic?'Kredi':base,QD.c);pdfShow()}
  catch(e){akSheet(`<h3>Okunamadı</h3><div class=mut>${E(e.message)}</div><button class="btn ghost" onclick="akClose()">Kapat</button>`)}};
-const akPdfOpen=()=>{akSheet(`<h3>Kredi planı yükle</h3><div class=mut>Ödeme planının PDF'ini ya da fotoğrafını seçin. Okunanları kontrol edip onaylayabilirsiniz.</div><input type=file id=pdfIn accept="application/pdf,image/*" class=input style="margin-top:10px" onchange="pdfPick(this.files[0])"><button class="btn ghost" style="margin-top:10px" onclick="akPay()">Geri</button>`)};
+const akPdfOpen=()=>{akSheet(`<h3>Kredi planı yükle</h3><div class=mut>Ödeme planının PDF dosyasını seçin. Okunanları kontrol edip onaylayabilirsiniz.</div><input type=file id=pdfIn accept="application/pdf" class=input style="margin-top:10px" onchange="pdfPick(this.files[0])"><button class="btn ghost" style="margin-top:10px" onclick="akPay()">Geri</button>`)};
+const pdfAddRow=()=>{const P=PDFP;if(!P)return;P.rows.forEach((r,i)=>{const el=$('pdfR'+i);if(el)r.a=+el.value||0});
+ const last=P.rows[P.rows.length-1];P.rows.push({d:P.hasDates&&last&&last.d?addMonths(last.d,1):null,a:last?last.a:0,ap:0});pdfShow()};
 const pdfConfirm=()=>{const P=PDFP;const act=P?pdfActive(P):[];if(!act.length)return toast('Eklenecek taksit yok');if(act.some(r=>!(+P.rows[r.i].a>0)))return toast('Tutarı 0 olan taksit var');
  act.forEach((r,k)=>{const t=new Date(r.d+'T00:00');ensureCovers(t);const pw=pickWeekFor(t);
   pw.w[2].push(mkP(`${P.n||'Kredi'} (${k+1}/${act.length})`,iso(wd(pw.w)),+P.rows[r.i].a,'PDF planı',P.c))});
@@ -833,7 +835,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='6.76';
+const KEY='butce_v3';const VER='6.78';
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
