@@ -478,9 +478,9 @@ const imgLines=async file=>{await loadScript(OCR_JS,()=>!!window.Tesseract);
    // 1) Tablo satırları: yatay çizgilerle bölünüp her satır ayrı okunur
    const bands=rowBands(im);
    if(bands&&bands.length>=4){
-     await w.setParameters({tessedit_pageseg_mode:'7'});
+     await w.setParameters({tessedit_pageseg_mode:'7',tessedit_char_whitelist:''});
      const out=[];
-     for(const b of bands){const r=await w.recognize(bandCanvas(im,b,3));const t=(r.data.text||'').trim();if(t)out.push(t)}
+     for(let k=0;k<bands.length;k++){if(k===1)await w.setParameters({tessedit_char_whitelist:'0123456789,.|'});const r=await w.recognize(bandCanvas(im,bands[k],2));const t=(r.data.text||'').trim();if(t)out.push(t)}
      consider(out);
    }
    // 2) Yedek: tüm sayfa, birkaç ayarla denenir
@@ -497,7 +497,8 @@ const docLines=file=>(/pdf/i.test(file.type)||/\.pdf$/i.test(file.name))?pdfLine
 
 // OCR hatalarını toleranslı okuyan yardımcılar
 const normTok=t=>t.replace(/,\./g,',').replace(/^[|:;,\[\(\]\)]+|[|:;,\[\(\]\)]+$/g,'').replace(/(?<=\d)[Oo]|[Oo](?=\d)/g,'0').replace(/(?<=\d)[lI](?=\d)/g,'1');
-const fixDigits=t=>/\d/.test(t)&&/^[\dBbSsZzGgOoIl.,]+$/.test(t)&&t.length>=4?t.replace(/B/g,'8').replace(/[Ss]/g,'5').replace(/[Zz]/g,'2').replace(/[Gg]/g,'6'):t;
+const fixDigits0=t=>/\d/.test(t)&&/^[\dBbSsZzGgOoIl.,]+$/.test(t)&&t.length>=4?t.replace(/B/g,'8').replace(/[Ss]/g,'5').replace(/[Zz]/g,'2').replace(/[Gg]/g,'6'):t;
+const fixDigits=t=>/^\d{6,}$/.test(t)?t.slice(0,-2)+','+t.slice(-2):fixDigits0(t);
 const NUM_OK=t=>/^\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?$|^\d+(?:,\d{1,2})?$|^\d+\.\d{1,2}$/.test(t);
 const tnum=t=>{if(t.includes(','))return parseFloat(t.replace(/\./g,'').replace(',','.'))||0;if(/^\d+\.\d{1,2}$/.test(t))return parseFloat(t)||0;return parseFloat(t.replace(/\./g,''))||0};
 const DATE_RE=/(\d{2})[.\/](\d{2})[.\/](\d{4})/;
@@ -881,7 +882,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='6.82';
+const KEY='butce_v3';const VER='6.83';
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -1781,9 +1782,20 @@ const saveQS=()=>{const v=$('qsamt').value;if(v===''||!(+v>=0))return toast('Tut
 /* uygulama içi yenileme */
 let ptY=null,ptD=0;const ptEl=()=>document.getElementById('ptr');
 const ptSet=(d,txt)=>{const e=ptEl();if(!e)return;e.textContent=txt||'';e.style.transition=d?'none':'.2s';e.style.opacity=d?Math.min(1,d/50):0;e.style.transform=`translate(-50%,${d?Math.min(d*.6,70)-40:-60}px)`};
-document.addEventListener('touchstart',e=>{ptY=null;ptD=0;if(window.scrollY<=0&&!document.documentElement.classList.contains('lk'))ptY=e.touches[0].clientY},{passive:true});
-document.addEventListener('touchmove',e=>{if(ptY===null)return;if(window.scrollY>0||document.documentElement.classList.contains('lk')){ptY=null;ptSet(0);return}const d=e.touches[0].clientY-ptY;if(d<=0){ptD=0;ptSet(0);return}ptD=d;ptSet(d,d>100?'↻ Bırak, yenilensin':'↓ Yenilemek için çek')},{passive:true});
-document.addEventListener('touchend',()=>{if(ptY===null)return;const go=ptD>100;ptY=null;ptD=0;ptSet(0);if(go){refreshClock();draw();toast('Yenilendi');refreshRates(false)}},{passive:true});
+let ptHold=null,ptGo=false;
+const ptInScroll=el=>{for(let n=el;n&&n!==document.body;n=n.parentElement){if(!n||n.nodeType!==1)continue;const cs=getComputedStyle(n);if(/auto|scroll/.test(cs.overflowY)&&n.scrollHeight>n.clientHeight+2)return true}return false};
+const ptVis=el=>{if(!el)return false;const cs=getComputedStyle(el);return el.getBoundingClientRect().height>0&&cs.display!=='none'&&cs.visibility!=='hidden'};
+const ptRefresh=()=>{ptGo=true;ptSet(0);refreshClock();draw();toast('Yenilendi');refreshRates(false)};
+document.addEventListener('touchstart',e=>{ptY=null;ptD=0;clearTimeout(ptHold);ptHold=null;ptGo=false;
+ if(window.scrollY<=0&&!document.documentElement.classList.contains('lk')&&!ptInScroll(e.target)&&!ptVis(document.getElementById('akSW')))ptY=e.touches[0].clientY},{passive:true});
+document.addEventListener('touchmove',e=>{if(ptY===null)return;if(window.scrollY>0||document.documentElement.classList.contains('lk')){ptY=null;ptSet(0);return}
+ const d=e.touches[0].clientY-ptY;
+ if(d<=0){ptD=0;clearTimeout(ptHold);ptHold=null;ptSet(0);return}
+ ptD=d;
+ if(d>100){if(!ptHold&&!ptGo)ptHold=setTimeout(()=>{ptHold=null;ptRefresh()},900);ptSet(d,ptGo?'↻ Yenileniyor…':'↻ Basılı tutmaya devam et')}
+ else{clearTimeout(ptHold);ptHold=null;ptSet(d,'↓ Yenilemek için çek')}
+},{passive:true});
+document.addEventListener('touchend',()=>{clearTimeout(ptHold);ptHold=null;ptY=null;ptD=0;ptGo=false;ptSet(0)},{passive:true});
 
 
 /* ===== Belgelerim ===== */
