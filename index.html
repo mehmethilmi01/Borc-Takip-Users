@@ -58,7 +58,7 @@ html.lk,html.lk body{overflow:hidden;overscroll-behavior:none}
 .toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:20px;z-index:10;max-width:80%;animation:tin .2s ease}
 @keyframes tin{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
 html,body{overscroll-behavior-y:contain}
-#ptr{position:fixed;top:0;left:50%;z-index:7;transform:translate(-50%,-60px);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:20px;padding:6px 14px;font-size:13px;opacity:0;pointer-events:none;box-shadow:0 2px 8px #0002;margin-top:env(safe-area-inset-top,0px)}
+#ptr{position:fixed;top:0;left:50%;z-index:9999;transform:translate(-50%,-60px);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:20px;padding:6px 14px;font-size:13px;opacity:0;pointer-events:none;box-shadow:0 2px 8px #0002;margin-top:env(safe-area-inset-top,0px)}
 #docovl,#docvovl,#docfovl{display:none;position:fixed;inset:0;background:#0008;align-items:center;justify-content:center;padding:20px}
 #docovl{z-index:8}
 #docatovl{display:none;position:fixed;inset:0;background:#0008;z-index:10;align-items:center;justify-content:center;padding:20px}
@@ -882,7 +882,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='6.84';
+const KEY='butce_v3';const VER='6.85';
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -1782,21 +1782,20 @@ const saveQS=()=>{const v=$('qsamt').value;if(v===''||!(+v>=0))return toast('Tut
 /* uygulama içi yenileme */
 let ptY=null,ptD=0;const ptEl=()=>document.getElementById('ptr');
 const ptSet=(d,txt)=>{const e=ptEl();if(!e)return;e.textContent=txt||'';e.style.transition=d?'none':'.2s';e.style.opacity=d?Math.min(1,d/50):0;e.style.transform=`translate(-50%,${d?Math.min(d*.6,70)-40:-60}px)`};
-let ptHold=null,ptGo=false;
-const ptInScroll=el=>{for(let n=el;n&&n!==document.body;n=n.parentElement){if(!n||n.nodeType!==1)continue;const cs=getComputedStyle(n);if(/auto|scroll/.test(cs.overflowY)&&n.scrollHeight>n.clientHeight+2)return true}return false};
-const ptVis=el=>{if(!el)return false;const cs=getComputedStyle(el);return el.getBoundingClientRect().height>0&&cs.display!=='none'&&cs.visibility!=='hidden'};
+const PT_THR=100;
+const ptScrolled=el=>{for(let n=el;n&&n!==document.body;n=n.parentElement){if(!n||n.nodeType!==1)continue;const cs=getComputedStyle(n);if(/auto|scroll/.test(cs.overflowY)&&n.scrollTop>0)return true}return false};
 const ptColor=c=>{const e=ptEl();if(e)e.style.color=c||''};
-const ptRefresh=()=>{ptGo=true;ptColor('var(--acc)');ptSet(0);refreshClock();draw();toast('Yenilendi');refreshRates(false)};
-document.addEventListener('touchstart',e=>{ptY=null;ptD=0;clearTimeout(ptHold);ptHold=null;ptGo=false;ptColor('');
- if(window.scrollY<=0&&!document.documentElement.classList.contains('lk')&&!ptInScroll(e.target)&&!ptVis(document.getElementById('akSW')))ptY=e.touches[0].clientY},{passive:true});
-document.addEventListener('touchmove',e=>{if(ptY===null)return;if(window.scrollY>0||document.documentElement.classList.contains('lk')){ptY=null;ptSet(0);return}
+document.addEventListener('touchstart',e=>{ptY=null;ptD=0;ptColor('');
+ if(window.scrollY<=0&&!document.documentElement.classList.contains('lk')&&!ptScrolled(e.target))ptY=e.touches[0].clientY},{passive:true});
+document.addEventListener('touchmove',e=>{if(ptY===null)return;
  const d=e.touches[0].clientY-ptY;
- if(d<=0){ptD=0;clearTimeout(ptHold);ptHold=null;ptColor('');ptSet(0);return}
+ if(d<=0){ptD=0;ptColor('');ptSet(0);return}
  ptD=d;
- if(d>100){if(!ptHold&&!ptGo)ptHold=setTimeout(()=>{ptHold=null;ptRefresh()},500);ptSet(d,'↻')}
- else{clearTimeout(ptHold);ptHold=null;ptColor('');ptSet(d,'↻')}
+ ptColor(d>=PT_THR?'var(--acc)':'var(--mut)');
+ ptSet(d,'↻');
 },{passive:true});
-document.addEventListener('touchend',()=>{clearTimeout(ptHold);ptHold=null;ptY=null;ptD=0;ptGo=false;ptColor('');ptSet(0)},{passive:true});
+document.addEventListener('touchend',()=>{const go=ptY!==null&&ptD>=PT_THR;ptY=null;ptD=0;ptColor('');ptSet(0);
+ if(go){refreshClock();draw();toast('Yenilendi');refreshRates(false)}},{passive:true});
 
 
 /* ===== Belgelerim ===== */
