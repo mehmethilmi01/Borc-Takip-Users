@@ -447,6 +447,11 @@ function akAdd(){QDW=null;akSheet(`<h3>Ne eklemek istersin?</h3><div class=menu>
 function akPayRead(){const g=id=>document.getElementById(id);if(!g('qn'))return;QD.n=g('qn').value;QD.a=g('qa').value;QD.d=g('qd').value;QD.t=g('qt').value;QD.note=g('qnote').value}
 let PDFP=null;
 const PDF_JS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+const loadScript=(src,ready)=>new Promise((res,rej)=>{if(ready())return res();const s=document.createElement('script');s.src=src;s.onload=()=>res();s.onerror=()=>rej(new Error('Kütüphane yüklenemedi, internet bağlantınızı kontrol edin'));document.head.appendChild(s)});
+const pdfLines=async file=>{await loadScript(PDF_JS+'pdf.min.js',()=>!!window.pdfjsLib);window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDF_JS+'pdf.worker.min.js';
+ const doc=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;const out=[];
+ for(let i=1;i<=doc.numPages;i++){const c=await (await doc.getPage(i)).getTextContent();let line='',lastY=null;c.items.forEach(it=>{const y=Math.round(it.transform[5]);if(lastY!==null&&Math.abs(y-lastY)>2){out.push(line.trim());line=''}line+=it.str+' ';lastY=y});out.push(line.trim())}
+ return out.filter(Boolean)};
 const docLines=file=>pdfLines(file);
 // OCR hatalarını toleranslı okuyan yardımcılar
 const normTok=t=>t.replace(/,\./g,',').replace(/^[|:;,\[\(\]\)]+|[|:;,\[\(\]\)]+$/g,'').replace(/(?<=\d)[Oo]|[Oo](?=\d)/g,'0').replace(/(?<=\d)[lI](?=\d)/g,'1');
@@ -835,7 +840,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='6.78';
+const KEY='butce_v3';const VER='6.79';
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
