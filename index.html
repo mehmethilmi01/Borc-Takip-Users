@@ -455,35 +455,40 @@ const pdfLines=async file=>{await loadScript(PDF_JS+'pdf.min.js',()=>!!window.pd
  return out.filter(Boolean)};
 const imgLines=async file=>{await loadScript(OCR_JS,()=>!!window.Tesseract);const r=await window.Tesseract.recognize(file,'tur+eng');return r.data.text.split('\n').map(x=>x.trim()).filter(Boolean)};
 const docLines=file=>(/pdf/i.test(file.type)||/\.pdf$/i.test(file.name))?pdfLines(file):imgLines(file);
-const NUM_RE=/^\d{1,3}(?:\.\d{3})+(?:,\d+)?$|^\d+(?:,\d+)?$/;
+// OCR hatalarını toleranslı okuyan yardımcılar
+const normTok=t=>t.replace(/^[|:;,\[\(\]\)]+|[|:;,\[\(\]\)]+$/g,'').replace(/(?<=\d)[Oo]|[Oo](?=\d)/g,'0').replace(/(?<=\d)[lI](?=\d)/g,'1');
+const fixDigits=t=>/\d/.test(t)&&/^[\dBbSsZzGgOoIl.,]+$/.test(t)&&t.length>=4?t.replace(/B/g,'8').replace(/[Ss]/g,'5').replace(/[Zz]/g,'2').replace(/[Gg]/g,'6'):t;
+const NUM_OK=t=>/^\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?$|^\d+(?:,\d{1,2})?$|^\d+\.\d{2}$/.test(t);
+const tnum=t=>{if(t.includes(','))return parseFloat(t.replace(/\./g,'').replace(',','.'))||0;if(/^\d+\.\d{2}$/.test(t))return parseFloat(t)||0;return parseFloat(t.replace(/\./g,''))||0};
 const DATE_RE=/(\d{2})[.\/](\d{2})[.\/](\d{4})/;
-const tnum=s=>parseFloat(s.replace(/\./g,'').replace(',','.'))||0;
 const dIso=m=>`${m[3]}-${m[2]}-${m[1]}`;
 const pad2=n=>String(n).padStart(2,'0');
 const addMonths=(s,k)=>{const [y,mo,d]=s.split('-').map(Number);const t=new Date(y,mo-1+k,d);return `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`};
 const fmtD=s=>s?new Date(s+'T00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'short',year:'numeric'}):'-';
-// başlık satırından sütun sırasını çıkarır: Sıra ve Tarih sayısal sütun değildir, "Ödeme Tarihi" de tarih sütunudur
-const headerCols=h=>{const skip=new Set(['sıra','tarih']);const w=h.trim().split(/\s+/);const labels=[];let sira=false;
- for(let i=0;i<w.length;i++){const x=w[i].toLocaleLowerCase('tr-TR');if(x==='sıra'){sira=true;continue}
-  if(skip.has(x))continue;if(x==='ödeme'&&/^tarihi$/i.test(w[i+1]||'')){i++;continue}labels.push(x)}
- const t=labels.indexOf('taksit'),a=labels.indexOf('anapara');
+const headerCols=h=>{const w=h.trim().split(/\s+/);const labels=[];let sira=false;
+ for(let i=0;i<w.length;i++){const x=w[i].toLocaleLowerCase('tr-TR');if(x==='sıra'||x==='sira'){sira=true;continue}
+  if(x==='tarih')continue;if(x==='ödeme'&&/^tarihi$/i.test(w[i+1]||'')){i++;continue}labels.push(x)}
+ const t=labels.findIndex(x=>/tak[sş]it/.test(x)),a=labels.findIndex(x=>/anapara/.test(x));
  return {taksit:t>=0?t:0,anapara:a>=0?a:1,sira}};
-// başlık yoksa: aynı tutarın en çok tekrar ettiği sütun taksittir (sıfırlar sayılmaz)
 const modeCol=rows=>{const n=Math.min(...rows.map(r=>r.v.length));let best=0,bi=0;for(let k=0;k<n;k++){const f={};rows.forEach(r=>{const v=r.v[k];if(v)f[v]=(f[v]||0)+1});const mx=Math.max(0,...Object.values(f));if(mx>best){best=mx;bi=k}}return bi};
 const pdfParse=lines=>{
- const hIdx=lines.findIndex(l=>/taksit/i.test(l)&&/anapara|faiz|bakiye|kalan/i.test(l));
+ const hIdx=lines.findIndex(l=>/tak[sş]it/i.test(l)&&/anapara|faiz|bakiye|kalan|sıra|sira/i.test(l));
  const cols=hIdx>=0?headerCols(lines[hIdx]):null;
  const low=lines.join(' ').toLocaleLowerCase('tr-TR');
  const fm=low.match(/faiz oran[^\d]*?(\d+(?:,\d+)?)/);const bm=low.match(/bugünkü kredi borcu[^\d]*?(\d[\d.]*,\d+)/);
- const raw=[];let summary=null;
- lines.forEach((l,li)=>{if(li===hIdx)return;
-  const dm=l.match(DATE_RE);
-  let vals=l.split(/\s+/).filter(t=>NUM_RE.test(t));
-  let sira=false;
-  if(vals.length>=4&&/^\d{1,3}$/.test(vals[0])&&((cols&&cols.sira)||(!cols&&!dm))){vals=vals.slice(1);sira=true}
-  if((dm||sira)&&vals.length>=3)raw.push({d:dm?dIso(dm):null,v:vals});
-  else if(!dm&&!sira&&vals.length>=4)summary=vals;
+ // her satırı tokenlara ayır
+ const info=lines.map((l,li)=>{const dm=l.match(DATE_RE);const toks=l.split(/\s+/).map(normTok).map(fixDigits).filter(Boolean);const nums=toks.filter(NUM_OK);return {li,dm,nums}});
+ const cand=info.filter(x=>x.li!==hIdx&&x.nums.length>=3&&(x.dm||/^\d{1,3}$/.test(x.nums[0])));
+ // sıra sütunu var mı: adaylar 1,2,3... diye gidiyorsa veya başlıkta "Sıra" varsa
+ const seqOk=cand.length>=2&&cand.every((c,k)=>!c.dm&&c.nums[0]===String(k+1));
+ const siraCol=!!((cols&&cols.sira)||seqOk);
+ const raw=[];let lastDataLi=-1;
+ info.forEach(x=>{if(x.li===hIdx)return;let vals=x.nums;let sira=false;
+  if(siraCol&&vals.length>=4&&/^\d{1,3}$/.test(vals[0])){vals=vals.slice(1);sira=true}
+  if((x.dm||sira)&&vals.length>=3){raw.push({d:x.dm?dIso(x.dm):null,v:vals});lastDataLi=x.li}
  });
+ let summary=null;
+ info.forEach(x=>{if(x.li===hIdx||x.dm||x.li<=lastDataLi||x.nums.length<4)return;summary=x.nums});
  const idxT=cols?cols.taksit:(raw.length?modeCol(raw):0);
  const idxA=cols?cols.anapara:idxT+1;
  const rows=raw.map(r=>({d:r.d,a:r.v[idxT]!==undefined?tnum(r.v[idxT]):0,ap:r.v[idxA]!==undefined?tnum(r.v[idxA]):0})).filter(r=>r.a>0);
@@ -491,11 +496,10 @@ const pdfParse=lines=>{
 const planBuild=(lines,name,c)=>{const p=pdfParse(lines);
  let rows=p.rows.filter((r,i,arr)=>!r.d||arr.findIndex(x=>x.d===r.d)===i);
  if(p.hasDates)rows=rows.slice().sort((x,y)=>(x.d||'').localeCompare(y.d||''));
- const today=iso(bt0);
- return {n:name,c:c||S.dcats[0],rows,hasDates:p.hasDates,start:addMonths(today,1),incPast:false,
+ return {n:name,c:c||S.dcats[0],rows,lines,hasDates:p.hasDates,start:'',incPast:false,
   kredi:p.summaryAnapara||rows.reduce((s,r)=>s+r.ap,0),faiz:p.faiz,borc:p.borc}};
-const pdfDate=(P,i)=>P.hasDates?P.rows[i].d:addMonths(P.start,i);
-const pdfActive=P=>P.rows.map((r,i)=>({i,a:r.a,d:pdfDate(P,i)})).filter(r=>P.incPast||r.d>=iso(bt0));
+const pdfDate=(P,i)=>P.hasDates?P.rows[i].d:(P.start?addMonths(P.start,i):null);
+const pdfActive=P=>P.rows.map((r,i)=>({i,a:r.a,d:pdfDate(P,i)})).filter(r=>r.d&&(P.incPast||r.d>=iso(bt0)));
 const pdfShow=()=>{const P=PDFP;if(!P)return;
  const act=pdfActive(P);act.forEach(r=>ensureCovers(new Date(r.d+'T00:00')));
  const totalPlan=P.rows.reduce((s,r)=>s+(+r.a||0),0);
@@ -506,23 +510,26 @@ const pdfShow=()=>{const P=PDFP;if(!P)return;
  const tile=(lbl,val,clr)=>`<div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px"><div style="font-size:12px;color:var(--mut)">${lbl}</div><div style="font-size:17px;font-weight:700;color:${clr||'var(--ink)'};margin-top:3px">${val}</div></div>`;
  const sec=t=>`<div style="font-size:12px;font-weight:700;color:var(--mut);letter-spacing:.4px;margin:16px 0 8px">${t}</div>`;
  const amtBox=(id,val,onch)=>`<div style="position:relative;width:118px;flex:none"><input class="input n" id=${id} inputmode=decimal value="${val}" style="width:100%;text-align:right;padding-right:26px" onchange="${onch}"><span style="position:absolute;right:9px;top:50%;transform:translateY(-50%);color:var(--mut);pointer-events:none">₺</span></div>`;
+ const dateAsk=!P.hasDates?`<div style="background:${INFO_BG};border:1px solid #b9d1f0;border-radius:12px;padding:12px;margin:12px 0"><div style="font-weight:700;color:${INFO_FG}">İlk taksit tarihi nedir?</div><div style="font-size:12px;color:${INFO_FG};margin:3px 0 8px">Bu planda tarih yok. Girdiğiniz tarihten itibaren taksitler aylık oluşturulur.</div><input class=input type=date id=pdfS value="${P.start||''}" onchange="pdfEdit()"></div>`:'';
  const rowsHtml=P.rows.map((r,i)=>{const d=pdfDate(P,i);const on=activeIdx.has(i);
   let meta;
-  if(on){const pw=pickWeekFor(new Date(d+'T00:00'));const tot=wtotW(pw.w)+act.filter(q=>{const qw=pickWeekFor(new Date(q.d+'T00:00'));return qw.mi===pw.mi&&qw.wi===pw.wi}).reduce((s,q)=>s+(+P.rows[q.i].a||0),0);
+  if(!d)meta=`<div style="margin-top:6px">${chip('Tarih bekleniyor',INFO_BG,INFO_FG)}</div>`;
+  else if(on){const pw=pickWeekFor(new Date(d+'T00:00'));const tot=wtotW(pw.w)+act.filter(q=>{const qw=pickWeekFor(new Date(q.d+'T00:00'));return qw.mi===pw.mi&&qw.wi===pw.wi}).reduce((s,q)=>s+(+P.rows[q.i].a||0),0);
    meta=`<div style="margin-top:6px">${chip('Çarşamba '+wd(pw.w).toLocaleDateString('tr-TR',{day:'numeric',month:'short'}),INFO_BG,INFO_FG)}${chip('Hafta toplamı '+F(tot),'var(--ok)','var(--acc)')}</div>`}
   else meta=`<div style="margin-top:6px">${chip('Geçmiş, eklenmez','var(--line)','var(--mut)')}</div>`;
-  return `<div style="display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line);${on?'':'opacity:.6'}">
+  return `<div style="display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line);${on||!d?'':'opacity:.6'}">
    <div style="width:4px;align-self:stretch;border-radius:4px;background:${on?'var(--acc)':'var(--line)'}"></div>
-   <div style="flex:1;min-width:0"><div style="font-weight:600">${i+1}. taksit · ${fmtD(d)}</div>${meta}</div>
+   <div style="flex:1;min-width:0"><div style="font-weight:600">${i+1}. taksit · ${d?fmtD(d):'tarih yok'}</div>${meta}</div>
    ${amtBox('pdfR'+i,r.a||'','pdfEdit()')}</div>`}).join('');
  const cats=S.dcats.map(c=>`<option value="${E(c)}" ${c===P.c?'selected':''}>${E(c)}</option>`).join('');
  const info=[
    act.length?chip('İlk taksit: '+fmtD(act[0].d),INFO_BG,INFO_FG):'',
    act.length?chip('Son taksit: '+fmtD(act[act.length-1].d),INFO_BG,INFO_FG):'',
    P.faiz?chip('Faiz %'+String(P.faiz).replace('.',','),INFO_BG,INFO_FG):'',
-   P.borc?chip('Bugünkü borç '+F(P.borc),INFO_BG,INFO_FG):'',
-   !P.hasDates?chip('Tarihsiz plan: tarihleri siz belirlersiniz',INFO_BG,INFO_FG):''].join('');
+   P.borc?chip('Bugünkü borç '+F(P.borc),INFO_BG,INFO_FG):''].join('');
+ const debug=P.rows.length?'':`<div class=mut style="margin:10px 0">Taksit satırları bulunamadı. Aşağıdaki okunan metne bakarak bilgi verebilirsiniz.</div><details style="margin-bottom:10px"><summary style="cursor:pointer;color:var(--mut)">Okunan metin</summary><pre style="white-space:pre-wrap;font-size:11px;background:var(--bg);border-radius:8px;padding:8px;max-height:200px;overflow:auto">${E((P.lines||[]).join('\n'))}</pre></details>`;
  akSheet(`<h3 style="margin:0">Okunan plan</h3>
+ ${dateAsk}
  <div style="margin:10px 0 2px">${info}</div>
  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
    ${tile('Kredi tutarı',F(P.kredi||0))}
@@ -530,20 +537,21 @@ const pdfShow=()=>{const P=PDFP;if(!P)return;
    ${tile('Eklenecek taksit',act.length+' / '+P.rows.length)}
    ${tile('Eklenecek toplam',F(totalAct),'var(--acc)')}
  </div>
+ ${debug}
  ${sec('BORÇ BİLGİLERİ')}
  <div class=field><label>Borç adı</label><input class=input id=pdfN value="${E(P.n)}" onchange="pdfEdit()"></div>
  <div class=field><label>Kategori</label><select class=input id=pdfC onchange="pdfEdit()">${cats}</select></div>
  <div class=field><label>Kredi tutarı</label><div style="position:relative"><input class=input id=pdfK inputmode=decimal value="${P.kredi||''}" onchange="pdfEdit()" style="padding-right:30px"><span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--mut);pointer-events:none">₺</span></div></div>
- ${P.hasDates?'':`<div class=field><label>İlk taksit tarihi (aylık üretilir)</label><input class=input type=date id=pdfS value="${P.start}" onchange="pdfEdit()"></div>`}
  <label style="display:flex;gap:8px;align-items:center;margin:10px 0 0;color:var(--ink)"><input type=checkbox id=pdfPast ${P.incPast?'checked':''} onchange="pdfEdit()"> Geçmiş taksitleri de ekle</label>
  ${sec('TAKSİTLER')}
- <div>${rowsHtml||'<div class=empty>Tutar bulunamadı. Bu planı elle girin.</div>'}</div>
- <div style="display:flex;gap:8px;margin-top:16px"><button class=btn style="flex:2" onclick="pdfConfirm()" ${act.length?'':'disabled'}>Onayla, ${act.length} taksiti ekle</button><button class="btn ghost" style="flex:1" onclick="akClose()">Vazgeç</button></div>`)};
+ <div>${rowsHtml}</div>
+ <div style="display:flex;gap:8px;margin-top:16px"><button class=btn style="flex:2" onclick="pdfConfirm()" ${act.length?'':'disabled'}>${act.length?'Onayla, '+act.length+' taksiti ekle':(P.hasDates?'Eklenecek taksit yok':'Önce ilk taksit tarihini girin')}</button><button class="btn ghost" style="flex:1" onclick="akClose()">Vazgeç</button></div>`)};
 const pdfEdit=()=>{const P=PDFP;if(!P)return;P.n=($('pdfN').value||'').trim()||P.n;P.c=$('pdfC').value||P.c;P.kredi=+$('pdfK').value||0;P.incPast=$('pdfPast').checked;
- if(!P.hasDates&&$('pdfS').value)P.start=$('pdfS').value;
+ if(!P.hasDates&&$('pdfS'))P.start=$('pdfS').value||'';
  P.rows.forEach((r,i)=>{const el=$('pdfR'+i);if(el)r.a=+el.value||0});pdfShow()};
 const pdfPick=async file=>{if(!file)return;akSheet('<h3>Okunuyor…</h3><div class=mut>PDF veya fotoğraf okunuyor, lütfen bekleyin</div>');
- try{PDFP=planBuild(await docLines(file),file.name.replace(/\.[a-z0-9]+$/i,''),QD.c);pdfShow()}
+ try{const base=file.name.replace(/\.[a-z0-9]+$/i,'');const generic=/^(screenshot|img|image|dsc|scan|whatsapp|pdf|odeme)/i.test(base)||/^[\d_\- ]+$/.test(base);
+  PDFP=planBuild(await docLines(file),generic?'Kredi':base,QD.c);pdfShow()}
  catch(e){akSheet(`<h3>Okunamadı</h3><div class=mut>${E(e.message)}</div><button class="btn ghost" onclick="akClose()">Kapat</button>`)}};
 const akPdfOpen=()=>{akSheet(`<h3>Kredi planı yükle</h3><div class=mut>Ödeme planının PDF'ini ya da fotoğrafını seçin. Okunanları kontrol edip onaylayabilirsiniz.</div><input type=file id=pdfIn accept="application/pdf,image/*" class=input style="margin-top:10px" onchange="pdfPick(this.files[0])"><button class="btn ghost" style="margin-top:10px" onclick="akPay()">Geri</button>`)};
 const pdfConfirm=()=>{const P=PDFP;const act=P?pdfActive(P):[];if(!act.length)return toast('Eklenecek taksit yok');if(act.some(r=>!(+P.rows[r.i].a>0)))return toast('Tutarı 0 olan taksit var');
@@ -825,7 +833,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='6.75';
+const KEY='butce_v3';const VER='6.76';
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
