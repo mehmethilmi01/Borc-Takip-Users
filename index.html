@@ -279,9 +279,9 @@ function akFlowBody(){
 function akWkPayAdd(mi,wi){QDW={mi,wi};const w=S.m[mi].w[wi];QD.d=iso(wd(w));QD.c=QD.c||S.dcats[0];akPay()}
 /* ===== YIL GORUNUMU (Takvim > Yıl) ===== */
 const AK_YM={t:'Toplam',p:'Ödenen',l:'Kalan'};
-function akSwitch(){return akModes(akSt.view||'month',[['month','Ay'],['year','Yıl']],k=>`akSt.view='${k}';draw(1)`)}
+function akSwitch(){return akModes(akSt.view||'month',[['month','Ay'],['year','Yıl']],k=>`akSt.view='${k}';akSt.yrPage=null;akSt.yrCat=null;draw(1)`)}
 function akYr(d){akSt.yr=(akSt.yr||t0.getFullYear())+d;draw(1)}
-function akYm(k){akSt.ym=k;draw()}
+function akYm(k){akSt.yrPage={k,yr:akSt.yr||t0.getFullYear()};akSt.yrCat=null;draw(1)}
 function akOpenM(mi){akSt.mi=mi;akSt.view='month';draw(1)}
 function akYearBody(){
  const yr=akSt.yr||t0.getFullYear();akSt.yr=yr;
@@ -304,12 +304,57 @@ function akYearBody(){
  const grid=`<div class=ak-ygrid>${cells.map(c=>{
    const has=!!(c.v&&(c.v.tot||c.v.paid)),now=c.ym==cYm;
    const x=has?mv(c.v,sel):0;
-   return `<button class="ak-ym${now?' ak-now':''}${has?'':' ak-empty'}" ${has?`onclick="akOpenM(${c.mi})"`:'disabled'}><small>${AK_LM[c.m-1]}</small><b class=num style="color:${has?(sel=='l'&&x<=0?'var(--good)':col(sel)):'var(--mut)'}">${has?(sel=='l'&&x<=0?'Ödendi':F(x)):'–'}</b></button>`;
+   return `<button class="ak-ym${now?' ak-now':''}${has?'':' ak-empty'}" ${has?`onclick="akOpenM(${c.mi})"`:'disabled'}><small>${AK_LM[c.m-1]}</small><b class=num style="color:${has?(sel=='l'&&x<=0?'var(--good)':col(sel)):'var(--mut)'}">${has?(sel=='l'&&x<=0?F(c.v.paid)+'<span class=ak-pd>ödendi</span>':F(x)):'–'}</b></button>`;
  }).join('')}</div>`;
  return `<div class=mhead><button class=nav-arrow onclick="akYr(-1)">‹</button><b>${yr}</b><button class=nav-arrow onclick="akYr(1)">›</button></div>${top}${hint}${grid}`;
 }
+function akYrCatBody(){
+ const {k,yr}=akSt.yrPage;const ys=String(yr);const c=akSt.yrCat;
+ const rows=[];
+ const amtOf=(t,o)=>k=='t'?t:k=='o'?o:t-o;
+ S.m.forEach((m,mi)=>{
+   const ym=ymOf(mi);if(ym.slice(0,4)!==ys)return;
+   const ml=AK_LM[+ym.slice(5)-1];
+   m.w.forEach(w=>w[2].forEach(p=>{
+     const t=+p[2]||0;if(!t)return;
+     if((p[5]||'📌 Diğer')!==c)return;
+     const o=Math.min(t,akPaidOf(p));const amt=amtOf(t,o);if(!(amt>0))return;
+     const dm=(String(w[0]).match(/\((.*?)\)/)||[])[1];
+     rows.push({n:p[0]||'—',s:ml+' '+ys+(dm?' · '+dm:''),amt,done:o>=t});
+   }));
+   if(c=='🧾 Faturalar')(S.bills||[]).forEach(b=>{
+     const inst=S.billPaid[b.id+'_'+ym];if(!inst)return;
+     const t=+inst.amount||0;if(!t)return;
+     const o=inst.paid?t:0;const amt=amtOf(t,o);if(!(amt>0))return;
+     rows.push({n:b.name||'Fatura',s:ml+' '+ys,amt,done:!!inst.paid});
+   });
+ });
+ const list=rows.map(r=>`<div class=row><div class=meta><div class=nm>${E(r.n)}</div><div class=sub>${E(r.s)} · ${r.done?'ödendi':'kaldı'}</div></div><div class="amt num">${F(r.amt)}</div></div>`).join('');
+ return `<div class=sect><button class=link onclick="akSt.yrCat=null;draw(1)">‹ Geri</button><h2>${E(c)}</h2></div>${rows.length?`<div class=list>${list}</div>`:'<div class="card empty">Kayıt yok</div>'}`;
+}
+function akYrPageBody(){
+ if(akSt.yrCat)return akYrCatBody();const {k,yr}=akSt.yrPage;const ys=String(yr);
+ const g={};let T=0,O=0;
+ const add=(c,t,o)=>{if(!(t>0))return;const x=g[c]=g[c]||{t:0,o:0,np:0,nl:0,npo:0};x.t+=t;x.o+=o;if(o>0)x.npo++;if(o>=t)x.np++;else x.nl++;T+=t;O+=o};
+ S.m.forEach((m,mi)=>{
+   const ym=ymOf(mi);if(ym.slice(0,4)!==ys)return;
+   m.w.forEach(w=>w[2].forEach(p=>{const t=+p[2]||0;if(!t)return;add(p[5]||'📌 Diğer',t,Math.min(t,akPaidOf(p)))}));
+   (S.bills||[]).forEach(b=>{const inst=S.billPaid[b.id+'_'+ym];if(!inst)return;const t=+inst.amount||0;if(!t)return;add('🧾 Faturalar',t,inst.paid?t:0)});
+ });
+ const R=T-O,pct=T?Math.round(O/T*100):0;
+ const cfg={t:['Toplam borç',T],o:['Ödenen',O],l:['Kalan',R]}[k]||['Kalan',R];
+ const row=(c,sub,amt,p)=>`<div class=debt onclick="akSt.yrCat='${Q(c)}';draw(1)"><div class=info><b>${E(c)}</b><small>${sub}</small><div class=bar><i style="width:${p}%"></i></div></div><div class="rem num">${F(amt)}</div></div>`;
+ const ents=Object.entries(g);
+ let rows='';
+ if(k=='t')rows=ents.sort((a,b)=>b[1].t-a[1].t).map(([c,x])=>row(c,`${x.np} ödeme yapıldı · ${x.nl} kaldı`,x.t,x.t?Math.round(x.o/x.t*100):0)).join('');
+ if(k=='o')rows=ents.filter(([c,x])=>x.o>0).sort((a,b)=>b[1].o-a[1].o).map(([c,x])=>row(c,`${x.npo} ödeme yapıldı`,x.o,x.t?Math.round(x.o/x.t*100):0)).join('');
+ if(k=='l')rows=ents.filter(([c,x])=>x.t-x.o>0).sort((a,b)=>(b[1].t-b[1].o)-(a[1].t-a[1].o)).map(([c,x])=>row(c,`${x.nl} ödeme kaldı`,x.t-x.o,x.t?Math.round(x.o/x.t*100):0)).join('');
+ return `<div class=mhead><button class=nav-arrow onclick="akSt.yrPage=null;akSt.yrCat=null;draw(1)">‹</button><b>${yr}</b><span></span></div>
+ <section class="card stagger"><div class=lbl>${yr} · ${cfg[0]}</div><div class="big num" style="font-size:30px;margin-top:4px">${F(cfg[1])}</div><div class=bar style="height:6px;border-radius:9px;background:var(--surface2);margin-top:14px;overflow:hidden"><i style="display:block;height:100%;width:${pct}%;background:var(--good);border-radius:9px"></i></div><div class=mut style="margin-top:8px">${pct}% ödendi</div></section>
+ <div class=sect><h2>Kategoriler</h2></div>${rows?`<div class=list>${rows}</div>`:'<div class="card empty">Kayıt yok</div>'}`;
+}
 function akCalBody(){
- if(akSt.view=='year')return akSwitch()+akYearBody();
+ if(akSt.view=='year')return akSwitch()+(akSt.yrPage?akYrPageBody():akYearBody());
  const mi=akSt.mi==null?akMonthIdx():akSt.mi;akSt.mi=mi;const cw=akWeeks().find(y=>!isClosed(y.w));
  const m=S.m[mi],ym=ymOf(mi),T=akMonthTot(mi),pct=T.tot?Math.round(T.paid/T.tot*100):0;
  const weeks=m.w.map((w,wi)=>{const pay=w[2].map((p,pi)=>akPayRow(mi,wi,pi,p)).join('');
@@ -914,7 +959,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='6.89';
+const KEY='butce_v3';const VER='6.93';
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -3341,7 +3386,7 @@ input,textarea,[contenteditable=true]{-webkit-user-select:text;user-select:text}
 .wkb{height:64px;flex:none}</style><style>.wkd.izin .wkb{background:repeating-linear-gradient(45deg,var(--line),var(--line) 6px,transparent 6px,transparent 12px)}.wkd.izin .wkb i{background:transparent}.wkd.izin .wkup{color:var(--mut)}.wkd{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}</style><style>button.ak-r2,label.ak-r2{cursor:pointer;color:var(--acc);font-weight:600}button.ak-r2::after,label.ak-r2::after{content:"›";font-size:22px;line-height:1;color:var(--mut);margin-left:auto;font-weight:400}button.ak-r2 span[style*="color"]{color:var(--bad)!important}</style><style>button.ak-r2,label.ak-r2{background:var(--surface2);border-radius:14px;margin:6px 10px;width:calc(100% - 20px);padding:14px 16px;cursor:pointer;color:var(--acc);font-weight:600;border:1px solid var(--line)}button.ak-r2:active,label.ak-r2:active{transform:scale(.99)}</style><style>.tl-pp{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-top:2px}.tl-pg,.tl-pr{font-size:12px;font-weight:600;white-space:nowrap}.tl-pg{color:var(--good)}.tl-pr{color:var(--bad)}.tl-bar{width:120px;height:6px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:6px;margin-left:auto}.tl-bar i{display:block;height:100%;background:var(--good);border-radius:4px;transition:width .3s}</style><style>body{text-transform:capitalize}input,textarea,select{text-transform:none}</style><style>#qkcats *,#qksrc *{animation:none!important;transition:none!important}</style><style>
 .ak-ygrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .ak-ym{background:var(--surface);border:0;border-radius:16px;padding:12px;box-shadow:0 1px 2px rgba(20,20,30,.05),0 8px 18px -12px rgba(20,20,30,.22);text-align:left;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);display:flex;flex-direction:column;min-width:0;aspect-ratio:1.36;cursor:pointer;transition:transform .15s var(--ease)}
-html.nv .ak-ym{background:var(--surface,#fff);padding:12px;color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;border:0}.ak-ym:active{transform:scale(.97)}
+html.nv .ak-ym{background:var(--surface,#fff);padding:12px;color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;border:0}.ak-pd{font-size:11px;font-weight:500;color:var(--mut);margin-left:4px}.ak-ym:active{transform:scale(.97)}
 .ak-ym:disabled{cursor:default;transform:none}
 .ak-ym small{font-size:15px;color:var(--mut);font-weight:600;line-height:1.2}
 .ak-ym b{font-size:17px;font-weight:600;margin-top:14px;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
