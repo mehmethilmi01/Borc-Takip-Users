@@ -293,7 +293,7 @@ function akYearBody(){
    const ym=yr+'-'+String(m).padStart(2,'0');const mi=idx[ym];
    const v=mi==null?null:akMonthTot(mi);
    if(v){T+=v.tot;P+=v.paid}
-   cells.push({m,ym,mi,v,wk:mi!=null&&S.m[mi].w.some(w=>w[2].some(p=>(+p[2]||0)>0))});
+   cells.push({m,ym,mi,v});
  }
  const L=T-P,pct=T?Math.round(P/T*100):0;
  const yv=k=>k=='p'?P:k=='l'?L:T;
@@ -302,7 +302,7 @@ function akYearBody(){
  const top=`<div class=mtot>${['t','p','l'].map(k=>`<button class="mt-cell ak-yt${sel==k?' on':''}" onclick="akYm('${k}')"><small>${AK_YM[k]}</small><b class=num style="color:${col(k)}">${F(yv(k))}</b></button>`).join('')}</div><div class=mbar><i style="width:${pct}%"></i></div><div class=mbar-lbl>${pct}% ödendi</div>`;
  const hint=`<div class=ak-yhint>${AK_YM[sel]} tutarları aylara göre gösteriliyor · bir aya dokun, o ayın detayına git</div>`;
  const grid=`<div class=ak-ygrid>${cells.map(c=>{
-   const has=!!(c.v&&c.wk&&(c.v.tot||c.v.paid)),now=c.ym==cYm;
+   const has=!!(c.v&&(c.v.tot||c.v.paid)),now=c.ym==cYm;
    const x=has?mv(c.v,sel):0;
    return `<button class="ak-ym${now?' ak-now':''}${has?'':' ak-empty'}" ${has?`onclick="akOpenM(${c.mi})"`:'disabled'}><small>${AK_LM[c.m-1]}</small><b class=num style="color:${has?(sel=='l'&&x<=0?'var(--good)':col(sel)):'var(--mut)'}">${has?(sel=='l'&&x<=0?'Ödendi':F(x)):'–'}</b></button>`;
  }).join('')}</div>`;
@@ -914,7 +914,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='6.88';
+const KEY='butce_v3';const VER='6.89';
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
