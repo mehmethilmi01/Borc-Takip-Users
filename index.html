@@ -959,7 +959,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='6.94';
+const KEY='butce_v3';const VER='6.95';
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -3385,7 +3385,7 @@ input,textarea,[contenteditable=true]{-webkit-user-select:text;user-select:text}
 .wkd{cursor:pointer}
 .wkb{height:64px;flex:none}</style><style>.wkd.izin .wkb{background:repeating-linear-gradient(45deg,var(--line),var(--line) 6px,transparent 6px,transparent 12px)}.wkd.izin .wkb i{background:transparent}.wkd.izin .wkup{color:var(--mut)}.wkd{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}</style><style>button.ak-r2,label.ak-r2{cursor:pointer;color:var(--acc);font-weight:600}button.ak-r2::after,label.ak-r2::after{content:"›";font-size:22px;line-height:1;color:var(--mut);margin-left:auto;font-weight:400}button.ak-r2 span[style*="color"]{color:var(--bad)!important}</style><style>button.ak-r2,label.ak-r2{background:var(--surface2);border-radius:14px;margin:6px 10px;width:calc(100% - 20px);padding:14px 16px;cursor:pointer;color:var(--acc);font-weight:600;border:1px solid var(--line)}button.ak-r2:active,label.ak-r2:active{transform:scale(.99)}</style><style>.tl-pp{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-top:2px}.tl-pg,.tl-pr{font-size:12px;font-weight:600;white-space:nowrap}.tl-pg{color:var(--good)}.tl-pr{color:var(--bad)}.tl-bar{width:120px;height:6px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:6px;margin-left:auto}.tl-bar i{display:block;height:100%;background:var(--good);border-radius:4px;transition:width .3s}</style><style>body{text-transform:capitalize}input,textarea,select{text-transform:none}</style><style>#qkcats *,#qksrc *{animation:none!important;transition:none!important}</style><style>
 .ak-ygrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.ak-ym{background:var(--surface);border:0;border-radius:16px;padding:12px;box-shadow:0 1px 2px rgba(20,20,30,.05),0 8px 18px -12px rgba(20,20,30,.22);text-align:left;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);display:flex;flex-direction:column;min-width:0;aspect-ratio:1.36;cursor:pointer;transition:transform .15s var(--ease)}
+.ak-ym{background:var(--surface);border:0;border-radius:16px;padding:12px;box-shadow:0 1px 2px rgba(20,20,30,.05),0 8px 18px -12px rgba(20,20,30,.22);text-align:left;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);display:flex;flex-direction:column;min-width:0;height:96px;overflow:hidden;cursor:pointer;transition:transform .15s var(--ease)}
 html.nv .ak-ym{background:var(--surface,#fff);padding:12px;color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;border:0}.ak-pd{display:block;font-size:11px;font-weight:500;color:var(--mut);margin-top:2px}.ak-ym:active{transform:scale(.97)}
 .ak-ym:disabled{cursor:default;transform:none}
 .ak-ym small{font-size:15px;color:var(--mut);font-weight:600;line-height:1.2}
