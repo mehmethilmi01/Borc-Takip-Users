@@ -309,7 +309,7 @@ function akYearBody(){
  return `<div class=mhead><button class=nav-arrow onclick="akYr(-1)">‹</button><b>${yr}</b><button class=nav-arrow onclick="akYr(1)">›</button></div>${top}${hint}${grid}`;
 }
 function akYrCatBody(){
- const {k,yr}=akSt.yrPage;const ys=String(yr);const c=akSt.yrCat;
+ const {k,yr}=akSt.yrPage;const ys=String(yr);const c=akSt.yrCat;const amtC={t:'var(--ink)',o:'var(--good)',l:'var(--bad)'}[k]||'var(--ink)';
  const rows=[];
  const amtOf=(t,o)=>k=='t'?t:k=='o'?o:t-o;
  S.m.forEach((m,mi)=>{
@@ -329,7 +329,7 @@ function akYrCatBody(){
      rows.push({n:b.name||'Fatura',s:ml+' '+ys,amt,done:!!inst.paid});
    });
  });
- const list=rows.map(r=>`<div class=row><div class=meta><div class=nm>${E(r.n)}</div><div class=sub>${E(r.s)} · ${r.done?'ödendi':'kaldı'}</div></div><div class="amt num">${F(r.amt)}</div></div>`).join('');
+ const list=rows.map(r=>`<div class=row><div class=meta><div class=nm>${E(r.n)}</div><div class=sub>${E(r.s)} · ${r.done?'ödendi':'kaldı'}</div></div><div class="amt num" style="color:${amtC}">${F(r.amt)}</div></div>`).join('');
  return `<div class=sect><button class=link onclick="akSt.yrCat=null;draw(1)">‹ Geri</button><h2>${E(c)}</h2></div>${rows.length?`<div class=list>${list}</div>`:'<div class="card empty">Kayıt yok</div>'}`;
 }
 function akYrPageBody(){
@@ -341,16 +341,16 @@ function akYrPageBody(){
    m.w.forEach(w=>w[2].forEach(p=>{const t=+p[2]||0;if(!t)return;add(p[5]||'📌 Diğer',t,Math.min(t,akPaidOf(p)))}));
    (S.bills||[]).forEach(b=>{const inst=S.billPaid[b.id+'_'+ym];if(!inst)return;const t=+inst.amount||0;if(!t)return;add('🧾 Faturalar',t,inst.paid?t:0)});
  });
- const R=T-O,pct=T?Math.round(O/T*100):0;
+ const R=T-O,pct=T?Math.round(O/T*100):0;const tc={t:'var(--ink)',o:'var(--good)',l:'var(--bad)'}[k]||'var(--bad)';
  const cfg={t:['Toplam borç',T],o:['Ödenen',O],l:['Kalan',R]}[k]||['Kalan',R];
- const row=(c,sub,amt,p)=>`<div class=debt onclick="akSt.yrCat='${Q(c)}';draw(1)"><div class=info><b>${E(c)}</b><small>${sub}</small><div class=bar><i style="width:${p}%"></i></div></div><div class="rem num">${F(amt)}</div></div>`;
+ const row=(c,sub,amt,p)=>`<div class=debt onclick="akSt.yrCat='${Q(c)}';draw(1)"><div class=info><b>${E(c)}</b><small>${sub}</small><div class=bar><i style="width:${p}%;background:${tc}"></i></div></div><div class="rem num" style="color:${tc}">${F(amt)}</div></div>`;
  const ents=Object.entries(g);
  let rows='';
  if(k=='t')rows=ents.sort((a,b)=>b[1].t-a[1].t).map(([c,x])=>row(c,`${x.np} ödeme yapıldı · ${x.nl} kaldı`,x.t,x.t?Math.round(x.o/x.t*100):0)).join('');
  if(k=='o')rows=ents.filter(([c,x])=>x.o>0).sort((a,b)=>b[1].o-a[1].o).map(([c,x])=>row(c,`${x.npo} ödeme yapıldı`,x.o,x.t?Math.round(x.o/x.t*100):0)).join('');
  if(k=='l')rows=ents.filter(([c,x])=>x.t-x.o>0).sort((a,b)=>(b[1].t-b[1].o)-(a[1].t-a[1].o)).map(([c,x])=>row(c,`${x.nl} ödeme kaldı`,x.t-x.o,x.t?Math.round(x.o/x.t*100):0)).join('');
  return `<div class=mhead><button class=nav-arrow onclick="akSt.yrPage=null;akSt.yrCat=null;draw(1)">‹</button><b>${yr}</b><span></span></div>
- <section class="card stagger"><div class=lbl>${yr} · ${cfg[0]}</div><div class="big num" style="font-size:30px;margin-top:4px">${F(cfg[1])}</div><div class=bar style="height:6px;border-radius:9px;background:var(--surface2);margin-top:14px;overflow:hidden"><i style="display:block;height:100%;width:${pct}%;background:var(--good);border-radius:9px"></i></div><div class=mut style="margin-top:8px">${pct}% ödendi</div></section>
+ <section class="card stagger"><div class=lbl>${yr} · ${cfg[0]}</div><div class="big num" style="font-size:30px;margin-top:4px;color:${tc}">${F(cfg[1])}</div><div class=bar style="height:6px;border-radius:9px;background:var(--surface2);margin-top:14px;overflow:hidden"><i style="display:block;height:100%;width:${pct}%;background:${tc};border-radius:9px"></i></div><div class=mut style="margin-top:8px">${pct}% ödendi</div></section>
  <div class=sect><h2>Kategoriler</h2></div>${rows?`<div class=list>${rows}</div>`:'<div class="card empty">Kayıt yok</div>'}`;
 }
 function akCalBody(){
@@ -959,7 +959,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='6.95';
+const KEY='butce_v3';const VER='6.96';
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
