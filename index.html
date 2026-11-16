@@ -233,26 +233,29 @@ const wkShow=()=>{S.wkHidden=false;save();draw()};
 const WK_SIG=180;const wkTev=G=>G>=12000?Math.round((G-G/1.2)*0.2*100)/100:0;
 const wkAutoSalary=()=>{
  S.wg=S.wg||{};
+ const addD=(k,n)=>{const d=new Date(k+'T00:00');return iso(new Date(d.getFullYear(),d.getMonth(),d.getDate()+n))};
+ const findW=day=>{let h=null;for(const m of S.m)for(const w of m.w)if(iso(wd(w))==day)h=w;return h};
+ const calcNet=k=>{const D=S.wg[k]||{};const mon=new Date(k+'T00:00');const izin=D.izin||[];
+   const days=[...Array(7)].map((_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return iso(d)});
+   const got=(D.g||[]).filter(x=>!izin.includes(x.d)).reduce((s,x)=>s+(+x.a||0),0);
+   const exp=(S.ex||[]).filter(e=>days.includes(e.d)&&!e.lid&&!e.mp).reduce((s,e)=>s+(+e.a||0),0);
+   return {got,net:Math.round(got-exp-WK_SIG-wkTev(got))}};
  const pm=wkMon();pm.setDate(pm.getDate()-7);
  const end=iso(pm);
+ let ch=false;
+ if(!S.autoV2){
+   S.autoV2=true;
+   const r=calcNet(end);
+   const wrong=findW(addD(end,2));
+   if(wrong&&r.got>0&&r.net>0&&+wrong[1]===r.net){wrong[1]='';}
+   S.autoLast=null;ch=true;
+ }
  const cur=S.autoLast?new Date(S.autoLast+'T00:00'):new Date(pm);
  if(S.autoLast)cur.setDate(cur.getDate()+7);
- let ch=false;
  while(iso(cur)<=end){
-   const k=iso(cur);const mon=new Date(cur);
-   const D=S.wg[k];
-   const wed=iso(new Date(mon.getFullYear(),mon.getMonth(),mon.getDate()+2));
-   let hit=null;
-   for(const m of S.m)for(const w of m.w)if(iso(wd(w))==wed)hit=w;
+   const k=iso(cur);const D=S.wg[k];const hit=findW(addD(k,9));
    if(D&&!hit)break;
-   if(D&&hit){
-     const izin=D.izin||[];
-     const days=[...Array(7)].map((_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return iso(d)});
-     const got=(D.g||[]).filter(x=>!izin.includes(x.d)).reduce((s,x)=>s+(+x.a||0),0);
-     const exp=(S.ex||[]).filter(e=>days.includes(e.d)&&!e.lid&&!e.mp).reduce((s,e)=>s+(+e.a||0),0);
-     const net=Math.round(got-exp-WK_SIG-wkTev(got));
-     if(got>0&&net>0&&!(+hit[1]>0))hit[1]=net;
-   }
+   if(D&&hit){const r=calcNet(k);if(r.got>0&&r.net>0&&!(+hit[1]>0))hit[1]=r.net}
    S.autoLast=k;ch=true;
    cur.setDate(cur.getDate()+7);
  }
@@ -986,7 +989,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='6.99';
+const KEY='butce_v3';const VER='7.00';
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
