@@ -231,6 +231,33 @@ const wkDayClick=d=>{if(window.__wkLong){window.__wkLong=false;return}wkDayPop(d
 const wkHide=()=>{S.wkHidden=true;save();draw()};
 const wkShow=()=>{S.wkHidden=false;save();draw()};
 const WK_SIG=180;const wkTev=G=>G>=12000?Math.round((G-G/1.2)*0.2*100)/100:0;
+const wkAutoSalary=()=>{
+ S.wg=S.wg||{};
+ const pm=wkMon();pm.setDate(pm.getDate()-7);
+ const end=iso(pm);
+ const cur=S.autoLast?new Date(S.autoLast+'T00:00'):new Date(pm);
+ if(S.autoLast)cur.setDate(cur.getDate()+7);
+ let ch=false;
+ while(iso(cur)<=end){
+   const k=iso(cur);const mon=new Date(cur);
+   const D=S.wg[k];
+   const wed=iso(new Date(mon.getFullYear(),mon.getMonth(),mon.getDate()+2));
+   let hit=null;
+   for(const m of S.m)for(const w of m.w)if(iso(wd(w))==wed)hit=w;
+   if(D&&!hit)break;
+   if(D&&hit){
+     const izin=D.izin||[];
+     const days=[...Array(7)].map((_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return iso(d)});
+     const got=(D.g||[]).filter(x=>!izin.includes(x.d)).reduce((s,x)=>s+(+x.a||0),0);
+     const exp=(S.ex||[]).filter(e=>days.includes(e.d)&&!e.lid&&!e.mp).reduce((s,e)=>s+(+e.a||0),0);
+     const net=Math.round(got-exp-WK_SIG-wkTev(got));
+     if(got>0&&net>0&&!(+hit[1]>0))hit[1]=net;
+   }
+   S.autoLast=k;ch=true;
+   cur.setDate(cur.getDate()+7);
+ }
+ if(ch)save();
+};
 const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=ghost-pill onclick="wkShow()">🎯 Haftalık hedef kartını göster</button></div>`;const open=S.wkOpen!==false;const days=wkDays();const D=wkData();const T=wkTarget(D);const hasT=!!D&&(D.tAuto||T>0);
  const head=`<div class=row><h2 onclick="wkTog()" style="border:0;margin:0;cursor:pointer;flex:1">🎯 Haftalık hedef <span class=mut style="font-size:14px">${open?'▾':'▸'}</span></h2><div style="display:flex;gap:6px;align-items:center"><button class=add onclick="wkEditT()">${hasT?'Hedef: '+F(T):'+ Hedef gir'}</button><button class=bnic onclick="wkHide()" aria-label="Gizle">✕</button></div></div>`;
  if(!open)return `<div class=card style="margin:12px 0">${head}</div>`;
@@ -959,7 +986,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='6.96';
+const KEY='butce_v3';const VER='6.99';
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -1550,7 +1577,7 @@ const addEx=()=>{if(ED.src!==undefined){ED.mp=ED.src=='mp';ED.ds=(ED.src&&ED.src
  const mpN=ED.mp?((ED.n?ED.n+' · ':'')+'Maxipuan kullanıldı'):ED.n;S.ex.push({d:ED.d||iso(bt0),c:cat,s:csub||null,a,n:mpN,ts:Date.now(),ds:ED.ds||undefined,mp:ED.mp?1:0});
  if(ED.ds)debtAdj(ED.ds,a);
  ED={a:'',d:iso(bt0),n:'',ds:ED.ds||null,mp:false};save();draw()};
-function draw(reset){wbFill();try{wkEnsureWeek();wkAutoZero();purgeBillEx();ensureKeep()}catch(e){};const y=window.scrollY;
+function draw(reset){wbFill();try{wkEnsureWeek();wkAutoZero();wkAutoSalary();purgeBillEx();ensureKeep()}catch(e){};const y=window.scrollY;
 document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==tab));
 document.getElementById('app').innerHTML=akRender();if(tab=='h'||tab=='b')renderSearch();
 if(reset){if(gw!==null){const e=document.getElementById('w'+gw);if(e){e.scrollIntoView();gw=null}else window.scrollTo(0,0)}else window.scrollTo(0,0)}else window.scrollTo(0,y)}
