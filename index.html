@@ -283,13 +283,28 @@ const wkPastBody=k=>{
 };
 const wkPastShow=k=>akSheet(wkPastBody(k));
 const wkPastOpen=()=>{const d=wkMon();d.setDate(d.getDate()-7);wkPastShow(iso(d))};
+const wkRef=T=>{
+ const cur=iso(wkMon());let best=null,bd=Infinity;
+ for(const k of Object.keys(S.wg||{})){
+   if(k>=cur)continue;
+   const D=S.wg[k]||{};const izin=D.izin||[];
+   const got=(D.g||[]).filter(x=>!izin.includes(x.d)).reduce((s,x)=>s+(+x.a||0),0);
+   if(got<=0)continue;
+   const mon=new Date(k+'T00:00');
+   const days=[...Array(7)].map((_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return iso(d)});
+   const exp=(S.ex||[]).filter(e=>days.includes(e.d)&&!e.lid&&!e.mp).reduce((s,e)=>s+(+e.a||0),0);
+   const dd=Math.abs(got-T);
+   if(dd<bd){bd=dd;best={k,got,exp}}
+ }
+ return best;
+};
 const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=ghost-pill onclick="wkShow()">🎯 Haftalık hedef kartını göster</button></div>`;const open=S.wkOpen!==false;const days=wkDays();const D=wkData();const T=wkTarget(D);const hasT=!!D&&(D.tAuto||T>0);
  const head=`<div class=row><h2 onclick="wkTog()" style="border:0;margin:0;cursor:pointer;flex:1">🎯 Haftalık hedef <span class=mut style="font-size:14px">${open?'▾':'▸'}</span></h2><div style="display:flex;gap:6px;align-items:center"><button class=bnic onclick="wkPastOpen()" aria-label="Geçmiş">🕓</button><button class=add onclick="wkEditT()">${hasT?'Hedef: '+F(T):'+ Hedef gir'}</button><button class=bnic onclick="wkHide()" aria-label="Gizle">✕</button></div></div>`;
  if(!open)return `<div class=card style="margin:12px 0">${head}</div>`;
  if(!hasT)return `<div class=card style="margin:12px 0">${head}<div class=mut style="margin-top:8px">Bu hafta için hedef tutarı gir.</div></div>`;
  const izinL=D.izin||[];const g=D.g||[];const got=g.filter(x=>!izinL.includes(x.d)).reduce((s,x)=>s+(+x.a||0),0);
  const exp=(S.ex||[]).filter(e=>days.includes(e.d)&&!e.lid&&!e.mp).reduce((s,e)=>s+(+e.a||0),0);
- const tev=wkTev(got);const eff=T+exp+WK_SIG+tev;const rem=eff-got;const ti=days.indexOf(iso(bt0));const izin=D.izin||[];const entered=d=>g.some(x=>x.d==d&&!x.auto);const openDays=days.filter((d,i)=>ti>=0&&i>=ti&&!entered(d)&&!izin.includes(d));const left=openDays.length;
+ const ti0=days.indexOf(iso(bt0));const futShare=ti0>=0?Math.max(0,(6-ti0+(wkDayGain(iso(bt0))>0?0:1))/7):0;const ref=wkRef(T);const expEst=exp+(ref?ref.exp*futShare:0);const tev=wkTev(ref?Math.max(got,ref.got):got);const eff=T+expEst+WK_SIG+tev;const rem=eff-got;const ti=days.indexOf(iso(bt0));const izin=D.izin||[];const entered=d=>g.some(x=>x.d==d&&!x.auto);const openDays=days.filter((d,i)=>ti>=0&&i>=ti&&!entered(d)&&!izin.includes(d));const left=openDays.length;
  const per=left>0&&rem>0?Math.round(rem/left):0;
  const pct=eff>0?Math.max(0,Math.min(100,Math.round(got/eff*100))):0;
  const st=rem<=0?'Hedef tamam 🎉':left>0?`Kalan ${left} günde günlük: ${F(per)}`:`Hafta bitti, kalan ${F(rem)}`;
@@ -298,7 +313,7 @@ const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=
  return `<div class=card style="margin:12px 0">${head}
  <div style="height:10px;border-radius:6px;background:var(--line);overflow:hidden;margin:10px 0 8px"><div style="height:100%;width:${pct}%;background:var(--acc);transition:width .3s"></div></div>
  <div class=row><span class=mut>Hedef${D.tAuto?' (otomatik)':''}</span><b class=num>${F(T)}</b></div>
- <div class=row style="cursor:pointer" onclick="akSt.wkAdd=!akSt.wkAdd;draw()"><span class=mut>Hedefe Eklenen ${akSt.wkAdd?'▾':'▸'}</span><b class=num>${F(exp+WK_SIG+tev)}</b></div>${akSt.wkAdd?`<div class=row><span class=mut>Harcama</span><b class=num>${F(exp)}</b></div><div class=row><span class=mut>Sigorta</span><b class=num>${F(WK_SIG)}</b></div>${tev>0?`<div class=row><span class=mut>Tevkifat (KDV'nin %20'si)</span><b class=num>${F(tev)}</b></div>`:''}`:''}
+ <div class=row style="cursor:pointer" onclick="akSt.wkAdd=!akSt.wkAdd;draw()"><span class=mut>Hedefe Eklenen ${akSt.wkAdd?'▾':'▸'}</span><b class=num>${F(expEst+WK_SIG+tev)}</b></div>${akSt.wkAdd?`<div class=row><span class=mut>Harcama</span><b class=num>${F(expEst)}</b></div><div class=row><span class=mut style="font-size:12px">gerçek ${F(exp)} · tahmini ${F(expEst-exp)}</span></div><div class=row><span class=mut>Sigorta</span><b class=num>${F(WK_SIG)}</b></div>${tev>0?`<div class=row><span class=mut>Tevkifat (${ref&&got<ref.got?'tahmini':'gerçek'})</span><b class=num>${F(tev)}</b></div>`:''}<div class=mut style="font-size:12px;line-height:1.4;margin-top:6px">Tahmini: Haftanın başında henüz girilmemiş harcama ve tevkifat, hedefe en yakın geçmiş haftanın tutarlarından alınır. Her gün bitip gerçek veri girildikçe tahmin gerçek değerlerle değiştirilir.</div>`:''}
  <div class=row><span class=mut>Kazanılan</span><b class="num ok">${F(got)}</b></div>
  <div class=row><span class=mut>Kalan</span><b class=num>${F(Math.max(0,rem))}</b></div>
  <div class=mut style="margin:6px 0 10px">${st}</div>
@@ -1011,7 +1026,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='7.03';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
+const KEY='butce_v3';const VER='7.05';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
