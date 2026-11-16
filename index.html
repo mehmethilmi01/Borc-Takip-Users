@@ -298,23 +298,35 @@ const wkRef=T=>{
  }
  return best;
 };
-const akMonthSumBox=()=>{
- const y=bt0.getFullYear(),mo=bt0.getMonth();
- let gross=0,ex=0,tev=0,sig=0;
- Object.keys(S.wg||{}).forEach(k=>{
+const mSumUpd=()=>{
+ S.mSum=S.mSum||{};
+ const pm=wkMon();pm.setDate(pm.getDate()-7);const end=iso(pm);
+ const keys=Object.keys(S.wg||{}).filter(k=>k<=end).sort();
+ let ch=false;
+ for(const k of keys){
+   if(S.mSumLast&&k<=S.mSumLast)continue;
    const mon=new Date(k+'T00:00');
-   if(mon.getFullYear()!=y||mon.getMonth()!=mo)return;
+   const ym=mon.getFullYear()+'-'+String(mon.getMonth()+1).padStart(2,'0');
    const D=S.wg[k]||{};const izin=D.izin||[];
    const days=[...Array(7)].map((_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return iso(d)});
-   const got=(D.g||[]).filter(x=>!izin.includes(x.d)).reduce((s,x)=>s+(+x.a||0),0);
-   const e=(S.ex||[]).filter(x=>days.includes(x.d)&&!x.lid&&!x.mp).reduce((s,x)=>s+(+x.a||0),0);
-   gross+=got;ex+=e;tev+=wkTev(got);sig+=WK_SIG;
- });
- const net=gross-ex-tev-sig;
+   const gross=(D.g||[]).filter(x=>!izin.includes(x.d)).reduce((s,x)=>s+(+x.a||0),0);
+   const ex=(S.ex||[]).filter(x=>days.includes(x.d)&&!x.lid&&!x.mp).reduce((s,x)=>s+(+x.a||0),0);
+   const m=S.mSum[ym]=S.mSum[ym]||{gross:0,ex:0,tev:0,sig:0};
+   m.gross+=gross;m.ex+=ex;m.tev+=wkTev(gross);m.sig+=WK_SIG;
+   S.mSumLast=k;ch=true;
+ }
+ if(ch)save();
+};
+const akMonthSumBox=()=>{
+ mSumUpd();
+ const ym=bt0.getFullYear()+'-'+String(bt0.getMonth()+1).padStart(2,'0');
+ const m=(S.mSum||{})[ym]||{gross:0,ex:0,tev:0,sig:0};
+ const gross=m.gross,net=gross-m.ex-m.tev-m.sig;
  const ay=bt0.toLocaleDateString('tr-TR',{month:'long'});
- const box=(lbl,val,col)=>`<div class=card style="margin:0;height:96px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:12px 8px;text-align:center"><div class=mut style="font-size:12px">${lbl}</div><b class=num style="display:block;margin-top:6px;font-size:15px;color:${col}">${F(val)}</b></div>`;
- const mid=`<div class=card style="margin:0;height:96px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:12px 8px;text-align:center"><div class=mut style="font-size:12px">Düşülenler</div><b class=num style="display:block;margin-top:6px;font-size:15px;color:var(--bad)">${F(ex+tev+sig)}</b></div>`;
- return `<div class=sect><h2>${ay} Özeti</h2></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${box('Toplam kazanç',gross,'var(--ink)')}${mid}${box('Hesaba yatan',net,'var(--good)')}</div>`;
+ const cardSt='class=card style="margin:0;height:96px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:12px 8px;text-align:center"';
+ const box=(lbl,val,col)=>`<div ${cardSt}><div class=mut style="font-size:12px">${lbl}</div><b class=num style="display:block;margin-top:6px;font-size:15px;color:${col}">${F(val)}</b></div>`;
+ const mid=`<div ${cardSt}><div class=mut style="font-size:12px">Düşülenler</div><b class=num style="display:block;margin-top:6px;font-size:15px;color:var(--bad)">${F(m.ex+m.tev+m.sig)}</b></div>`;
+ return `<div class=sect><h2>${ay} Özeti</h2></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${box('Toplam kazanç',gross,'var(--ink)')}${mid}${box('Hesaba yatan',net,'var(--good)')}</div><div class=mut style="font-size:12px;margin-top:8px">Bu kart her pazartesi sabahı haftalık güncellenir.</div>`;
 };
 const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=ghost-pill onclick="wkShow()">🎯 Haftalık hedef kartını göster</button></div>`;const open=S.wkOpen!==false;const days=wkDays();const D=wkData();const T=wkTarget(D);const hasT=!!D&&(D.tAuto||T>0);
  const head=`<div class=row><h2 onclick="wkTog()" style="border:0;margin:0;cursor:pointer;flex:1">🎯 Haftalık hedef <span class=mut style="font-size:14px">${open?'▾':'▸'}</span></h2><div style="display:flex;gap:6px;align-items:center"><button class=bnic onclick="wkPastOpen()" aria-label="Geçmiş">🕓</button><button class=add onclick="wkEditT()">${hasT?'Hedef: '+F(T):'+ Hedef gir'}</button><button class=bnic onclick="wkHide()" aria-label="Gizle">✕</button></div></div>`;
@@ -1044,7 +1056,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='7.10';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
+const KEY='butce_v3';const VER='7.12';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
