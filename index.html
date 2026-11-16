@@ -195,7 +195,7 @@ function akExOpts(mi,wi,pi){
 function akExKeep(mi,wi,pi){const p=S.m[mi].w[wi][2][pi];if(p)p[15]=0;save();akClose();draw(1)}
 function akExDel(mi,wi,pi){S.m[mi].w[wi][2].splice(pi,1);save();akClose();draw(1)}
 function akPayRow(mi,wi,pi,p){const paid=!!p[3];
- return `<div class="row pl ${paid?'paid':''}" data-mi="${mi}" data-wi="${wi}" data-pi="${pi}"><span class=check onclick="tg(${mi},${wi},${pi})">${AK_CHK}</span><div class=meta onclick="akEdit(${mi},${wi},${pi})"><div class=nm>${E(p[0]||'—')}</div><div class=sub>${E(p[5]||'')}${p[4]?' <span class=tag>'+E(p[4])+'</span>':''}${p[15]?` <span class=tag onclick="event.stopPropagation();akExOpts(${mi},${wi},${pi})">Örnek</span>`:''}${!paid&&akPaidOf(p)>0?' · kalan '+F(remOf(p)):''}</div>${akMergeTxt(p)}</div><div class="amt num">${F(paid?p[2]:remOf(p))}</div></div>`}
+ return `<div class="row pl ${paid?'paid':''}" data-mi="${mi}" data-wi="${wi}" data-pi="${pi}"><span class=check onclick="tg(${mi},${wi},${pi})">${AK_CHK}</span><div class=meta onclick="akEdit(${mi},${wi},${pi})"><div class=nm>${E(p[0]||'—')}</div><div class=sub>${E(p[5]||'')}${p[4]?' <span class=tag>'+E(p[4])+'</span>':''}${p[16]?' <span class=tag>'+E(p[16])+'</span>':''}${p[15]?` <span class=tag onclick="event.stopPropagation();akExOpts(${mi},${wi},${pi})">Örnek</span>`:''}${!paid&&akPaidOf(p)>0?' · kalan '+F(remOf(p)):''}</div>${akMergeTxt(p)}</div><div class="amt num">${F(paid?p[2]:remOf(p))}</div></div>`}
 function akBillRow(b){const paid=!!b.inst.paid;
  return `<div class="row ${paid?'paid':''}"><span class=check onclick="tgBill('${b.key}')">${AK_CHK}</span><div class=meta><div class=nm>${billIco(b.b.cat)} ${E(b.b.name)}</div><div class=sub>Fatura${b.late?' · gecikmiş':''}</div></div><div class="amt num" onclick="openBillAmt('${b.key}')">${b.inst.amount?F(b.inst.amount):'Tutar'}</div></div>`}
 function akGroups(items){const g={};items.forEach(x=>{(g[x.k]=g[x.k]||[]).push(x.h)});
@@ -871,7 +871,7 @@ const pdfAddRow=()=>{const P=PDFP;if(!P)return;P.rows.forEach((r,i)=>{const el=$
  const last=P.rows[P.rows.length-1];P.rows.push({d:P.hasDates&&last&&last.d?addMonths(last.d,1):null,a:last?last.a:0,ap:0});pdfShow()};
 const pdfConfirm=()=>{const P=PDFP;const act=P?pdfActive(P):[];if(!act.length)return toast('Eklenecek taksit yok');if(act.some(r=>!(+P.rows[r.i].a>0)))return toast('Tutarı 0 olan taksit var');
  act.forEach((r,k)=>{const t=new Date(r.d+'T00:00');ensureCovers(t);const pw=pickWeekFor(t);
-  const np=mkP(`${P.n||'Kredi'} (${k+1}/${act.length})`,iso(wd(pw.w)),+P.rows[r.i].a,'PDF planı',P.c);if(P.ex)np[15]=1;pw.w[2].push(np)});
+  const np=mkP(P.n||'Kredi',iso(wd(pw.w)),+P.rows[r.i].a,'PDF planı',P.c);np[16]=(k+1)+'/'+act.length;if(P.ex)np[15]=1;pw.w[2].push(np)});
  save();PDFP=null;akClose();draw();toast(act.length+' taksit eklendi')};
 
 function akPay(){QD.c=QD.c||S.dcats[0];QD.d=QD.d||iso(t0);QD.t=QD.t||'1';
@@ -1149,7 +1149,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='7.29';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
+const KEY='butce_v3';const VER='7.31';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -1212,7 +1212,7 @@ const inR=p=>{const r=rng(p);return S.ex.map((e,i)=>({...e,i})).filter(e=>e.d>=r
 const PL={g:'Bugün',h:'Bu hafta',a:'Bu ay'};
 /* ===== v6.11: emoji serbest giriş + alt kategoriler ===== */
 let csub=null,SP=null,SE=null,gSubSel=null,gFxSel=null;
-const repairPays=()=>{let fx=0;S.m.forEach(m=>m.w.forEach(w=>(w[2]||[]).forEach(p=>{if(Array.isArray(p[13])){if(!Array.isArray(p[14]))p[14]=p[13];p[13]=null;fx++}else if(typeof p[13]==='string'&&p[13].indexOf('[object')>-1){p[13]=p[13].split('[object')[0]||null;fx++}})));if(fx){sm();save()}};
+const repairPays=()=>{let fx=0;S.m.forEach(m=>m.w.forEach(w=>(w[2]||[]).forEach(p=>{if(Array.isArray(p[13])){if(!Array.isArray(p[14]))p[14]=p[13];p[13]=null;fx++}else if(typeof p[13]==='string'&&p[13].indexOf('[object')>-1){p[13]=p[13].split('[object')[0]||null;fx++}})));let lm=0;if(!S.lblMig){S.m.forEach(m=>m.w.forEach(w=>(w[2]||[]).forEach(p=>{const mt=!p[16]&&typeof p[0]==='string'&&p[0].match(/^(.*?)\s*\((\d+)\/(\d+)\)\s*$/);if(mt&&mt[1].trim()){p[0]=mt[1].trim();p[16]=mt[2]+'/'+mt[3];lm++}})));S.lblMig=1;fx++}if(fx){sm();save();if(lm)try{toast(lm+' taksitin adı düzeltildi')}catch(e){}}};
 const pid=p=>{if(!p[13])p[13]='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);return p[13]};
 const logEv=(id,name,text)=>{if(!id)return;S.hlog=S.hlog||{};const o=S.hlog[id]=S.hlog[id]||{n:'',e:[]};if(name)o.n=name;o.e.push({t:Date.now(),x:text});if(o.e.length>300)o.e.splice(0,o.e.length-300)};
 const showLog=(id,name)=>{const L=id?(S.hlog||{})[id]:null;const e=L?L.e.slice().reverse():[];
@@ -1720,8 +1720,8 @@ if(baseMi<0){let bd=Infinity;S.m.forEach((m,i)=>{const dd=Math.abs(wd(m.w[0])-ta
 for(let i=0;i<cnt;i++){const mi=baseMi+i;
 const y=wd(S.m[mi].w[0]).getFullYear(),mo=wd(S.m[mi].w[0]).getMonth(),td=new Date(y,mo,target.getDate());
 const pw=pickWeekFor(td);const wi=pw.wi,pmi=pw.mi;
-const ref=wd(pw.w),qI=FQ?(i==cnt-1?Math.round((FQ.q-Math.floor(FQ.q/cnt*1000)/1000*(cnt-1))*1000)/1000:Math.floor(FQ.q/cnt*1000)/1000):0,a2=FQ?Math.round(qI*FQ.r*100)/100:(cu.length?cu[i]:(i==cnt-1?base+rem:base)),nm=`${n} (${i+1}/${cnt})`;
-const npI=mkP(nm,iso(ref),a2,note,c);if(QD.ex)npI[15]=1;if(FQ){npI[10]={u:FQ.u,q:qI,qp:0};npI[12]={d:iso(bt0),r:FQ.r}}pw.w[2].push(npI);added++;if(fmi===null){fmi=pmi;fwi=wi}}
+const ref=wd(pw.w),qI=FQ?(i==cnt-1?Math.round((FQ.q-Math.floor(FQ.q/cnt*1000)/1000*(cnt-1))*1000)/1000:Math.floor(FQ.q/cnt*1000)/1000):0,a2=FQ?Math.round(qI*FQ.r*100)/100:(cu.length?cu[i]:(i==cnt-1?base+rem:base)),nm=n;
+const npI=mkP(nm,iso(ref),a2,note,c);npI[16]=(i+1)+'/'+cnt;if(QD.ex)npI[15]=1;if(FQ){npI[10]={u:FQ.u,q:qI,qp:0};npI[12]={d:iso(bt0),r:FQ.r}}pw.w[2].push(npI);added++;if(fmi===null){fmi=pmi;fwi=wi}}
 }
 save();QD={n:'',c,d:iso(t0),a:'',t:'1',note:'',fx:''};QDW=null;
 closeAddP();toast(added>1?added+' taksit eklendi':'Ödeme eklendi');
