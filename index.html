@@ -182,8 +182,20 @@ function akDay(k){akSt.day=k;draw()}
 function akMon(d){akSt.mi=Math.max(0,Math.min(S.m.length-1,(akSt.mi==null?akMonthIdx():akSt.mi)+d));draw()}
 
 /* satırlar (tasarımın .row yapısı) */
+const exCount=()=>{let n=0;S.m.forEach(m=>m.w.forEach(w=>w[2].forEach(p=>{if(p[15])n++})));return n};
+function akExAll(){
+ const n=exCount();if(!n){alert('Silinecek örnek ödeme yok');return}
+ if(!confirm(n+' örnek ödeme silinsin mi? Hesaplamalar buna göre yenilenecek.'))return;
+ S.m.forEach(m=>m.w.forEach(w=>{w[2]=w[2].filter(p=>!p[15])}));
+ save();akClose();draw(1);
+}
+function akExOpts(mi,wi,pi){
+ akSheet(`<h3>Örnek ödeme</h3><p class=mut>Bu ödeme örnek olarak işaretli. Canlıya alabilir ya da silebilirsiniz.</p><div style="display:flex;gap:8px;margin-top:12px"><button class=btn onclick="akExKeep(${mi},${wi},${pi})">Canlıya al</button><button class="btn ghost" onclick="akExDel(${mi},${wi},${pi})">Sil</button></div>`);
+}
+function akExKeep(mi,wi,pi){const p=S.m[mi].w[wi][2][pi];if(p)p[15]=0;save();akClose();draw(1)}
+function akExDel(mi,wi,pi){S.m[mi].w[wi][2].splice(pi,1);save();akClose();draw(1)}
 function akPayRow(mi,wi,pi,p){const paid=!!p[3];
- return `<div class="row pl ${paid?'paid':''}" data-mi="${mi}" data-wi="${wi}" data-pi="${pi}"><span class=check onclick="tg(${mi},${wi},${pi})">${AK_CHK}</span><div class=meta onclick="akEdit(${mi},${wi},${pi})"><div class=nm>${E(p[0]||'—')}</div><div class=sub>${E(p[5]||'')}${p[4]?' <span class=tag>'+E(p[4])+'</span>':''}${!paid&&akPaidOf(p)>0?' · kalan '+F(remOf(p)):''}</div>${akMergeTxt(p)}</div><div class="amt num">${F(paid?p[2]:remOf(p))}</div></div>`}
+ return `<div class="row pl ${paid?'paid':''}" data-mi="${mi}" data-wi="${wi}" data-pi="${pi}"><span class=check onclick="tg(${mi},${wi},${pi})">${AK_CHK}</span><div class=meta onclick="akEdit(${mi},${wi},${pi})"><div class=nm>${E(p[0]||'—')}</div><div class=sub>${E(p[5]||'')}${p[4]?' <span class=tag>'+E(p[4])+'</span>':''}${p[15]?` <span class=tag onclick="event.stopPropagation();akExOpts(${mi},${wi},${pi})">Örnek</span>`:''}${!paid&&akPaidOf(p)>0?' · kalan '+F(remOf(p)):''}</div>${akMergeTxt(p)}</div><div class="amt num">${F(paid?p[2]:remOf(p))}</div></div>`}
 function akBillRow(b){const paid=!!b.inst.paid;
  return `<div class="row ${paid?'paid':''}"><span class=check onclick="tgBill('${b.key}')">${AK_CHK}</span><div class=meta><div class=nm>${billIco(b.b.cat)} ${E(b.b.name)}</div><div class=sub>Fatura${b.late?' · gecikmiş':''}</div></div><div class="amt num" onclick="openBillAmt('${b.key}')">${b.inst.amount?F(b.inst.amount):'Tutar'}</div></div>`}
 function akGroups(items){const g={};items.forEach(x=>{(g[x.k]=g[x.k]||[]).push(x.h)});
@@ -619,11 +631,57 @@ function akSheet(html){let w=document.getElementById('akSW');
  if(!w){w=document.createElement('div');w.id='akSW';w.className='sheetwrap';w.innerHTML='<div class=scrim onclick="akClose()"></div><div class=sheet><div class=grab></div><button class=xbtn aria-label="Kapat" onclick="akClose()">×</button><div id=akSB></div></div>';document.body.appendChild(w)}
  document.getElementById('akSB').innerHTML=html;w.classList.add('open')}
 function akClose(){akSecI=null;const w=document.getElementById('akSW');if(w)w.classList.remove('open')}
+function akSampNew(){
+ akSheet(`<h3>Örnek Ödeme</h3><div class=card style="margin-bottom:8px"><input id=spN class=in placeholder="Ad (örn. Konut kredisi)"><input id=spC class=in placeholder="Kategori" value="Kredi" style="margin-top:8px"><input id=spA class=in inputmode=decimal placeholder="Taksit tutarı" style="margin-top:8px"><input id=spK class=in inputmode=numeric placeholder="Taksit sayısı" style="margin-top:8px"><input id=spD class=in type=date style="margin-top:8px"><select id=spF class=in style="margin-top:8px"><option value=m>Aylık</option><option value=w>Haftalık</option></select></div><button class=btnp onclick="akSampSave()">Oluştur</button>`);
+}
+function akSampSave(){
+ const n=(document.getElementById('spN').value||'Örnek').trim();
+ const c=(document.getElementById('spC').value||'Kredi').trim();
+ const a=NUM(document.getElementById('spA').value);
+ const k=Math.max(1,parseInt(document.getElementById('spK').value)||1);
+ const d0=document.getElementById('spD').value;
+ const f=document.getElementById('spF').value;
+ if(!(a>0)||!d0){alert('Tutar ve ilk tarihi girin');return}
+ const base=new Date(d0+'T00:00');const items=[];
+ for(let i=0;i<k;i++){
+   const d=new Date(base);
+   if(f=='m')d.setMonth(base.getMonth()+i);else d.setDate(base.getDate()+7*i);
+   items.push({d:iso(d),n:n+' '+(i+1)+'/'+k,a});
+ }
+ S.samp=S.samp||[];S.samp.push({id:'s'+Date.now(),name:n,cat:c,items});save();
+ akSampList();
+}
+function akSampList(){
+ const plans=S.samp||[];
+ if(!plans.length){akSheet('<h3>Örnek Ödemeler</h3><div class="card empty">Henüz örnek ödeme yok</div>');return}
+ const body=plans.map(p=>{
+   const tot=p.items.reduce((s,i)=>s+i.a,0);
+   const rows=p.items.map(i=>`<div class=row><div class=meta><div class=nm>${E(i.n)}</div><div class=sub>${E(i.d)} · Örnek</div></div><div class="amt num">${F(i.a)}</div></div>`).join('');
+   return `<div class=sect><h2>${E(p.name)}</h2><span class=mut>${F(tot)}</span></div><div class=list>${rows}</div><div style="display:flex;gap:8px;margin:8px 0 16px"><button class=btnp onclick="akSampLive('${p.id}')">Canlıya aktar</button><button class=btnp onclick="akSampDel('${p.id}')">Tümünü sil</button></div>`;
+ }).join('');
+ akSheet(`<h3>Örnek Ödemeler</h3>${body}`);
+}
+function akSampDel(id){
+ if(!confirm('Bu örnek planın tamamı silinsin mi?'))return;
+ S.samp=(S.samp||[]).filter(p=>p.id!=id);save();akSampList();
+}
+function akSampLive(id){
+ const p=(S.samp||[]).find(x=>x.id==id);if(!p)return;
+ let moved=0;const left=[];
+ for(const it of p.items){
+   const d=new Date(it.d+'T00:00');let hit=null;
+   for(const m of S.m)for(const w of m.w){const diff=Math.round((d-wd(w))/864e5);if(diff>=-2&&diff<=4)hit=w}
+   if(hit){hit[2].push([it.n,'',it.a,0,'',p.cat,0]);moved++}else left.push(it);
+ }
+ if(left.length)p.items=left;else S.samp=S.samp.filter(x=>x.id!=id);
+ save();akClose();draw(1);
+ alert(moved+' taksit canlıya aktarıldı'+(left.length?', '+left.length+' tanesi için takvimde hafta yok':''));
+}
 function akAdd(){QDW=null;akSheet(`<h3>Ne eklemek istersin?</h3><div class=menu>
  <button onclick="akClose();akPay()"><i>🧾</i>Ödeme<small class=mut style="margin-left:auto">tarihli</small></button>
  <button onclick="akClose();akSpend()"><i>💸</i>Harcama<small class=mut style="margin-left:auto">bugün</small></button>
- <button onclick="akClose();akDebtNew()"><i>🤝</i>Tarihsiz borç<small class=mut style="margin-left:auto">vergi vb.</small></button></div>`)}
-function akPayRead(){const g=id=>document.getElementById(id);if(!g('qn'))return;QD.n=g('qn').value;QD.a=g('qa').value;QD.d=g('qd').value;QD.t=g('qt').value;QD.note=g('qnote').value}
+ <button onclick="akClose();akDebtNew()"><i>🤝</i>Tarihsiz borç<small class=mut style="margin-left:auto">vergi vb.</small></button><button onclick="akClose();akExAll()"><i>🧹</i>Örnekleri sil<small class=mut style="margin-left:auto">${exCount()} adet</small></button></div>`)}
+function akPayRead(){const g=id=>document.getElementById(id);if(!g('qn'))return;QD.n=g('qn').value;QD.a=g('qa').value;QD.d=g('qd').value;QD.t=g('qt').value;QD.note=g('qnote').value;QD.ex=g('qex')?g('qex').checked:false}
 let PDFP=null;
 const PDF_JS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 const loadScript=(src,ready)=>new Promise((res,rej)=>{if(ready())return res();const s=document.createElement('script');s.src=src;s.onload=()=>res();s.onerror=()=>rej(new Error('Kütüphane yüklenemedi, internet bağlantınızı kontrol edin'));document.head.appendChild(s)});
@@ -795,6 +853,7 @@ function akPay(){QD.c=QD.c||S.dcats[0];QD.d=QD.d||iso(t0);QD.t=QD.t||'1';
   <div class=field><label>Tutar</label><input class="input big-input" id=qa inputmode=decimal placeholder="0" value="${E(QD.a||'')}"></div>
   <div class=field style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div style="display:flex;flex-direction:column;gap:6px"><label>Tarih</label><input class=input id=qd type=date value="${QD.d}"></div><div style="display:flex;flex-direction:column;gap:6px"><label>Taksit</label><input class=input id=qt inputmode=decimal value="${E(QD.t)}"></div></div>
   <div class=field><label>Not</label><input class=input id=qnote value="${E(QD.note||'')}"></div>
+  <div class=field><label style="display:flex;align-items:center;gap:8px"><input type=checkbox id=qex ${QD.ex?'checked':''}> Örnek ödeme olarak ekle</label></div>
   <input type=hidden id=qcu value="">
   <button class="btn ghost" onclick="akPdfOpen()">PDF'den plan yükle</button><button class=btn onclick="akPayRead();addQuick();akClose()">Kaydet</button><button class="btn ghost" onclick="akClose()">Vazgeç</button>`)}
 function akSpendRead(){const a=document.getElementById('akA');if(!a)return;ED.a=a.value;ED.n=document.getElementById('akN').value}
@@ -1061,7 +1120,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='7.24';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
+const KEY='butce_v3';const VER='7.27';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -1625,7 +1684,7 @@ ensureCovers(target);
 if(cnt>1){const endT=new Date(target.getFullYear(),target.getMonth()+cnt-1,1);ensureCovers(endT)}
 const base=QD.fx?Math.round(amt/cnt*1000)/1000:Math.floor(amt/cnt),rem=QD.fx?Math.round((amt-base*cnt)*1000)/1000:amt-base*cnt;let added=0,fmi=null,fwi=null;
 if(cnt==1||QDW){
-const ref=QDW?{mi:QDW.mi,wi:QDW.wi,d:wd(S.m[QDW.mi].w[QDW.wi])}:pickWeekFor(target);const newP=mkP(n,iso(ref.d),amtTL,note,c);if(FQ){newP[10]={u:FQ.u,q:FQ.q,qp:0};newP[12]={d:iso(bt0),r:FQ.r}}S.m[ref.mi].w[ref.wi][2].push(newP);added=1;fmi=ref.mi;fwi=ref.wi;
+const ref=QDW?{mi:QDW.mi,wi:QDW.wi,d:wd(S.m[QDW.mi].w[QDW.wi])}:pickWeekFor(target);const newP=mkP(n,iso(ref.d),amtTL,note,c);if(QD.ex)newP[15]=1;if(FQ){newP[10]={u:FQ.u,q:FQ.q,qp:0};newP[12]={d:iso(bt0),r:FQ.r}}S.m[ref.mi].w[ref.wi][2].push(newP);added=1;fmi=ref.mi;fwi=ref.wi;
 }else{
 let baseMi=S.m.findIndex(m=>{const d0=wd(m.w[0]);return d0.getFullYear()==target.getFullYear()&&d0.getMonth()==target.getMonth()});
 if(baseMi<0){let bd=Infinity;S.m.forEach((m,i)=>{const dd=Math.abs(wd(m.w[0])-target);if(dd<bd){bd=dd;baseMi=i}})}
@@ -1633,7 +1692,7 @@ for(let i=0;i<cnt;i++){const mi=baseMi+i;
 const y=wd(S.m[mi].w[0]).getFullYear(),mo=wd(S.m[mi].w[0]).getMonth(),td=new Date(y,mo,target.getDate());
 const pw=pickWeekFor(td);const wi=pw.wi,pmi=pw.mi;
 const ref=wd(pw.w),qI=FQ?(i==cnt-1?Math.round((FQ.q-Math.floor(FQ.q/cnt*1000)/1000*(cnt-1))*1000)/1000:Math.floor(FQ.q/cnt*1000)/1000):0,a2=FQ?Math.round(qI*FQ.r*100)/100:(cu.length?cu[i]:(i==cnt-1?base+rem:base)),nm=`${n} (${i+1}/${cnt})`;
-const npI=mkP(nm,iso(ref),a2,note,c);if(FQ){npI[10]={u:FQ.u,q:qI,qp:0};npI[12]={d:iso(bt0),r:FQ.r}}pw.w[2].push(npI);added++;if(fmi===null){fmi=pmi;fwi=wi}}
+const npI=mkP(nm,iso(ref),a2,note,c);if(QD.ex)npI[15]=1;if(FQ){npI[10]={u:FQ.u,q:qI,qp:0};npI[12]={d:iso(bt0),r:FQ.r}}pw.w[2].push(npI);added++;if(fmi===null){fmi=pmi;fwi=wi}}
 }
 save();QD={n:'',c,d:iso(t0),a:'',t:'1',note:'',fx:''};QDW=null;
 closeAddP();toast(added>1?added+' taksit eklendi':'Ödeme eklendi');
