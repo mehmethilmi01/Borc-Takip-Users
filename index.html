@@ -743,43 +743,71 @@ const dIso=m=>`${m[3]}-${m[2]}-${m[1]}`;
 const pad2=n=>String(n).padStart(2,'0');
 const addMonths=(s,k)=>{const [y,mo,d]=s.split('-').map(Number);const t=new Date(y,mo-1+k,d);return `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`};
 const fmtD=s=>s?new Date(s+'T00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'short',year:'numeric'}):'-';
-const headerCols=h=>{const w=h.replace(/[|]/g,' ').trim().split(/\s+/).filter(x=>/[A-Za-zÇĞİÖŞÜçğıöşü]/.test(x));const labels=[];let sira=false;
- for(let i=0;i<w.length;i++){const x=w[i].toLocaleLowerCase('tr-TR');if(x==='sıra'||x==='sira'){sira=true;continue}
-  if(x==='tarih')continue;if(x==='ödeme'&&/^tarihi$/i.test(w[i+1]||'')){i++;continue}labels.push(x)}
- const t=labels.findIndex(x=>/tak[sş]it/.test(x)),a=labels.findIndex(x=>/anapara/.test(x));
- return {taksit:t>=0?t:0,anapara:a>=0?a:1,sira}};
-const modeCol=rows=>{const n=Math.min(...rows.map(r=>r.v.length));let best=0,bi=0;for(let k=0;k<n;k++){const f={};rows.forEach(r=>{const v=r.v[k];if(v)f[v]=(f[v]||0)+1});const mx=Math.max(0,...Object.values(f));if(mx>best){best=mx;bi=k}}return bi};
+// ---- Sütunları BAŞLIK ADINA göre eşler: bankalar sütun sırasını farklı koyabilir ----
+const colNameKey=w=>{const x=String(w).toLocaleLowerCase('tr-TR').replace(/[^a-zçğıöşü]/g,'');
+ if(/^(ay|sıra|sira|no|sn)$/.test(x))return 'sira';
+ if(/^(taksit|ödeme|odeme)$/.test(x))return 'taksit';
+ if(x==='anapara')return 'anapara';
+ if(x==='faiz')return 'faiz';
+ if(x==='kkdf')return 'kkdf';
+ if(x==='bsmv')return 'bsmv';
+ if(x==='bakiye'||x==='kalan')return 'bakiye';
+ if(x==='tarih')return 'tarih';
+ return null};
+const headerKeys=h=>{const s=String(h).toLocaleLowerCase('tr-TR').replace(/ana\s+para/g,'anapara').replace(/[|]/g,' ');
+ const out=[];s.split(/\s+/).forEach(t=>{const k=colNameKey(t);if(k)out.push(k)});return out};
+const findHeader=lines=>{for(let li=0;li<lines.length;li++){const k=headerKeys(lines[li]);if(k.length>=3&&(k.includes('taksit')||k.includes('anapara')))return {li,keys:k}}return null};
+const snOf=r=>(r.sira!==undefined&&Number.isFinite(r.sira))?Math.round(r.sira):null;
+// Satırdaki sayıları başlık anahtarlarıyla eşler; sayı adedi tutmazsa null döner
+const toRec=(nums,keys)=>{
+ let ks=keys.filter(k=>k!=='tarih');
+ let v=nums.slice();
+ if(v.length===ks.length+1&&!ks.includes('sira')&&/^\d{1,3}$/.test(v[0]))v=v.slice(1); // başta ay no var, başlıkta yok
+ if(v.length===ks.length-1&&ks.includes('sira'))ks=ks.filter(k=>k!=='sira'); // bu satırda ay no yok
+ if(v.length!==ks.length)return null;
+ const o={};ks.forEach((k,i)=>{o[k]=tnum(v[i])});
+ return o};
+const tkOf=r=>r.taksit!==undefined?r.taksit:(r.anapara||0)+(r.faiz||0)+(r.kkdf||0)+(r.bsmv||0);
+const DEFAULT_KEYS={7:['sira','taksit','anapara','faiz','kkdf','bsmv','bakiye'],6:['taksit','anapara','faiz','kkdf','bsmv','bakiye'],4:['taksit','anapara','faiz','bakiye'],3:['taksit','anapara','bakiye']};
+const defaultKeys=lines=>{const w={};lines.forEach(l=>{const n=l.split(/\s+/).map(normTok).map(fixDigits).filter(t=>NUM_OK(t)).length;if(n>=3)w[n]=(w[n]||0)+1});let best=4,bc=0;Object.entries(w).forEach(([n,c])=>{if(c>bc&&DEFAULT_KEYS[n]){best=+n;bc=c}});return DEFAULT_KEYS[best]};
 const pdfParse=lines=>{
- const hIdx=lines.findIndex(l=>/tak[sş]it/i.test(l)&&/anapara|faiz|bakiye|kalan|sıra|sira/i.test(l));
- const cols=hIdx>=0?headerCols(lines[hIdx]):null;
+ const H=findHeader(lines);
+ const keys=H?H.keys:defaultKeys(lines); // başlık yoksa satır genişliğine göre varsayılan sıra
+ const hIdx=H?H.li:-1;
  const low=lines.join(' ').toLocaleLowerCase('tr-TR');
- const fm=low.match(/faiz oran[^\d]*?(\d+(?:,\d+)?)/);const bm=low.match(/bugünkü kredi borcu[^\d]*?(\d[\d.]*,\d+)/);
- const info=lines.map((l,li)=>{const dm=l.match(DATE_RE);const toks=l.split(/\s+/).map(normTok).map(fixDigits).filter(Boolean);const nums=toks.filter(NUM_OK);return {li,dm,nums}}).filter(x=>x.li!==hIdx&&x.nums.length>=3);
+ const fm=low.match(/faiz oran[^\d]*?(\d+(?:,\d+)?)/);
+ const bm=low.match(/bugünkü kredi borcu[^\d]*?(\d[\d.]*,\d+)/);
+ const kt=low.match(/kredi tutar[ıi][^\d]*?(\d[\d.]*,\d+)/);
+ const info=lines.map((l,li)=>{const dm=l.match(DATE_RE);const toks=l.split(/\s+/).map(normTok).map(fixDigits).filter(Boolean);const nums=toks.filter(NUM_OK);return {li,dm,nums}}).filter(x=>x.li!==hIdx&&x.nums.length>=2);
+ const recOf=x=>toRec(x.nums,keys);
  const dated=info.filter(x=>x.dm);
  const lastDatedLi=dated.length?dated[dated.length-1].li:-1;
- const siraSeq=info.filter(x=>!x.dm&&/^\d{1,3}$/.test(x.nums[0])&&x.nums.length>=4);
- const siraCol=!!((cols&&cols.sira)||(siraSeq.length>=2&&siraSeq.every((c,k)=>c.nums[0]===String(k+1))));
  const raw=[];
- const mk=x=>{let v=x.nums,sn=null;if(siraCol&&v.length>=4&&/^\d{1,3}$/.test(v[0])){sn=parseInt(v[0],10);v=v.slice(1)}return {v,sn}};
- dated.forEach(x=>{const {v,sn}=mk(x);if(v.length>=3)raw.push({d:dIso(x.dm),v,sn})});
- let undated=info.filter(x=>!x.dm&&(dated.length===0||x.li<lastDatedLi)).map(x=>({li:x.li,...mk(x)})).filter(x=>x.v.length>=3);
+ dated.forEach(x=>{const r=recOf(x);if(r)raw.push({d:dIso(x.dm),r})});
+ let undated=info.filter(x=>!x.dm&&(dated.length===0||x.li<lastDatedLi)).map(x=>({r:recOf(x)})).filter(x=>x.r);
  let summary=null;
- const afterTable=info.filter(x=>!x.dm&&x.li>lastDatedLi&&x.nums.length>=4);
- if(dated.length&&afterTable.length)summary=afterTable[afterTable.length-1].nums;
- if(!dated.length&&undated.length>=2){const last=undated[undated.length-1];const others=undated.slice(0,-1);const sum=others.reduce((s,r)=>s+tnum(r.v[0]),0);if(Math.abs(tnum(last.v[0])-sum)<1){summary=last.v;undated=others}}
- undated.forEach(x=>raw.push({d:null,v:x.v,sn:x.sn}));
- if(siraCol)raw.sort((a,b)=>(a.sn||0)-(b.sn||0));
- const idxT=cols?cols.taksit:(raw.length?modeCol(raw):0);
- const idxA=cols?cols.anapara:idxT+1;
- const rows=raw.map(r=>({d:r.d,a:r.v[idxT]!==undefined?tnum(r.v[idxT]):0,ap:r.v[idxA]!==undefined?tnum(r.v[idxA]):0})).filter(r=>r.a>0);
+ const afterTable=info.filter(x=>!x.dm&&x.li>lastDatedLi&&x.nums.length>=2);
+ if(dated.length&&afterTable.length){const s=recOf(afterTable[afterTable.length-1]);if(s)summary=s}
+ if(!dated.length&&undated.length>=2){const last=undated[undated.length-1];const sum=undated.slice(0,-1).reduce((s,x)=>s+tkOf(x.r),0);if(tkOf(last.r)>0&&Math.abs(tkOf(last.r)-sum)<1){summary=last.r;undated=undated.slice(0,-1)}}
+ undated.forEach(x=>raw.push({d:null,r:x.r}));
+ if(keys.includes('sira'))raw.sort((a,b)=>(snOf(a.r)||0)-(snOf(b.r)||0));
+ const rows=raw.map(x=>({d:x.d,a:tkOf(x.r),ap:x.r.anapara||0,rec:x.r})).filter(r=>r.a>0);
  let missing=[];
- if(siraCol){const have=new Set(raw.map(r=>r.sn).filter(Boolean));const mx=Math.max(0,...have);for(let k=1;k<=mx;k++)if(!have.has(k))missing.push(k)}
- return {rows,missing,summaryTotal:summary&&summary[idxT]!==undefined?tnum(summary[idxT]):0,summaryAnapara:summary&&summary[idxA]!==undefined?tnum(summary[idxA]):0,faiz:fm?tnum(fm[1]):0,borc:bm?tnum(bm[1]):0,hasDates:rows.some(r=>r.d)}};
+ if(keys.includes('sira')){const have=new Set(raw.map(x=>snOf(x.r)).filter(Boolean));const mx=Math.max(0,...have);for(let k=1;k<=mx;k++)if(!have.has(k))missing.push(k)}
+ // Kontroller: taksit = anapara + faiz (+ kkdf + bsmv) tutmalı; anapara toplamı kredi tutarına eşit olmalı
+ const warns=[];
+ if(!H)warns.push('Tablo başlığı (Taksit, Anapara, Faiz…) okunamadı; sütunlar varsayılan sırayla alındı. Değerleri mutlaka kontrol edin.');
+ const bad=rows.filter(r=>{const x=r.rec;if(x.taksit===undefined||x.anapara===undefined||x.faiz===undefined)return false;const base=x.anapara+x.faiz;const full=base+(x.kkdf||0)+(x.bsmv||0);return !(Math.abs(x.taksit-base)<=1.01||Math.abs(x.taksit-full)<=1.01)}).length;
+ if(bad)warns.push(bad+' satırda Taksit, Anapara ve Faiz tutarları birbirini tutmuyor; sütunlar yanlış eşleşmiş olabilir.');
+ const kreditTutar=kt?tnum(kt[1]):0;
+ const apSum=rows.reduce((s,r)=>s+r.ap,0);
+ if(kreditTutar&&rows.length&&Math.abs(apSum-kreditTutar)>1)warns.push('Anapara toplamı ('+apSum.toFixed(2)+') kredi tutarına ('+kreditTutar.toFixed(2)+') eşit değil; eksik ya da fazla satır olabilir.');
+ return {rows,missing,summaryAnapara:summary?summary.anapara||0:0,kreditTutar,faiz:fm?tnum(fm[1]):0,borc:bm?tnum(bm[1]):0,warn:warns.join(' '),hasDates:rows.some(r=>r.d)}};
 const planBuild=(lines,name,c)=>{const p=pdfParse(lines);
  let rows=p.rows.filter((r,i,arr)=>!r.d||arr.findIndex(x=>x.d===r.d)===i);
  if(p.hasDates)rows=rows.slice().sort((x,y)=>(x.d||'').localeCompare(y.d||''));
  return {n:name,c:c||S.dcats[0],rows,lines,hasDates:p.hasDates,start:'',incPast:false,
-  kredi:p.summaryAnapara||rows.reduce((s,r)=>s+r.ap,0),faiz:p.faiz,borc:p.borc,missing:p.missing||[]}};
+  kredi:p.kreditTutar||p.summaryAnapara||rows.reduce((s,r)=>s+r.ap,0),faiz:p.faiz,borc:p.borc,missing:p.missing||[],warn:p.warn||''}};
 const pdfDate=(P,i)=>P.hasDates?P.rows[i].d:(P.start?addMonths(P.start,i):null);
 const pdfActive=P=>P.rows.map((r,i)=>({i,a:r.a,d:pdfDate(P,i)})).filter(r=>r.d&&(P.incPast||r.d>=iso(bt0)));
 const pdfShow=()=>{const P=PDFP;if(!P)return;
@@ -820,7 +848,7 @@ const pdfShow=()=>{const P=PDFP;if(!P)return;
    ${tile('Eklenecek taksit',act.length+' / '+P.rows.length)}
    ${tile('Eklenecek toplam',F(totalAct),'var(--acc)')}
  </div>
- ${debug}
+ ${debug}${P.warn?`<div style="background:#fff4e5;border:1px solid #f0c36d;border-radius:12px;padding:10px 12px;margin:10px 0;font-size:12px;color:#8a5a00">⚠️ ${E(P.warn)}</div>`:''}
  ${sec('BORÇ BİLGİLERİ')}
  <div class=field><label>Borç adı</label><input class=input id=pdfN value="${E(P.n)}" onchange="pdfEdit()"></div>
  <div class=field><label>Kategori</label><select class=input id=pdfC onchange="pdfEdit()">${cats}</select></div>
