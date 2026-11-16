@@ -8,7 +8,7 @@
 <style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);--bg:#f3f1ec;--card:#fff;--ink:#1d2a26;--mut:#6b7772;--line:#e2ded5;--acc:#1f6f5c;--ok:#dff3e6;--bad:#b4402f;--in:#fff8d6}
 :root[data-theme=dark]{--bg:#141a18;--card:#1d2624;--ink:#e8efec;--mut:#93a39c;--line:#2c3835;--acc:#5fc4a8;--ok:#1f3a2e;--bad:#e5806f;--in:#3a3720}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#141a18;--card:#1d2624;--ink:#e8efec;--mut:#93a39c;--line:#2c3835;--acc:#5fc4a8;--ok:#1f3a2e;--bad:#e5806f;--in:#3a3720}}
-html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:auto}
 *{box-sizing:border-box}
 body{margin:0 auto;background:var(--bg);color:var(--ink);font:15px/1.4 Georgia,serif;max-width:560px;padding:12px 12px 90px;transition:background .2s}
 h1{font-size:20px;margin:0 0 10px}
@@ -176,7 +176,7 @@ function akMonthTot(mi){const ym=ymOf(mi);let tot=0,paid=0;
  S.bills.forEach(b=>{const inst=S.billPaid[b.id+'_'+ym];if(inst){const a=+inst.amount||0;tot+=a;if(inst.paid)paid+=a}});
  return {tot,paid,left:tot-paid}}
 function akWk(mi,wi){akSt.wk=[mi,wi];draw(1)}
-function akTab(t){tab=t;if(t=='a')akSt.mi=null;draw(1);if(t=='a')setTimeout(()=>{const e=document.querySelector('.tl-week.cur');if(e)e.scrollIntoView({block:'start'})},30)}
+function akTab(t){tab=t;if(t=='a')akSt.mi=null;draw(1);if(t=='a'){const e=document.querySelector('.tl-week.cur');if(e)e.scrollIntoView({block:'start',behavior:'instant'})}}
 function akEdit(mi,wi,pi){cur=mi;openPEdit(wi,pi)}
 function akDay(k){akSt.day=k;draw()}
 function akMon(d){akSt.mi=Math.max(0,Math.min(S.m.length-1,(akSt.mi==null?akMonthIdx():akSt.mi)+d));draw()}
@@ -1061,7 +1061,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='7.13';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
+const KEY='butce_v3';const VER='7.19';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -1652,10 +1652,28 @@ const addEx=()=>{if(ED.src!==undefined){ED.mp=ED.src=='mp';ED.ds=(ED.src&&ED.src
  const mpN=ED.mp?((ED.n?ED.n+' · ':'')+'Maxipuan kullanıldı'):ED.n;S.ex.push({d:ED.d||iso(bt0),c:cat,s:csub||null,a,n:mpN,ts:Date.now(),ds:ED.ds||undefined,mp:ED.mp?1:0});
  if(ED.ds)debtAdj(ED.ds,a);
  ED={a:'',d:iso(bt0),n:'',ds:ED.ds||null,mp:false};save();draw()};
-function draw(reset){wbFill();try{wkEnsureWeek();wkAutoZero();wkAutoSalary();purgeBillEx();ensureKeep()}catch(e){};const y=window.scrollY;
+(()=>{const st=document.createElement('style');st.textContent='.noanim .card,.noanim .stagger,.noanim .row,.noanim [class*=stagger]{animation:none!important}';document.head.appendChild(st)})();
+function domSyncNode(a,b){
+ if(a.nodeType!==b.nodeType||a.nodeName!==b.nodeName){a.replaceWith(b.cloneNode(true));return}
+ if(a.nodeType===3||a.nodeType===8){if(a.nodeValue!==b.nodeValue)a.nodeValue=b.nodeValue;return}
+ if(a.isEqualNode(b))return;
+ for(const at of [...a.attributes]){if(!b.hasAttribute(at.name))a.removeAttribute(at.name)}
+ for(const at of [...b.attributes]){if(a.getAttribute(at.name)!==at.value)a.setAttribute(at.name,at.value)}
+ domSyncKids(a,b);
+}
+function domSyncKids(a,b){
+ const ac=[...a.childNodes],bc=[...b.childNodes];
+ const n=Math.max(ac.length,bc.length);
+ for(let i=0;i<n;i++){
+   if(i>=bc.length){ac[i].remove();continue}
+   if(i>=ac.length){a.appendChild(bc[i].cloneNode(true));continue}
+   domSyncNode(ac[i],bc[i]);
+ }
+}
+function draw(reset){wbFill();try{wkEnsureWeek();wkAutoZero();wkAutoSalary();purgeBillEx();ensureKeep()}catch(e){};const y=window.scrollY;const _sg=tab+'|'+JSON.stringify([akSt.view,akSt.yrPage,akSt.yrCat,akSt.gpath,akSt.mi,akSt.wk,akSt.day,akSt.cat,akSt.gfx,akSt.gp]);const _same=_sg===window._sg;window._sg=_sg;
 document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==tab));
-document.getElementById('app').innerHTML=akRender();if(tab=='h'||tab=='b')renderSearch();
-if(reset){if(gw!==null){const e=document.getElementById('w'+gw);if(e){e.scrollIntoView();gw=null}else window.scrollTo(0,0)}else window.scrollTo(0,0)}else window.scrollTo(0,y)}
+document.body.classList.toggle('noanim',_same);const _ap=document.getElementById('app'),_tp=document.createElement('div');_tp.innerHTML=akRender();if(_ap.childNodes.length&&_same)domSyncKids(_ap,_tp);else _ap.innerHTML=_tp.innerHTML;if(tab=='h'||tab=='b')renderSearch();
+if(gw!==null||(reset&&!_same)){if(gw!==null){const e=document.getElementById('w'+gw);if(e){e.scrollIntoView();gw=null}else window.scrollTo(0,0)}else window.scrollTo(0,0)}else window.scrollTo(0,y)}
 /* ===== v2 eklentileri ===== */
 /* ===== v2.1 eklentileri ===== */
 
