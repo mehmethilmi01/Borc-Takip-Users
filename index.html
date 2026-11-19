@@ -768,6 +768,10 @@ const colNameKey=w=>{const x=String(w).toLocaleLowerCase('tr-TR').replace(/[^a-z
  if(x==='kkdf')return 'kkdf';
  if(x==='bsmv')return 'bsmv';
  if(x==='bakiye'||x==='kalan')return 'bakiye';
+ if(x==='fon')return 'fon';
+ if(x==='vergi')return 'vergi';
+ if(x==='gecikmefaizi'||x==='gecikme')return 'gecikme';
+ if(x==='odemetutari'||x==='tutar')return 'tutar';
  if(x==='tarih')return 'tarih';
  return null};
 const headerKeys=h=>{const s=String(h).toLocaleLowerCase('tr-TR').replace(/ana\s+para/g,'anapara').replace(/[|]/g,' ');
@@ -784,11 +788,14 @@ const toRec=(nums,keys)=>{
  const o={};ks.forEach((k,i)=>{o[k]=tnum(v[i])});
  return o};
 const tkOf=r=>r.taksit!==undefined?r.taksit:(r.anapara||0)+(r.faiz||0)+(r.kkdf||0)+(r.bsmv||0);
-const DEFAULT_KEYS={7:['sira','taksit','anapara','faiz','kkdf','bsmv','bakiye'],6:['taksit','anapara','faiz','kkdf','bsmv','bakiye'],4:['taksit','anapara','faiz','bakiye'],3:['taksit','anapara','bakiye']};
+const DEFAULT_KEYS={8:['taksit','anapara','faiz','fon','vergi','bakiye','tutar','gecikme'],7:['sira','taksit','anapara','faiz','kkdf','bsmv','bakiye'],6:['taksit','anapara','faiz','kkdf','bsmv','bakiye'],4:['taksit','anapara','faiz','bakiye'],3:['taksit','anapara','bakiye']};
 const defaultKeys=lines=>{const w={};lines.forEach(l=>{const n=l.split(/\s+/).map(normTok).map(fixDigits).filter(t=>NUM_OK(t)).length;if(n>=3)w[n]=(w[n]||0)+1});let best=4,bc=0;Object.entries(w).forEach(([n,c])=>{if(c>bc&&DEFAULT_KEYS[n]){best=+n;bc=c}});return DEFAULT_KEYS[best]};
 const pdfParse=lines=>{
  const H=findHeader(lines);
- const keys=H?H.keys:defaultKeys(lines); // başlık yoksa satır genişliğine göre varsayılan sıra
+ const dcC={};lines.forEach(l=>{if(!DATE_RE.test(l))return;const n=l.split(/\s+/).map(normTok).map(fixDigits).filter(NUM_OK).length;if(n>=2)dcC[n]=(dcC[n]||0)+1});
+ const dcN=+(Object.keys(dcC).sort((a,b)=>dcC[b]-dcC[a])[0]||0);
+ let keys=H?H.keys:defaultKeys(lines); // başlık yoksa satır genişliğine göre varsayılan sıra
+ if(dcN&&DEFAULT_KEYS[dcN]&&Math.abs(keys.filter(k=>k!=='tarih').length-dcN)>=2)keys=DEFAULT_KEYS[dcN]; // başlık sütun sayısı veri satırlarıyla tutmuyorsa veri sayısına göre
  const hIdx=H?H.li:-1;
  const low=lines.join(' ').toLocaleLowerCase('tr-TR');
  const fm=low.match(/faiz oran[^\d]*?(\d+(?:,\d+)?)/);
@@ -813,7 +820,7 @@ const pdfParse=lines=>{
  // Kontroller: taksit = anapara + faiz (+ kkdf + bsmv) tutmalı; anapara toplamı kredi tutarına eşit olmalı
  const warns=[];
  if(!H)warns.push('Tablo başlığı (Taksit, Anapara, Faiz…) okunamadı; sütunlar varsayılan sırayla alındı. Değerleri mutlaka kontrol edin.');
- const bad=rows.filter(r=>{const x=r.rec;if(x.taksit===undefined||x.anapara===undefined||x.faiz===undefined)return false;const base=x.anapara+x.faiz;const full=base+(x.kkdf||0)+(x.bsmv||0);return !(Math.abs(x.taksit-base)<=1.01||Math.abs(x.taksit-full)<=1.01)}).length;
+ const bad=rows.filter(r=>{const x=r.rec;if(x.taksit===undefined||x.anapara===undefined||x.faiz===undefined)return false;const base=x.anapara+x.faiz;const full=base+(x.kkdf||0)+(x.bsmv||0)+(x.fon||0)+(x.vergi||0);return !(Math.abs(x.taksit-base)<=1.01||Math.abs(x.taksit-full)<=1.01)}).length;
  if(bad)warns.push(bad+' satırda Taksit, Anapara ve Faiz tutarları birbirini tutmuyor; sütunlar yanlış eşleşmiş olabilir.');
  const kreditTutar=kt?tnum(kt[1]):0;
  const apSum=rows.reduce((s,r)=>s+r.ap,0);
@@ -1011,8 +1018,43 @@ async function motoDocRead(kind,inp){const f=inp.files[0];if(!f)return;const isP
  }catch(e){P.msg='Okunamadı: '+(e.message||'hata')}
  if(MOTO_PEND[kind]===P)draw(1)}
 async function motoDocView(kind){const m=(S.moto&&S.moto.m)||{};const P=MOTO_PEND[kind];const id=kind==='ru'?m.ruId:(S.moto&&S.moto.sig&&S.moto.sig.img);let src=(P&&P.data)||null;if(!src&&id){src=DC[id]||await idbGet(id);if(src)DC[id]=src}
- if(!src)return toast('Kayıtlı belge bulunamadı');const isP=/^data:application\/pdf/.test(src);
- akSheet('<h3>'+(kind==='ru'?'Ruhsat':'Sigorta poliçesi')+'</h3>'+(isP?'<iframe src="'+src+'" style="width:100%;height:70vh;border:0"></iframe>':'<img src="'+src+'" style="width:100%;border-radius:10px">'))}
+ if(!src)return toast('Kayıtlı belge bulunamadı');motoShowViewer(src,kind==='ru'?'Ruhsat':'Sigorta poliçesi')}
+function motoShowViewer(src,title){let v=document.getElementById('docViewer');if(v)v.remove();
+ v=document.createElement('div');v.id='docViewer';v.style.cssText='position:fixed;inset:0;z-index:100000;background:#111;display:flex;flex-direction:column;color:#fff';
+ v.innerHTML='<div style="display:flex;align-items:center;gap:6px;padding:8px 10px;padding-top:calc(8px + env(safe-area-inset-top,0px));background:#1d2a26"><b style="flex:1;font-size:15px">'+title+'</b><button id=dvOut class=add style="width:auto;padding:6px 12px;margin:0">−</button><button id=dvIn class=add style="width:auto;padding:6px 12px;margin:0">+</button><button id=dvX class=add style="width:auto;padding:6px 12px;margin:0">✕</button></div><div id=dvBody style="flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:8px"></div>';
+ document.body.appendChild(v);
+ let z=1;const body=v.querySelector('#dvBody');
+ const apply=()=>{body.querySelectorAll('[data-zoomable]').forEach(el=>{el.style.width=(z*100)+'%'})};
+ v.querySelector('#dvX').onclick=()=>v.remove();
+ v.querySelector('#dvIn').onclick=()=>{z=Math.min(4,z+0.5);apply()};
+ v.querySelector('#dvOut').onclick=()=>{z=Math.max(1,z-0.5);apply()};
+ if(/^data:application\/pdf/.test(src)){
+  body.innerHTML='<div style="text-align:center;color:#ccc;padding:20px">PDF yükleniyor…</div>';
+  (async()=>{try{
+    const bytes=await fetch(src).then(r=>r.arrayBuffer());
+    await loadScript(PDF_JS+'pdf.min.js',()=>!!window.pdfjsLib);
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDF_JS+'pdf.worker.min.js';
+    const pdf=await window.pdfjsLib.getDocument({data:new Uint8Array(bytes)}).promise;
+    body.innerHTML='';
+    const W=Math.max(200,body.clientWidth-16);
+    for(let i=1;i<=pdf.numPages;i++){
+      const pg=await pdf.getPage(i);const v1=pg.getViewport({scale:1});
+      const vp=pg.getViewport({scale:(W*2)/v1.width});
+      const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;
+      c.dataset.zoomable=1;c.style.cssText='display:block;margin:0 auto 10px;width:100%;height:auto;background:#fff';
+      body.appendChild(c);
+      await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+    }
+    apply();
+  }catch(e){body.innerHTML='<div style="color:#f88;padding:20px">PDF gösterilemedi: '+(e.message||'hata')+'</div>'}})();
+ } else {
+  const img=document.createElement('img');img.src=src;img.dataset.zoomable=1;
+  img.style.cssText='display:block;margin:0 auto;width:100%;height:auto;cursor:zoom-in';
+  img.onclick=()=>{z=z>1?1:2.5;apply()};
+  body.appendChild(img);
+ }
+ apply();
+}
 function motoPersistDoc(kind){const P=MOTO_PEND[kind];if(!P||!P.data)return'';const id=(kind==='ru'?'mru_':'mpo_')+Date.now()+'_'+Math.random().toString(36).slice(2,6);idbPut(id,P.data).catch(()=>{});DC[id]=P.data;MOTO_PEND[kind]=null;return id}
 function motoCancelEdit(){MOTO_PEND.ru=null;MOTO_PEND.po=null;akSt.motoEdit=0;akSt.motoDraft=null;draw()}
 function motoDocsCard(){const m=(S.moto&&S.moto.m)||{};const g=(S.moto&&S.moto.sig)||{};if(!m.ruId&&!g.img&&!m.plaka&&!m.sasi&&!m.muayene&&!g.bit&&!g.sirket)return'';
@@ -1270,7 +1312,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='7.41';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
+const KEY='butce_v3';const VER='7.43';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
