@@ -950,19 +950,81 @@ const motoKmFmt=k=>(+k||0).toLocaleString('tr-TR');
 const mpanel=(x,y,w,h,bg,rad,z,extra)=>{const st=`left:${x}px;top:${y}px;width:${w}px;height:${h}px;border-radius:${rad};background:${bg};${extra||''}`;return `<div class=mp style="${st};transform:translateZ(${z}px)"></div><div class=mp style="${st};transform:translateZ(${-z}px)"></div>`};
 const mwheel=(cx,cy,r,key)=>`<div class=mp style="left:${cx-r}px;top:${cy-r}px;width:${2*r}px;height:${2*r}px;border-radius:50%;border:14px solid #161616;box-sizing:border-box;transform:translateZ(16px);background:#2a2a2a"></div><div class=mp style="left:${cx-r+14}px;top:${cy-r+14}px;width:${2*r-28}px;height:${2*r-28}px;border-radius:50%;background:#b8bec8;transform:translateZ(18px)"></div><div class=mp style="left:${cx-9}px;top:${cy-9}px;width:18px;height:18px;border-radius:50%;background:#7b818b;transform:translateZ(22px)"></div>`;
 const mhot=(x,y,z,key)=>`<button class="mdot" style="transform:translate3d(${x}px,${y}px,${z}px) translate(-50%,-50%)" onclick="motoOpen('${key}')" aria-label="${motoPartLbl[key]}"></button>`;
-function motoSetupHTML(){
+var MOTO_PEND={ru:null,po:null};
+var MOTO_RU_PROMPT='Bu Türkiye araç ruhsatından şu alanları JSON olarak çıkar: marka, model, yil (4 haneli sayı), plaka, sasi (şasi / VIN numarası), motor_no (motor numarası), tescil (ilk tescil tarihi YYYY-MM-DD), muayene (muayene bitiş veya geçerlilik tarihi YYYY-MM-DD). Bulamadığın alan için boş string yaz. Sadece JSON döndür.';
+function motoPoVals(){return {}}
+function motoFormSync(){const map={mM:'marka',mMo:'model',mY:'yil',mK:'km',mPl:'plaka',mSa:'sasi',mMN:'motorNo',mTe:'tescil',mMu:'muayene'};const d=Object.assign({},akSt.motoDraft||(S.moto&&S.moto.m)||{});Object.keys(map).forEach(id=>{const e=document.getElementById(id);if(e)d[map[id]]=e.value});akSt.motoDraft=d;return d}
+function motoDateFix(v){v=String(v||'').trim();let m=/^(\d{2})[.\/-](\d{2})[.\/-](\d{4})/.exec(v);if(m)return m[3]+'-'+m[2]+'-'+m[1];m=/^(\d{4})-(\d{2})-(\d{2})/.exec(v);return m?m[0]:''}
+function motoDateNear(n,re){const m=re.exec(n);if(!m)return'';const seg=n.slice(m.index+m[0].length,m.index+m[0].length+60);const d=/(\d{2})[.\/-](\d{2})[.\/-](\d{4})|(\d{4})-(\d{2})-(\d{2})/.exec(seg);return d?(d[4]?d[4]+'-'+d[5]+'-'+d[6]:d[3]+'-'+d[2]+'-'+d[1]):''}
+function motoRuLocal(t){const o={};const n=String(t||'').replace(/\s+/g,' ');const U=n.toLocaleUpperCase('tr-TR');let m;
+ m=/\b(\d{2})\s?([A-Z]{1,3})\s?(\d{2,5})\b/.exec(U);if(m)o.plaka=m[1]+' '+m[2]+' '+m[3];
+ m=/\b([A-HJ-NPR-Z0-9]{17})\b/.exec(U);if(m)o.sasi=m[1];
+ m=/MODEL\s*Y[İIı]L[İIı]?\D{0,12}((?:19|20)\d{2})/.exec(U);if(m)o.yil=m[1];
+ m=/MARKA[^A-Z0-9ÇĞİÖŞÜ]{0,8}([A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜ\-]{1,20})/.exec(U);if(m)o.marka=m[1];
+ m=/TİCARİ\s*AD[İIi][^A-Z0-9ÇĞİÖŞÜ]{0,8}([A-Z0-9ÇĞİÖŞÜ\-]+(?:\s[A-Z0-9\-]+)?)/.exec(U);if(m)o.model=m[1];
+ m=/MOTOR\s*(?:NO|NUMARASI)[^A-Z0-9]{0,8}([A-Z0-9\-]{5,20})/.exec(U);if(m)o.motorNo=m[1];
+ o.tescil=motoDateNear(U,/TESC[İI]L/);
+ o.muayene=motoDateNear(U,/MUAYENE|GEÇERLİLİK|GECERLILIK/);
+ return o}
+function motoDocData(f,isPdf){const rd=()=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});return isPdf?rd():shrink(f).catch(rd)}
+async function motoAiJson(f,isPdf,prompt){const key=aiKey();const b64=()=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(f)});
+ if(aiIsGroq()){let body;
+  if(isPdf){const t=await motoSigPdfText(f);if(t.length<30)throw new Error('PDF metni okunamadı');body={model:(await aiGroqChain())[0],messages:[{role:'user',content:prompt+'\n\nBELGE METNİ:\n'+t.slice(0,12000)}],response_format:{type:'json_object'}}}
+  else body={model:MOTO_GROQ_VISION,messages:[{role:'user',content:[{type:'image_url',image_url:{url:'data:'+f.type+';base64,'+await b64()}},{type:'text',text:prompt}]}],response_format:{type:'json_object'}};
+  const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+key},body:JSON.stringify(body)});const j=await r.json();if(!r.ok)throw new Error((j.error&&j.error.message)||('HTTP '+r.status));return JSON.parse(j.choices[0].message.content)}
+ const mdl=(await aiModelChain())[0];const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent',{method:'POST',headers:{'content-type':'application/json','x-goog-api-key':key},body:JSON.stringify({contents:[{role:'user',parts:[{inline_data:{mime_type:isPdf?'application/pdf':f.type,data:await b64()}},{text:prompt}]}],generationConfig:{responseMimeType:'application/json'}})});const j=await r.json();if(!r.ok)throw new Error((j.error&&j.error.message)||('HTTP '+r.status));return JSON.parse(j.candidates[0].content.parts.map(p=>p.text||'').join(''))}
+function motoMergeAi(kind,x,ai){ai=ai||{};const out=Object.assign({},x);if(kind==='ru'){const map={marka:ai.marka,model:ai.model,yil:ai.yil,plaka:ai.plaka,sasi:ai.sasi,motorNo:ai.motor_no,tescil:ai.tescil,muayene:ai.muayene};Object.keys(map).forEach(k=>{if(!out[k]&&map[k])out[k]=map[k]})}else{['sirket','bas','bit','no'].forEach(k=>{if(!out[k]&&ai[k])out[k]=ai[k]})}return out}
+function motoRuFill(x){const d=motoFormSync();const s=(k,v)=>{v=(v==null?'':String(v)).trim();if(v)d[k]=v};s('marka',x.marka?tc(String(x.marka)):'');s('model',String(x.model||'').toUpperCase());s('yil',(String(x.yil||'').match(/\d{4}/)||[''])[0]);s('plaka',String(x.plaka||'').toUpperCase());s('sasi',String(x.sasi||'').toUpperCase());s('motorNo',String(x.motorNo||'').toUpperCase());s('tescil',motoDateFix(x.tescil));s('muayene',motoDateFix(x.muayene));akSt.motoDraft=d}
+async function motoDocRead(kind,inp){const f=inp.files[0];if(!f)return;const isPdf=/pdf/i.test(f.type)||/\.pdf$/i.test(f.name);const P={data:null,msg:'Belge okunuyor…',info:null};MOTO_PEND[kind]=P;motoFormSync();draw(1);
+ try{P.data=await motoDocData(f,isPdf);
+  let txt='';try{txt=(await docLines(f)).join('\n')}catch(e){}
+  let x=kind==='ru'?motoRuLocal(txt):motoSigLocal(txt);
+  const miss=kind==='ru'?!(x.plaka||x.sasi||x.marka):!(x.bas&&x.bit);
+  let aiErr='';
+  if(miss&&aiKey()){try{x=motoMergeAi(kind,x,await motoAiJson(f,isPdf,kind==='ru'?MOTO_RU_PROMPT:MOTO_SIG_PROMPT))}catch(e){aiErr=' (AI: '+(e.message||'hata')+')'}}
+  if(MOTO_PEND[kind]!==P)return;
+  if(kind==='ru'){motoRuFill(x);P.msg=(x.plaka||x.sasi||x.marka?'Ruhsat okundu, bilgiler dolduruldu. Kontrol edip kaydet.':'Ruhsattan bilgi okunamadı, alanları elle gir.')+aiErr}
+  else{P.info={sirket:x.sirket||'',bas:x.bas||'',bit:x.bit||'',no:x.no||''};P.msg=(P.info.bit?'Poliçe okundu: '+(P.info.sirket||'şirket bulunamadı')+', bitiş '+P.info.bit+'.':'Poliçe kaydedilecek ama tarihler okunamadı.')+aiErr+' Kaydedince "Ruhsat & belgeler" bölümünde görünür.'}
+ }catch(e){P.msg='Okunamadı: '+(e.message||'hata')}
+ if(MOTO_PEND[kind]===P)draw(1)}
+async function motoDocView(kind){const m=(S.moto&&S.moto.m)||{};const P=MOTO_PEND[kind];const id=kind==='ru'?m.ruId:(S.moto&&S.moto.sig&&S.moto.sig.img);let src=(P&&P.data)||null;if(!src&&id){src=DC[id]||await idbGet(id);if(src)DC[id]=src}
+ if(!src)return toast('Kayıtlı belge bulunamadı');const isP=/^data:application\/pdf/.test(src);
+ akSheet('<h3>'+(kind==='ru'?'Ruhsat':'Sigorta poliçesi')+'</h3>'+(isP?'<iframe src="'+src+'" style="width:100%;height:70vh;border:0"></iframe>':'<img src="'+src+'" style="width:100%;border-radius:10px">'))}
+function motoPersistDoc(kind){const P=MOTO_PEND[kind];if(!P||!P.data)return'';const id=(kind==='ru'?'mru_':'mpo_')+Date.now()+'_'+Math.random().toString(36).slice(2,6);idbPut(id,P.data).catch(()=>{});DC[id]=P.data;MOTO_PEND[kind]=null;return id}
+function motoCancelEdit(){MOTO_PEND.ru=null;MOTO_PEND.po=null;akSt.motoEdit=0;akSt.motoDraft=null;draw()}
+function motoDocsCard(){const m=(S.moto&&S.moto.m)||{};const g=(S.moto&&S.moto.sig)||{};if(!m.ruId&&!g.img&&!m.plaka&&!m.sasi&&!m.muayene&&!g.bit&&!g.sirket)return'';
+ const dt=x=>x?new Date(x+'T00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}):'-';
+ const kal=x=>{const k=Math.round((new Date(x+'T00:00')-bt0)/864e5);return k<0?' · <span class=bad>süresi doldu</span>':k<=30?' · <span class=bad>'+k+' gün kaldı</span>':' · '+k+' gün kaldı'};
+ const row=(a,b)=>b?`<div class=row><span class=mut>${a}</span><b>${b}</b></div>`:'';
+ const ru=`${row('Plaka',E(m.plaka||''))}${row('Şasi no',E(m.sasi||''))}${row('Motor no',E(m.motorNo||''))}${row('Tescil tarihi',m.tescil?dt(m.tescil):'')}${m.muayene?`<div class=row><span class=mut>Son muayene</span><b>${dt(m.muayene)}${kal(m.muayene)}</b></div>`:''}`;
+ const po=(g.img||g.bit||g.sirket)?`<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--line)"><b>🛡 Sigorta poliçesi</b>${row('Şirket',E(g.sirket||''))}${row('Başlangıç',g.bas?dt(g.bas):'')}${g.bit?`<div class=row><span class=mut>Bitiş</span><b>${dt(g.bit)}${kal(g.bit)}</b></div>`:''}${row('Poliçe no',E(g.no||''))}</div>`:'';
+ return `<div class=card style="margin-top:12px"><h2 style="border:0;margin:0 0 6px">🪪 Ruhsat & belgeler</h2>${ru}${po}<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">${m.ruId?`<button class=add style="flex:1" onclick="motoDocView('ru')">📄 Ruhsatı gör</button>`:''}${g.img?`<button class=add style="flex:1" onclick="motoDocView('po')">🛡 Poliçeyi gör</button>`:''}${(g.img||g.bit||g.sirket)?`<button class=add style="flex:1" onclick="motoSigDel()">🗑 Poliçeyi sil</button>`:''}</div></div>`}
+function motoMuaDue(){const m=(S.moto&&S.moto.m)||{};if(!m.muayene)return[];const d=Math.round((new Date(m.muayene+'T00:00')-bt0)/864e5);if(d!==30&&d!==7&&d!==1)return[];const id='mua_'+d;if((M.dis||{})[id]==iso(t0))return[];return[['🪪 Muayene '+(d===1?'yarın':d+' gün sonra')+' bitiyor'+(m.marka?' ('+m.marka+' '+(m.model||'')+')':''),"tab='mt';draw(1)",id]]}
+function motoSetupHTML(){const PV=motoPoVals();
  const m=akSt.motoDraft||(S.moto&&S.moto.m)||{};const isPre=m.preset==='nmax155'||(!m.preset&&!m.marka);const col=m.renk||MOTO_CATALOG[0].renk;
  const sw=MOTO_SWATCH.map(c=>`<button class="msw${col==c?' on':''}" style="background:${c}" onclick="motoPick('${c}')" aria-label="Renk"></button>`).join('');
- return `<div class=card><div class=sect style="margin:0 0 10px"><h2>Motor seç</h2></div>
+ return `<div class=card><div class=sect style="margin:0 0 10px"><h2>${(S.moto&&!S.moto.m&&S.motoOther&&S.motoOther.length)?'Yeni motor ekle':'Motor seç'}</h2></div>
+ <div class=card style="margin:0 0 10px;padding:10px"><b>🪪 Ruhsat</b><div class=mut style="margin:2px 0 8px">Ruhsatın fotoğrafını veya PDF'ini ekle; marka, model, plaka ve muayene tarihi otomatik dolsun.</div><input type=file id=ruF accept="image/*,application/pdf" class=in onchange="motoDocRead('ru',this)" style="width:100%"><div class=mut style="margin-top:6px;min-height:16px">${(MOTO_PEND.ru&&MOTO_PEND.ru.msg)||(m.ruId?'Kayıtlı ruhsat var. Yenisini seçersen o kaydedilir.':'')}</div>${((MOTO_PEND.ru&&MOTO_PEND.ru.data)||m.ruId)?`<button class=add style="margin-top:4px" onclick="motoDocView('ru')">📄 Ruhsatı gör</button>`:''}</div>
  <div class=field><label>Marka</label><input class=in id=mM value="${E(m.marka||'')}" placeholder="Örn. Yamaha"></div><div class=field><label>Model</label><input class=in id=mMo value="${E(m.model||'')}" placeholder="Örn. NMAX 155"></div>
  <div class=field><label>Yıl</label><input class=in id=mY inputmode=decimal value="${m.yil||''}"></div>
  <div class=field><label>Kilometre</label><input class=in id=mK inputmode=decimal value="${m.km||''}"></div>
+ <div class=field><label>Plaka</label><input class=in id=mPl value="${E(m.plaka||'')}" placeholder="34 ABC 123"></div>
+ <div class=field><label>Şasi no</label><input class=in id=mSa value="${E(m.sasi||'')}"></div>
+ <div class=field><label>Motor no</label><input class=in id=mMN value="${E(m.motorNo||'')}"></div>
+ <div class=field><label>Tescil tarihi</label><input type=date class=in id=mTe value="${m.tescil||''}"></div>
+ <div class=field><label>Son muayene (geçerlilik bitişi)</label><input type=date class=in id=mMu value="${m.muayene||''}"></div>
  <div class=field><label>Renk</label><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${sw}</div></div>
- <button class=btnp onclick="motoSave()">Kaydet</button>${S.moto&&S.moto.m?'<button class=add style="margin-top:8px" onclick="akSt.motoEdit=0;akSt.motoDraft=null;draw()">Vazgeç</button>':''}</div>`
+ <div class=card style="margin:10px 0;padding:10px"><b>🛡 Sigorta poliçesi</b><div class=mut style="margin:2px 0 8px">Poliçe fotoğrafını veya PDF'ini ekle; şirket ve tarihler okunup "Ruhsat & belgeler" bölümünde gösterilir.</div><input type=file id=poF accept="image/*,application/pdf" class=in onchange="motoDocRead('po',this)" style="width:100%"><div class=mut style="margin-top:6px;min-height:16px">${(MOTO_PEND.po&&MOTO_PEND.po.msg)||(S.moto&&S.moto.sig&&S.moto.sig.img?'Kayıtlı poliçe var. Yenisini seçersen o kaydedilir.':'')}</div></div>
+ <button class=btnp onclick="motoSave()">Kaydet</button>${S.moto&&S.moto.m?'<button class=add style="margin-top:8px" onclick="motoCancelEdit()">Vazgeç</button>':((S.motoOther&&S.motoOther.length)?'<button class=add style="margin-top:8px" onclick="motoAddCancel()">Vazgeç</button>':'')}</div>`
 }
-const motoModel=k=>{const d=Object.assign({},akSt.motoDraft||(S.moto&&S.moto.m)||{});if(k=='nmax155'){d.preset='nmax155';d.marka='Yamaha';d.model='NMAX 155'}else{d.preset='';if(d.marka==='Yamaha'&&d.model==='NMAX 155'){d.marka='';d.model=''}}d.renk=d.renk||MOTO_CATALOG[0].renk;akSt.motoDraft=d;draw()};
-const motoPick=c=>{const g=id=>{const e=document.getElementById(id);return e?e.value:undefined};const cur=Object.assign({},akSt.motoDraft||(S.moto&&S.moto.m)||{});const f={marka:g('mM'),model:g('mMo'),yil:g('mY'),km:g('mK')};Object.keys(f).forEach(k=>{if(f[k]!==undefined)cur[k]=f[k]});cur.renk=c;akSt.motoDraft=cur;draw()};
-const motoSave=()=>{const g=id=>{const e=document.getElementById(id);return e?e.value:''};const cur=akSt.motoDraft||(S.moto&&S.moto.m)||{};const marka=g('mM').trim(),model=g('mMo').trim();if(!marka||!model)return toast('Marka ve model gir');S.moto={m:{preset:'',marka,model,yil:+g('mY')||'',km:+g('mK')||0,kmAt:iso(t0),renk:cur.renk||'#1d3f8f'},p:(S.moto&&S.moto.p)||{},log:(S.moto&&S.moto.log)||[]};akSt.motoEdit=0;akSt.motoDraft=null;save();draw()};
+const motoModel=k=>{const d=Object.assign({},motoFormSync());if(k=='nmax155'){d.preset='nmax155';d.marka='Yamaha';d.model='NMAX 155'}else{d.preset='';if(d.marka==='Yamaha'&&d.model==='NMAX 155'){d.marka='';d.model=''}}d.renk=d.renk||MOTO_CATALOG[0].renk;akSt.motoDraft=d;draw()};
+const motoPick=c=>{const g=id=>{const e=document.getElementById(id);return e?e.value:undefined};const cur=Object.assign({},motoFormSync());const f={marka:g('mM'),model:g('mMo'),yil:g('mY'),km:g('mK')};Object.keys(f).forEach(k=>{if(f[k]!==undefined)cur[k]=f[k]});cur.renk=c;akSt.motoDraft=cur;draw()};
+const motoSave=()=>{const g=id=>{const e=document.getElementById(id);return e?e.value:''};const cur=akSt.motoDraft||(S.moto&&S.moto.m)||{};const marka=g('mM').trim(),model=g('mMo').trim();if(!marka||!model)return toast('Marka ve model gir');
+const ruId=motoPersistDoc('ru')||cur.ruId||'';
+S.moto=Object.assign({},S.moto||{},{m:{preset:'',marka,model,yil:+g('mY')||'',km:+g('mK')||0,kmAt:iso(t0),renk:cur.renk||'#1d3f8f',plaka:g('mPl').trim(),sasi:g('mSa').trim(),motorNo:g('mMN').trim(),tescil:g('mTe'),muayene:g('mMu'),ruId},p:(S.moto&&S.moto.p)||{},log:(S.moto&&S.moto.log)||[]});
+const pP=MOTO_PEND.po;if(pP&&pP.data){const o=S.moto.sig||{};const nx=Object.assign({},o);Object.keys(pP.info||{}).forEach(k=>{if(pP.info[k])nx[k]=pP.info[k]});const pid=motoPersistDoc('po');nx.img=pid||o.img||'';if(pid&&o.img){idbDel(o.img);delete DC[o.img]}S.moto.sig=nx}
+MOTO_PEND.po=null;
+motoEnsureId();MOTO_PEND.ru=null;akSt.motoEdit=0;akSt.motoDraft=null;save();draw()};
 const motoOpen=k=>{if(MOTO_MOVED)return;akSt.motoPart=k;draw(1)};
 const motoSavePart=k=>{const d=document.getElementById('mpD').value,km=NUM(document.getElementById('mpK').value)||0,n=document.getElementById('mpN').value.trim();if(!d)return toast('Tarih gir');
  S.moto.p=S.moto.p||{};S.moto.p[k]={d,km,n};S.moto.log=S.moto.log||[];S.moto.log.unshift({k,d,km,n});save();toast(motoPartLbl[k]+' kaydedildi');draw()};
@@ -990,7 +1052,7 @@ out.bit=grab(/biti[şs][^\s:]*\s*(tarihi)?\s*[:\-]?/i);
 if(!out.bas||!out.bit){const all=[];let m;const r=dre();while((m=r.exec(norm)))all.push(iso1(m));all.sort();if(all.length>=2){out.bas=out.bas||all[0];out.bit=out.bit||all[all.length-1]}}
 const ins=['allianz','axa','anadolu','ak sigorta','aksigorta','mapfre','groupama','zurich','eureko','sompo','hdi','unico','ray sigorta','generali','neova','quick sigorta','bereket','corpus','türkiye sigorta','koç','gulf','ergo'];
 let sn='';
-const mL=/sigorta\s*şirketi\s*[:\-]?\s*([A-ZÇĞİÖŞÜa-zçğıöşü.&\s]{3,80}?)(?=\s+(?:Acente|Poli[çc]e|Yenileme|Ba[şs]lang|Biti[şs]|Plaka|Tramer)|\s\d|$)/i.exec(norm);
+const mL=/sigorta\s*[şs]irketi\s*[:\-]?\s*([A-ZÇĞİÖŞÜa-zçğıöşü.&\s]{3,80}?)(?=\s+(?:Acente|Poli[çc]e|Yenileme|Ba[şs]lang|Biti[şs]|Plaka|Tramer)|\s\d|$)/i.exec(norm);
 if(mL)sn=mL[1].trim().split(/\s+/).map(tc).join(' ');
 if(!sn){const mC=/sigortac[ıi]\s*[:\-]\s*([A-Za-zÇĞİÖŞÜçğıöşü.&\s]{3,40}?)(?=\s+(?:Ba[şs]lang|Biti[şs]|Poli[çc]e|Prim|Tarih|Sigorta\s*Ettiren|Sigortal)|\s\d|$)/i.exec(norm);if(mC)sn=mC[1].trim()}
 if(!sn){const re=/sigorta/gi;let mm;while((mm=re.exec(norm))){const after=norm.slice(mm.index+7,mm.index+20).trim().toLowerCase();if(/^(ettiren|sigortal|poliçe|tarih|şirket|sirket|firma|bitiş|baslang)/.test(after))continue;const w=norm.slice(Math.max(0,mm.index-40),mm.index).trim().split(' ').filter(Boolean);const take=[];for(let k=w.length-1;k>=0&&take.length<3;k--){if(/^[A-ZÇĞİÖŞÜa-zçğıöşü&.]+$/.test(w[k])&&!/^(poliçe|tarafından|ile|ve|ve|sayın|bu)$/i.test(w[k]))take.unshift(w[k]);else break}if(take.length){sn=take.join(' ')+' Sigorta';break}}}
@@ -998,7 +1060,7 @@ if(!sn){const low=norm.toLowerCase();const hit=ins.find(k=>low.includes(k));if(h
 out.sirket=sn.replace(/\s+/g,' ').trim();
 const pm=/poli[çc]e\s*(no|numaras[ıi])\s*[:.]?\s*([A-Za-z0-9\-\/]{5,})/i.exec(norm);if(pm)out.no=pm[2];
 return out};
-const motoSigRead=async inp=>{const f=inp.files[0];if(!f)return;const msg=document.getElementById('sgMsg');const key=aiKey();if(!key){msg.textContent='Otomatik okuma için Groq veya Gemini anahtarı gerekli; bilgileri elle gir.';return}msg.textContent='Poliçe okunuyor…';
+const motoSigRead=async inp=>{const f=inp.files[0];if(!f)return;motoDocData(f,/pdf/i.test(f.type)||/\.pdf$/i.test(f.name)).then(d=>{MOTO_PEND.po={data:d,msg:''}}).catch(()=>{});const msg=document.getElementById('sgMsg');const key=aiKey();if(!key){msg.textContent='Otomatik okuma için Groq veya Gemini anahtarı gerekli; bilgileri elle gir.';return}msg.textContent='Poliçe okunuyor…';
  try{const isPdf=/pdf/i.test(f.type)||/\.pdf$/i.test(f.name);let x;if(isPdf){const text=await motoSigPdfText(f);if(text.length<30)throw new Error('PDF metni okunamadı, taranmış olabilir');motoSigFill(motoSigLocal(text));msg.textContent='PDF okundu, bilgileri kontrol edip kaydet.';return}
   if(aiIsGroq()){
    let body;
@@ -1014,8 +1076,8 @@ const motoSigRead=async inp=>{const f=inp.files[0];if(!f)return;const msg=docume
   }
   motoSigFill(x);msg.textContent='Bilgiler dolduruldu, kontrol edip kaydet.'
  }catch(e){msg.textContent='Okunamadı: '+(e.message||'hata')+'. Bilgileri elle gir.'}};
-const motoSigSave=()=>{const sirket=document.getElementById('sgS').value.trim(),bas=document.getElementById('sgB').value,bit=document.getElementById('sgE').value,no=document.getElementById('sgN').value.trim();if(!bas||!bit)return toast('Başlangıç ve bitiş tarihi gir');S.moto=S.moto||{};S.moto.sig={sirket,bas,bit,no};save();toast('Poliçe kaydedildi');draw()};
-const motoSigDel=()=>askSure('Poliçe silinsin mi?',()=>{delete S.moto.sig;save();draw()});
+const motoSigSave=()=>{const sirket=document.getElementById('sgS').value.trim(),bas=document.getElementById('sgB').value,bit=document.getElementById('sgE').value,no=document.getElementById('sgN').value.trim();if(!bas||!bit)return toast('Başlangıç ve bitiş tarihi gir');S.moto=S.moto||{};const oSig=S.moto.sig||{};const pid=motoPersistDoc('po');S.moto.sig=Object.assign({},oSig,{sirket,bas,bit,no},pid?{img:pid}:{});if(pid&&oSig.img){idbDel(oSig.img);delete DC[oSig.img]}save();toast('Poliçe kaydedildi');draw()};
+const motoSigDel=()=>askSure('Poliçe silinsin mi?',()=>{const i=S.moto.sig&&S.moto.sig.img;if(i){idbDel(i);delete DC[i]}delete S.moto.sig;save();draw()});
 const motoSigDue=()=>{const g=S.moto&&S.moto.sig;if(!g||!g.bit)return[];const d=Math.round((new Date(g.bit+'T00:00')-bt0)/864e5);if(d!==7&&d!==1)return[];const id='sig_'+d;if((M.dis||{})[id]==iso(t0))return[];return[['🛡️ Sigorta poliçesi '+(d===1?'yarın':'1 hafta sonra')+' bitiyor'+(g.sirket?' ('+g.sirket+')':''),"tab='mt';draw(1)",id]]};
 const motoPSync=k=>{const M2=S.moto;M2.p=M2.p||{};const last=M2.log.filter(y=>y.k==k).sort((a,b)=>b.d.localeCompare(a.d))[0];if(last)M2.p[k]={d:last.d,km:last.km,n:last.n,gid:last.gid};else delete M2.p[k]};
 const motoLogEdit=idx=>{const x=(S.moto&&S.moto.log||[])[idx];if(!x)return;const ex=x.gid?S.ex.find(e=>e.gid==x.gid):null;const grp=x.gid?S.moto.log.filter(y=>y.gid==x.gid):[x];const parts=grp.map(y=>motoPartLbl[y.k]||y.k).join(', ');akSheet(`<h3>Bakım kaydını düzenle</h3><div class=field><label>Parçalar</label><div class=mut>${E(parts)}</div></div><div class=field><label>Tarih</label><input type=date id=meD class=in value="${x.d}"></div><div class=field><label>Kilometre</label><input id=meK class=in inputmode=decimal value="${x.km||''}"></div><div class=field><label>Tutar ₺ ${ex?'':'(bağlı harcama yok)'}</label><input id=meA class=in inputmode=decimal value="${ex?ex.a:''}" ${ex?'':'disabled'}></div><div class=field><label>Not</label><input id=meN class=in value="${E(x.n||'')}"></div><div class=mut style="margin:6px 0 10px">Aynı anda girilen parçalar birlikte güncellenir.</div><button class=btnp onclick="motoLogUpd(${idx});akClose()">Kaydet</button>`)};
@@ -1048,15 +1110,31 @@ const motoBnDone=i=>{S.moto.bn[i].last=iso(t0);save();draw(1)};
 const motoBnDel=i=>{S.moto.bn.splice(i,1);save();draw(1)};
 const motoBnRows=k=>{const L=((S.moto&&S.moto.bn)||[]).map((b,i)=>({b,i})).filter(x=>x.b.k==k);return `<div class=card><div class=sect style="margin:0 0 6px"><h2>Bildirimler</h2></div>${L.length?L.map(({b,i})=>`<div class=row style="padding:6px 0"><div><b>${b.every} günde bir</b><div class=mut>son: ${fd(new Date(b.last+'T00:00'))}</div></div><div><button class=bnic onclick="motoBnAsk('${k}',${i})" aria-label="Düzenle">✎</button><button class=bnic del onclick="motoBnDel(${i})" aria-label="Sil">🗑</button></div></div>`).join(''):'<div class=mut>Bu parça için bildirim yok</div>'}</div>`};
 const motoBnBtn=k=>`<div style="margin:14px 0 0"><button class=add style="width:100%" onclick="motoBnAsk('${k}')">🔔 Bildirim ekle</button></div>`;
+/* ===== v7.40: çoklu motor ===== */
+const motoEnsureId=()=>{if(!Array.isArray(S.motoOther))S.motoOther=[];[S.moto,...S.motoOther].forEach((o,i)=>{if(!o)return;if(!o.id)o.id='mt'+Date.now().toString(36)+i;if(!o.ord)o.ord=Date.now()+i})};
+const motoLabel=o=>o&&o.m?(((o.m.marka||'')+' '+(o.m.model||'')).trim()||'Motor'):'Yeni motor';
+const motoBar=()=>{motoEnsureId();const all=[S.moto,...S.motoOther].filter(o=>o&&o.m).sort((a,b)=>a.ord-b.ord);
+ return `<div class=chips style="flex-wrap:nowrap;overflow-x:auto;margin:0 0 10px;padding-bottom:2px">${all.map(o=>`<button class="chip${o===S.moto?' on':''}" style="white-space:nowrap" onclick="motoSwitch('${o.id}')">🏍️ ${E(motoLabel(o))}</button>`).join('')}<button class=chip style="white-space:nowrap" onclick="motoAdd()">➕ Motor ekle</button></div>`};
+const motoSwitch=id=>{motoEnsureId();if(S.moto&&S.moto.id===id)return;const k=S.motoOther.findIndex(o=>o.id===id);if(k<0)return;const cur=S.moto;S.moto=S.motoOther[k];if(cur)S.motoOther[k]=cur;else S.motoOther.splice(k,1);akSt.motoPart=null;akSt.motoEdit=0;akSt.motoDraft=null;MOTO_POS=MOTO_KEYS[0];save();draw(1)};
+const motoAdd=()=>{motoEnsureId();if(!S.moto||!S.moto.m)return;akSt.motoPrev=S.moto.id;S.motoOther.push(S.moto);S.moto={id:'mt'+Date.now().toString(36),ord:Date.now()};akSt.motoPart=null;akSt.motoEdit=0;akSt.motoDraft=null;save();draw(1)};
+const motoAddCancel=()=>{MOTO_PEND.ru=null;MOTO_PEND.po=null;motoEnsureId();const k=S.motoOther.findIndex(o=>o.id===akSt.motoPrev),back=k>=0?S.motoOther.splice(k,1)[0]:S.motoOther.shift();if(back)S.moto=back;akSt.motoDraft=null;akSt.motoEdit=0;save();draw(1)};
+const motoLinked=o=>{const g=new Set(((o&&o.log)||[]).map(x=>x.gid).filter(Boolean));return S.ex.filter(e=>e.gid&&g.has(e.gid))};
+const motoDelAsk=()=>{const o=S.moto;if(!o)return;const L=motoLinked(o),tot=L.reduce((s,e)=>s+(+e.a||0),0);
+ if(!L.length)return askSure('"'+motoLabel(o)+'" silinsin mi? Bakım kayıtları, bildirimler ve sigorta bilgisi de silinir.',()=>motoDelDo(false));
+ akSheet(`<h3>"${E(motoLabel(o))}" silinsin mi?</h3><div class=mut style="margin-bottom:14px">Bu motora bağlı ${L.length} harcama var (toplam ${F(tot)}). Harcamalar da silinsin mi? Bakım kayıtları, bildirimler ve sigorta bilgisi her durumda silinir.</div><div style="display:flex;flex-direction:column;gap:8px"><button class=btnp onclick="akClose();motoDelDo(true)">Evet, harcamalar da silinsin</button><button class=add onclick="akClose();motoDelDo(false)">Hayır, harcamalar kalsın</button><button class=add onclick="akClose()">Vazgeç</button></div>`)};
+const motoDelDo=wipe=>{const o=S.moto;if(!o)return;const snap=JSON.stringify(S);let n=0;
+ if(wipe){const g=new Set((o.log||[]).map(x=>x.gid).filter(Boolean));const b0=S.ex.length;S.ex=S.ex.filter(e=>!(e.gid&&g.has(e.gid)));n=b0-S.ex.length}
+ motoEnsureId();const nx=S.motoOther.sort((a,b)=>a.ord-b.ord).shift();if(nx)S.moto=nx;else delete S.moto;
+ akSt.motoPart=null;akSt.motoEdit=0;akSt.motoDraft=null;MOTO_POS=MOTO_KEYS[0];save();draw(1);UNDO=snap;showUndo('Motor silindi'+(n?' · '+n+' harcama silindi':''))};
 function akMotorBody(){
  if(!S.moto||!S.moto.m||akSt.motoEdit)return motoSetupHTML();
  if(akSt.motoPart)return motoDetail(akSt.motoPart);
  const m=S.moto.m;const greet=!akSt.motoSeen;akSt.motoSeen=1;if(greet){MOTO_POS=MOTO_KEYS[0];void 0}
  const log=(S.moto.log||[]).slice(0,15).map((x,i)=>`<div class=row><div onclick="akSt.motoPart='${x.k}';draw(1)" style="cursor:pointer;flex:1;min-width:0"><b>${motoPartLbl[x.k]}</b><div class=mut>${fd(new Date(x.d+'T00:00'))} · ${motoKmFmt(x.km)} km</div></div><div><button class=bnic onclick="motoLogEdit(${i})" aria-label="Düzenle">✎</button><button class=bnic del onclick="motoLogDel(${i})" aria-label="Sil">🗑</button></div></div>`).join('')||'<div class=empty>Henüz bakım kaydı yok</div>';
- return `<div style="padding:0">${motoSceneHTML(m.renk||'#1d3f8f',greet)}</div>${motoSigCard()}
+ return `${motoBar()}<div style="padding:0">${motoSceneHTML(m.renk||'#1d3f8f',greet)}</div>${motoDocsCard()}
  <div class=mut style="text-align:center;font-size:12px;margin:-4px 0 12px">Sürükleyerek döndür · Noktalara dokun</div>
  <div class=card><div><b>${E(m.marka)} ${E(m.model)}</b></div><div class=mut>${m.yil||''} · ${motoKmFmt(m.km)} km</div>
- <div style="display:flex;gap:8px;margin-top:10px"><button class=add onclick="akSt.motoEdit=1;akSt.motoDraft=null;draw()">Düzenle</button><button class=add onclick="motoKmAsk()">Km güncelle</button></div></div>
+ <div style="display:flex;gap:8px;margin-top:10px"><button class=add onclick="akSt.motoEdit=1;akSt.motoDraft=null;draw()">Düzenle</button><button class=add onclick="motoKmAsk()">Km güncelle</button><button class=add style="color:var(--bad)" onclick="motoDelAsk()">Sil</button></div></div>
  <div class=sect><h2>Bakım geçmişi</h2></div><div class=list>${log}</div>`}
 const MOTO_LIGHTS={"W":800,"H":582};
 function motoLightClear(){
@@ -1169,7 +1247,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='7.39';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
+const KEY='butce_v3';const VER='7.40';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -1357,7 +1435,7 @@ S.cats.forEach((c,i)=>{const l=+S.limits[c];if(!(l>0)||!onN('lm')||(M.dis||{})['
 customDue().forEach(x=>al.push(x));
 motoDue().forEach(x=>al.push(x));
 motoBnDue().forEach(x=>al.push(x));
-motoSigDue().forEach(x=>al.push(x));
+motoSigDue().forEach(x=>al.push(x));motoMuaDue().forEach(x=>al.push(x));
 wkAlerts().forEach(x=>al.push(x));
 ALERTS=al;let h=updBanner()+`<div class=apphead style="position:relative"><button class=docbtn style="left:auto;right:0" onclick="openNP()" aria-label="Bildirimler">🔔${unreadN()?`<span class=bdg>${Math.min(99,unreadN())}</span>`:''}</button><div class=at style="display:flex;align-items:center;justify-content:center;gap:10px"><span class=ico style="width:38px;height:38px"></span>Borç Takip</div><div id=cloudSyncBadge>${cloudBadgeTxt}</div><div class=ad>${fd(t0)}</div></div>${qsShow()?'<button class=add style="margin-bottom:12px;padding:12px;font-size:16px" onclick="openQS()">💰 Maaşı Gir</button>':''}`;
 if(nx){const w=S.m[nx[0]].w[nx[1]],dl=Math.round((nx[2]-t0)/864e5);
@@ -3089,7 +3167,7 @@ const cloudDeriveKey=async(password,salt)=>{const mat=await crypto.subtle.import
 const cloudEncrypt=async(data)=>{const key=await crypto.subtle.importKey('raw',cloudUnB64(cloudEncKey),{name:'AES-GCM'},false,['encrypt']);const iv=crypto.getRandomValues(new Uint8Array(12));const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(data)));return {v:1,iv:cloudB64(iv),cipher:cloudB64(cipher)}};
 const cloudDecrypt=async(payload)=>{if(!payload||payload.v!==1)throw new Error('Bulut yedeği biçimi tanınmıyor.');const key=await crypto.subtle.importKey('raw',cloudUnB64(cloudEncKey),{name:'AES-GCM'},false,['decrypt']);const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:cloudUnB64(payload.iv)},key,cloudUnB64(payload.cipher));return JSON.parse(new TextDecoder().decode(plain))};
 const cloudShowBadge=t=>{const x=String(t||'');let st='Senkron açık';if(/Yedekleniyor|ediliyor/i.test(x))st='Senkron ediliyor…';else if(/bekliyor|hata|kurulamadı/i.test(x))st='Senkron hatası';else if(/Çevrimdışı/i.test(x))st='Çevrimdışı';const who=(cloudUser&&cloudUser.username)||'';window.cloudBadgeTxt=(who?who+' • ':'')+st;cloudBadgeTxt=window.cloudBadgeTxt;const e=document.getElementById('cloudSyncBadge');if(e)e.textContent=cloudBadgeTxt};
-const cloudPayload=async()=>{const im={};for(const d of S.docs||[])for(const id of d.imgs||[]){try{const v=await idbGet(id);if(v)im[id]=v}catch(e){}}return Object.assign({},S,{docs:[],docCats:[],_imgs:{}})};
+const cloudPayload=async()=>{const im={};const ids=[];for(const d of S.docs||[])ids.push(...(d.imgs||[]));const mots=[S.moto,...(S.motoOther||[])].filter(Boolean);for(const o of mots){if(o.m&&o.m.ruId)ids.push(o.m.ruId);if(o.sig&&o.sig.img)ids.push(o.sig.img)}for(const id of ids){try{const v=await idbGet(id);if(v)im[id]=v}catch(e){}}return Object.assign({},S,{docs:[],docCats:[],_imgs:im})};
 const cloudRestoreImgs=async()=>{const im=S._imgs||{};delete S._imgs;for(const k of Object.keys(im)){try{await idbPut(k,im[k]);DC[k]=im[k]}catch(e){}}};
 const cloudDoLogout=async()=>{if(cloudToken&&!cloudOffline){try{await cloudApi('backup',{method:'PUT',body:JSON.stringify({payload:await cloudEncrypt(await cloudPayload())})})}catch(e){toast('Yedek alınamadı, çıkış yapılmadı. İnternetini kontrol et.');return}}
 ['bt_cloud_token','bt_cloud_user','bt_cloud_enc_key','butce_v3','butce_meta','butce_auto','butce_auto_prev'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});try{indexedDB.deleteDatabase('borc_docs')}catch(e){}location.reload()};
