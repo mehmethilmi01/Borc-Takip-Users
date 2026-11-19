@@ -120,7 +120,7 @@ html,body{overscroll-behavior-y:contain}
 <div class=row><input autocomplete=off spellcheck=false id=pname class=in placeholder="Ödeme adı" style="flex:1"></div>
 <div class=row style="gap:6px"><input autocomplete=off spellcheck=false id=pamt class="in n" type=text inputmode=decimal placeholder="Tutar" style="width:48%"><input autocomplete=off spellcheck=false id=ppaid class="in n" type=text inputmode=decimal placeholder="Ödenen" style="width:48%"></div><div class=row style="gap:6px"><select id=punit onchange="pUnitChg()" style="flex:1;margin:0"><option value=TRY>₺ Türk Lirası</option><option value=USD>💵 Dolar</option><option value=EUR>💶 Euro</option><option value=GBP>💷 Sterlin</option><option value=GRA>🥇 gr Altın</option><option value=CEY>🪙 Çeyrek Altın</option><option value=YAR>🪙 Yarım Altın</option><option value=TAM>🪙 Tam Altın</option><option value=GUM>🥈 gr Gümüş</option></select><input autocomplete=off spellcheck=false id=pqty class="in n" type=text inputmode=decimal placeholder="Miktar" oninput="pUnitChg()" style="width:40%;display:none"></div><div id=pfxinfo class=mut style="font-size:12px"></div>
 <div class=row style="gap:6px"><input autocomplete=off spellcheck=false id=pdate class=in type=date style="flex:1"></div>
-<div id=pcats class=chips></div>
+<label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:6px 0"><input type=checkbox id=pflex> Ödeme günü farketmez (haftaya serbestçe yerleşsin)</label><div id=pcats class=chips></div>
 <div class=row><input autocomplete=off spellcheck=false id=pnote class=in placeholder="Not" style="width:100%"></div>
 <label style="display:flex;gap:6px;align-items:center;font-size:12px;color:var(--mut);margin-top:6px"><input autocomplete=off spellcheck=false type=checkbox id=papply>Ad/tutar değişince diğer taksitlere de uygula</label>
 <div class=row style="gap:8px;margin-top:10px"><button class=add onclick="closePEdit()">Vazgeç</button><button class=add style="color:var(--bad)" onclick="delPFromPopup()">Sil</button><button class=add style="color:var(--acc)" onclick="savePEdit()">Kaydet</button></div></div></div>
@@ -195,7 +195,9 @@ function akExOpts(mi,wi,pi){
 }
 function akExKeep(mi,wi,pi){const p=S.m[mi].w[wi][2][pi];if(p)p[15]=0;save();akClose();draw(1)}
 function akExDel(mi,wi,pi){S.m[mi].w[wi][2].splice(pi,1);save();akClose();draw(1)}
-function akSerLbl(p){try{const L=seriesList(p);if(!L)return '';const i=L.indexOf(p);return i<0?'':(i+1)+'/'+L.length}catch(e){return ''}}
+function serMonthOf(q){return S.m.findIndex(m=>m.w.some(w=>w[2].includes(q)))}
+function serMonths(p){const b=baseNm(p);const out=[];S.m.forEach((m,mi)=>{if(m.w.some(w=>w[2].some(q=>baseNm(q)===b)))out.push(mi)});return out}
+function akSerLbl(p){try{const L=seriesList(p);if(!L)return '';const mi=serMonthOf(p);const ms=serMonths(p);const i=ms.indexOf(mi);return i<0?'':(i+1)+'/'+ms.length}catch(e){return ''}}
 function akPayRow(mi,wi,pi,p){const paid=!!p[3];
  return `<div class="row pl ${paid?'paid':''}" data-mi="${mi}" data-wi="${wi}" data-pi="${pi}"><span class=check onclick="tg(${mi},${wi},${pi})">${AK_CHK}</span><div class=meta onclick="akEdit(${mi},${wi},${pi})"><div class=nm>${E(p[0]||'—')}</div><div class=sub>${(()=>{const l=p[16]||akSerLbl(p);return l?'<span>'+E(l)+'</span>'+(p[5]?' • ':''):''})()}${E(p[5]||'')}${(p[4]&&p[4]!=='PDF planı')?' <span class=tag>'+E(p[4])+'</span>':''}${p[15]?` <span class=tag onclick="event.stopPropagation();akExOpts(${mi},${wi},${pi})">Örnek</span>`:''}${!paid&&akPaidOf(p)>0?' · kalan '+F(remOf(p)):''}${(+p[9]>0)?` <span class=tag style="font-size:10px;padding:1px 7px;line-height:1.5;font-weight:600">↩️ Devir : ${F(p[9])}</span>`:''}</div>${akMergeTxt(p)}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none"><button class=x aria-label="IBAN kopyala" onclick="event.stopPropagation();copyIban('${E(S.ibans[p[0]])}')" style="display:${(!paid&&S.ibans[p[0]])?'inline-grid':'none'};place-items:center;width:28px;height:28px;border:1px solid var(--line);border-radius:8px;color:var(--acc);background:var(--card);padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="amt num">${F(paid?p[2]:remOf(p))}</div></div></div>`}
 function akBillRow(b){const paid=!!b.inst.paid;
@@ -1318,7 +1320,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='7.48';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
+const KEY='butce_v3';const VER='7.50';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -1796,7 +1798,7 @@ const unlogExpense=id=>{if(!id)return;const i=S.ex.findIndex(e=>e.lid==id);if(i>
 let PED=null;
 const openPEdit=(wi,pi)=>{const p=S.m[cur].w[wi][2][pi];PED={wi,pi,cat:p[5],orig:{n:p[0],a:+p[2]||0,d:p[1],note:p[4]||'',pa:paidOf(p),c:p[5]}};
 document.getElementById('pname').value=p[0];document.getElementById('pamt').value=p[2];document.getElementById('ppaid').value=paidOf(p)||'';
-document.getElementById('pdate').value=p[1];document.getElementById('pnote').value=p[4]||'';{const f=p[10];$('punit').value=f?f.u:'TRY';$('pqty').value=f?f.q:'';pUnitChg()}
+document.getElementById('pdate').value=p[1];document.getElementById('pnote').value=p[4]||'';document.getElementById('pflex').checked=!!p[17];{const f=p[10];$('punit').value=f?f.u:'TRY';$('pqty').value=f?f.q:'';pUnitChg()}
 document.getElementById('papply').checked=APPLY_ALL.has(wi+'_'+pi);
 document.getElementById('pcats').innerHTML=S.dcats.map(c=>`<button class="chip ${c==p[5]?'on':''}" onclick="selPCat('${Q(c)}')">${c}</button>`).join('');
 document.getElementById('povl').style.display='flex'};
@@ -1817,7 +1819,7 @@ if(paidV!==orig.pa)ed(wi,pi,6,paidV);
 {const fu=$('punit').value,fq=NUM($('pqty').value),rt=fxRate(fu),pp=S.m[cur].w[wi][2][pi];
 if(fu!=='TRY'&&fq>0){const old=pp[10];pp[10]={u:fu,q:fq,qp:(old&&old.u==fu)?(old.qp||0):(pp[3]?fq:0)}}else if(pp.length>10)pp[10]=null;
 if(applyV)S.m.forEach(m=>m.w.forEach(w=>w[2].forEach(q=>{if(q!==pp&&q[0]==pp[0]&&!q[3]){if(fu!=='TRY'&&fq>0){q[10]={u:fu,q:fq,qp:0};if(rt)q[2]=Math.round(fq*rt)}else if(q.length>10)q[10]=null}})))}
-closePEdit();save();draw();toast('Ödeme güncellendi')};
+S.m[cur].w[wi][2][pi][17]=document.getElementById('pflex').checked?1:0;closePEdit();save();draw();toast('Ödeme güncellendi')};
 let IP={mode:null,key:null};
 const openIbanP=name=>{IP={mode:'iban',key:name};document.getElementById('iptitle').textContent='IBAN — '+name;
 document.getElementById('ipicons').style.display='none';document.getElementById('ipinput').style.display='block';document.getElementById('ipinput').value=S.ibans[name]||'';document.getElementById('ipinput').placeholder='TR..';
@@ -1884,7 +1886,7 @@ ensureCovers(target);
 if(cnt>1){const endT=new Date(target.getFullYear(),target.getMonth()+cnt-1,1);ensureCovers(endT)}
 const base=QD.fx?Math.round(amt/cnt*1000)/1000:Math.floor(amt/cnt),rem=QD.fx?Math.round((amt-base*cnt)*1000)/1000:amt-base*cnt;let added=0,fmi=null,fwi=null;
 if(cnt==1||QDW){
-const ref=QDW?{mi:QDW.mi,wi:QDW.wi,d:wd(S.m[QDW.mi].w[QDW.wi])}:(QD.minW?minWeekFor(target):pickWeekFor(target));const newP=mkP(n,iso(ref.d),amtTL,note,c);if(QD.ex)newP[15]=1;if(FQ){newP[10]={u:FQ.u,q:FQ.q,qp:0};newP[12]={d:iso(bt0),r:FQ.r}}S.m[ref.mi].w[ref.wi][2].push(newP);added=1;fmi=ref.mi;fwi=ref.wi;
+const ref=QDW?{mi:QDW.mi,wi:QDW.wi,d:wd(S.m[QDW.mi].w[QDW.wi])}:(QD.minW?minWeekFor(target):pickWeekFor(target));const newP=mkP(n,iso(ref.d),amtTL,note,c);if(QD.ex)newP[15]=1;newP[17]=QD.flex?1:0;if(FQ){newP[10]={u:FQ.u,q:FQ.q,qp:0};newP[12]={d:iso(bt0),r:FQ.r}}S.m[ref.mi].w[ref.wi][2].push(newP);added=1;fmi=ref.mi;fwi=ref.wi;
 }else{
 let baseMi=S.m.findIndex(m=>{const d0=wd(m.w[0]);return d0.getFullYear()==target.getFullYear()&&d0.getMonth()==target.getMonth()});
 if(baseMi<0){let bd=Infinity;S.m.forEach((m,i)=>{const dd=Math.abs(wd(m.w[0])-target);if(dd<bd){bd=dd;baseMi=i}})}
@@ -1892,7 +1894,7 @@ for(let i=0;i<cnt;i++){const mi=baseMi+i;
 const y=wd(S.m[mi].w[0]).getFullYear(),mo=wd(S.m[mi].w[0]).getMonth(),td=new Date(y,mo,target.getDate());
 const pw=QD.minW?minWeekFor(td):pickWeekFor(td);const wi=pw.wi,pmi=pw.mi;
 const ref=wd(pw.w),qI=FQ?(i==cnt-1?Math.round((FQ.q-Math.floor(FQ.q/cnt*1000)/1000*(cnt-1))*1000)/1000:Math.floor(FQ.q/cnt*1000)/1000):0,a2=FQ?Math.round(qI*FQ.r*100)/100:(cu.length?cu[i]:(i==cnt-1?base+rem:base)),nm=n;
-const npI=mkP(nm,iso(ref),a2,note,c);npI[16]=(i+1)+'/'+cnt;if(QD.ex)npI[15]=1;if(FQ){npI[10]={u:FQ.u,q:qI,qp:0};npI[12]={d:iso(bt0),r:FQ.r}}pw.w[2].push(npI);added++;if(fmi===null){fmi=pmi;fwi=wi}}
+const npI=mkP(nm,iso(ref),a2,note,c);npI[16]=(i+1)+'/'+cnt;if(QD.ex)npI[15]=1;npI[17]=QD.flex?1:0;if(FQ){npI[10]={u:FQ.u,q:qI,qp:0};npI[12]={d:iso(bt0),r:FQ.r}}pw.w[2].push(npI);added++;if(fmi===null){fmi=pmi;fwi=wi}}
 }
 save();QD={n:'',c,d:iso(t0),a:'',t:'1',note:'',fx:''};QDW=null;
 closeAddP();toast(added>1?added+' taksit eklendi':'Ödeme eklendi');
@@ -2154,17 +2156,26 @@ const pmBulkDo=(mi,wi,pi,k)=>{closePayMenu();const L=serOf(mi,wi,pi),me=L.findIn
 if(k=='unpaid')T=L.filter(x=>!x.p[3]&&!paidOf(x.p));else if(k=='after')T=L.slice(me);if(!T.length)return;
 ask('"'+(L[0].p[0]||'Ödeme')+'" için '+T.length+' kayıt silinsin mi?',()=>{const snap=JSON.stringify(S),del=new Set(T.map(x=>x.p));
 S.m.forEach(m=>m.w.forEach(w=>{w[2]=w[2].filter(q=>!del.has(q))}));save();draw();UNDO=snap;showUndo(T.length+' kayıt silindi')})};
-const eqPlan=mi=>{const m=S.m[mi];if(!m)return null;const info=[];
-m.w.forEach((w,wi)=>{if(isClosed(w))return;let fixed=0;const mov=[];w[2].forEach(p=>{const c=Math.round((+p[2]||0)*100);if(c>0&&!p[3]&&!paidOf(p)&&!p[10])mov.push({p,c});else fixed+=c});
-const mc=mov.reduce((s,y)=>s+y.c,0);info.push({wi,w,fixed,mov,tot:fixed+mc,before:fixed+mc,inn:0,out:0})});
+const eqPlan=mi=>{const m=S.m[mi];if(!m)return null;
+const isoOk=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||'');
+const wStart=i=>wkIso(m.w[i]);
+const dayWeek=dt=>{if(!isoOk(dt)||!m.w.length)return -1;const f=wStart(0),ls=wStart(m.w.length-1);if(!f||!ls)return -1;const e=new Date(ls+'T00:00');e.setDate(e.getDate()+7);if(dt<f||dt>=iso(e))return -1;let r=-1;m.w.forEach((w,i)=>{const s=wStart(i);if(s&&s<=dt)r=i});return r};
+const info=[],byWi={},dated=[],ops=[];
+m.w.forEach((w,wi)=>{if(isClosed(w))return;const x={wi,w,fixed:0,mov:[],tot:0,before:0,inn:0,out:0};
+ w[2].forEach(p=>{const c=Math.round((+p[2]||0)*100);x.before+=c;
+  if(c>0&&!p[3]&&!paidOf(p)&&!p[10]){if(p[17])x.mov.push({p,c});else dated.push({p,c,own:wi})}
+  else x.fixed+=c});
+ info.push(x);byWi[wi]=x});
 if(info.length<2)return null;
+dated.forEach(d=>{const tw=dayWeek(d.p[1]);const t=(tw>=0&&byWi[tw])?tw:d.own;byWi[t].fixed+=d.c;if(t!==d.own){byWi[d.own].out+=d.c;byWi[t].inn+=d.c;ops.push({t:'move',keep:true,p:d.p,c:d.c,from:d.own,to:t})}});
+info.forEach(x=>x.tot=x.fixed+x.mov.reduce((s,y)=>s+y.c,0));
 const sat=new Set();let rest=info.slice();
 for(let it=0;it<20;it++){rest=info.filter(x=>!sat.has(x));if(!rest.length)return null;
 const pool=info.reduce((s,x)=>s+x.tot,0)-[...sat].reduce((s,x)=>s+x.fixed,0),tg=pool/rest.length;const ns=rest.filter(x=>x.fixed>tg);if(!ns.length)break;ns.forEach(x=>sat.add(x))}
 rest=info.filter(x=>!sat.has(x));if(!rest.length)return null;
 const pool=info.reduce((s,x)=>s+x.tot,0)-[...sat].reduce((s,x)=>s+x.fixed,0),base=Math.floor(pool/rest.length);let rm=pool-base*rest.length;
 rest.slice().sort((a,b)=>b.tot-a.tot).forEach(x=>{x.lv=base+(rm>0?1:0);if(rm>0)rm--});sat.forEach(x=>{x.lv=x.fixed});
-const src=info.filter(x=>x.tot>x.lv).map(x=>({x,ex:x.tot-x.lv})),dst=info.filter(x=>x.tot<x.lv).map(x=>({x,df:x.lv-x.tot})),ops=[];
+const src=info.filter(x=>x.tot>x.lv).map(x=>({x,ex:x.tot-x.lv})),dst=info.filter(x=>x.tot<x.lv).map(x=>({x,df:x.lv-x.tot}));
 src.forEach(s=>{dst.forEach(d=>{while(s.ex>0&&d.df>0){let x=Math.min(s.ex,d.df);const mv=s.x.mov.filter(y=>y.c>0);if(!mv.length){s.ex=0;break}
 const fit=mv.filter(y=>y.c<=x).sort((a,b)=>b.c-a.c)[0];
 if(fit){ops.push({t:'move',p:fit.p,c:fit.c,from:s.x.wi,to:d.x.wi});x=fit.c;fit.c=0}
@@ -2177,15 +2188,15 @@ const rows=pl.info.map(x=>`<div class=row style="padding:8px 0;border-bottom:1px
 akSheet(`<h3>Haftaları eşitle</h3><div class=mut style="margin-bottom:8px">Ödenmemiş TL ödemeler haftalar arasında kaydırılır, gerekirse bir ödeme ikiye bölünür. Ödenmiş, kısmen ödenmiş, dövizli kalemler ve kapanmış haftalar yerinde kalır. Faturalar hesaba katılmaz.</div>${rows}<div class=mut style="margin:10px 0">${pl.ops.length} taşıma yapılacak.</div><div style="display:flex;gap:8px"><button class=btn style="flex:2" onclick="akEqApply(${mi})">Eşitle</button><button class="btn ghost" style="flex:1" onclick="akClose()">Vazgeç</button></div>`)};
 const akEqApply=mi=>{const pl=eqPlan(mi);if(!pl||!pl.ops.length){akClose();return toast('Haftalar zaten dengeli')}const snap=JSON.stringify(S),m=S.m[mi];
 pl.ops.forEach(o=>{const sa=m.w[o.from][2],da=m.w[o.to][2],dI=wkIso(m.w[o.to]);let np,amt;
-if(o.t=='move'){const k=sa.indexOf(o.p);if(k<0)return;sa.splice(k,1);np=o.p;amt=Math.round((+np[2]||0)*100)/100;if(dI)np[1]=dI}
-else{amt=o.c/100;o.p[2]=Math.round(((+o.p[2]||0)-amt)*100)/100;np=[o.p[0],dI||o.p[1],amt,0,o.p[4]||'',o.p[5],0,0,null,0];if(o.p[15])np[15]=o.p[15];if(o.p[16])np[16]=o.p[16]}
-const nm=(np[0]||'').trim(),q=da.find(x=>x!==np&&(x[0]||'').trim()===nm&&!x[3]&&!paidOf(x)&&!x[10]);
+if(o.t=='move'){const k=sa.indexOf(o.p);if(k<0)return;sa.splice(k,1);np=o.p;amt=Math.round((+np[2]||0)*100)/100;if(dI&&!o.keep)np[1]=dI}
+else{amt=o.c/100;o.p[2]=Math.round(((+o.p[2]||0)-amt)*100)/100;np=[o.p[0],dI||o.p[1],amt,0,o.p[4]||'',o.p[5],0,0,null,0];if(o.p[15])np[15]=o.p[15];if(o.p[17])np[17]=o.p[17];if(o.p[16])np[16]=o.p[16]}
+const nm=(np[0]||'').trim(),q=o.keep?null:da.find(x=>x!==np&&(x[0]||'').trim()===nm&&!x[3]&&!paidOf(x)&&!x[10]);
 if(q){q[2]=Math.round(((+q[2]||0)+amt)*100)/100;q[14]=(Array.isArray(q[14])?q[14]:[]).concat([{k:'hafta',a:amt}]);logEv(pid(q),q[0],'haftalar eşitlendi: +'+F(amt))}
 else{da.push(np);logEv(pid(np),np[0],'haftalar eşitlendi: '+F(amt))}});
 save();akClose();draw();UNDO=snap;showUndo('Haftalar eşitlendi')};
 const addFormHTML=()=>`<div class=row style="gap:6px"><input id=qn class=in placeholder="Ödeme/borç adı" value="${E(QD.n)}" oninput="QD.n=this.value" style="flex:1"></div>
 <div class=chips>${S.dcats.map(c=>`<button class="chip ${c==QD.c?'on':''}" onclick="QD.c='${Q(c)}';openAddP()">${c}</button>`).join('')}</div>
-<div class=row style="gap:6px"><input id=qd class=in type=date value="${QD.d}" oninput="QD.d=this.value" style="flex:1"><input id=qa class="in n" type=text inputmode=decimal placeholder="${QD.fx?'Toplam miktar':'Toplam tutar'}" value="${QD.a}" oninput="QD.a=this.value" style="width:130px;text-align:right"></div>
+<div class=row style="gap:6px"><input id=qd class=in type=date value="${QD.d}" oninput="QD.d=this.value" style="flex:1"><label style="display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap"><input type=checkbox id=qflex ${QD.flex?'checked':''} onchange="QD.flex=this.checked"> Gün farketmez</label><input id=qa class="in n" type=text inputmode=decimal placeholder="${QD.fx?'Toplam miktar':'Toplam tutar'}" value="${QD.a}" oninput="QD.a=this.value" style="width:130px;text-align:right"></div>
 <div class=row style="gap:6px"><select id=qfx onchange="QD.fx=this.value;openAddP()" style="margin:0"><option value="">₺ Türk Lirası</option>${Object.keys(FXU).map(u=>`<option value=${u} ${QD.fx==u?'selected':''}>${FXU[u][0]} ${FXU[u][1]}</option>`).join('')}</select></div>
 <div class=row style="gap:6px"><input id=qt class="in n" type=number min=1 placeholder="Taksit sayısı" value="${QD.t}" oninput="QD.t=this.value" style="width:120px"><input id=qnote class=in placeholder="Not (isteğe bağlı)" value="${E(QD.note)}" oninput="QD.note=this.value" style="flex:1"></div>
 <div class=row><input id=qcu class=in placeholder="Eşit değilse taksit tutarları: 5000 5000 7500" value="${E(QD.u||'')}" oninput="QD.u=this.value" style="width:100%"></div>
@@ -2543,7 +2554,7 @@ const celebrate=(name,cat)=>{const c=cat||'';const msg=c.includes('Kredi Kartı'
 for(let i=0;i<40;i++){const sp=document.createElement('span');sp.textContent=emo[i%emo.length];sp.style.left=(Math.random()*100)+'vw';sp.style.animationDelay=(Math.random()*0.7)+'s';sp.style.fontSize=(18+Math.random()*16)+'px';box.appendChild(sp)}
 const t=document.createElement('div');t.className='celebmsg';t.innerHTML=`<div style="font-size:30px">🏁</div><b>${E(name)}</b><br>${msg}`;box.appendChild(t);document.body.appendChild(box);setTimeout(()=>box.remove(),3800);try{navigator.vibrate([40,80,40])}catch(e){}};
 const seriesList=p=>{if(!p||!p[0])return null;const b=baseNm(p);const L=[];S.m.forEach(m=>m.w.forEach(w=>w[2].forEach(q=>{if(baseNm(q)===b)L.push(q)})));if(L.length<3)return null;const isK=/Kredi|Taksit/i.test((p[5]||'')+' '+(p[0]||''))||/\(\d+\/\d+\)/.test(p[0]||'');return isK?L:null};
-const seriesNote=p=>{const L=seriesList(p);if(!L)return'';const u=L.filter(q=>remOf(q)>0).length;if(!u||u>3)return'';return `<div class=mut style="font-size:11px;padding:0 0 4px 30px;color:var(--acc)">🏁 Son ${u} taksit kaldı</div>`};
+const seriesNote=p=>{const L=seriesList(p);if(!L)return'';const u=new Set(L.filter(q=>remOf(q)>0).map(q=>serMonthOf(q))).size;if(!u||u>3)return'';return `<div class=mut style="font-size:11px;padding:0 0 4px 30px;color:var(--acc)">🏁 Son ${u} taksit kaldı</div>`};
 const fmtTs=t=>new Date(t).toLocaleString('tr-TR',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
 const histCard=name=>{const rows=[];S.m.forEach(m=>m.w.forEach(w=>w[2].forEach(p=>{if(p[0]!==name||!p[11])return;p[11].forEach(e=>rows.push({t:e.t,a:e.a,w:m.t}))})));rows.sort((a,b)=>b.t-a.t);return `<div class=card><h2>🕓 Ödeme geçmişi</h2>${rows.length?rows.map(r=>`<div class=row><span>${fmtTs(r.t)}<div class=mut style="font-size:11px">${r.w}</div></span><span class=n>${F(r.a)}</span></div>`).join(''):'<div class=mut>Kısmi ödemeler Düzenle ekranından girildiğinde tarih ve saatleriyle burada görünür.</div>'}</div>`};
 const showHist=(mi,wi,pi)=>{const p=S.m[mi].w[wi][2][pi];if(!p)return;showLog(pid(p),p[0])};
