@@ -1,6 +1,6 @@
 // Servis çalışanı: sayfa her zaman sunucudan en güncel haliyle gelir,
 // internet yoksa son kaydedilen kopya kullanılır.
-const CACHE = 'butce-7.40';
+const CACHE = 'butce-7.41';
 
 self.addEventListener('install', () => self.skipWaiting());
 
