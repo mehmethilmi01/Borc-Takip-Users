@@ -1320,7 +1320,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='7.51';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
+const KEY='butce_v3';const VER='7.52';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -2168,6 +2168,7 @@ m.w.forEach((w,wi)=>{if(isClosed(w))return;const x={wi,w,fixed:0,mov:[],tot:0,be
  info.push(x);byWi[wi]=x});
 if(info.length<2)return null;
 dated.forEach(d=>{const tw=dayWeek(d.p[1]);const t=(tw>=0&&byWi[tw])?tw:d.own;byWi[t].fixed+=d.c;if(t!==d.own){byWi[d.own].out+=d.c;byWi[t].inn+=d.c;ops.push({t:'move',keep:true,p:d.p,c:d.c,from:d.own,to:t})}});
+const ymB=ymOf(mi);(S.bills||[]).forEach(b=>{const inst=S.billPaid&&S.billPaid[b.id+'_'+ymB];if(!inst)return;const c=Math.round((+inst.amount||0)*100);if(c<=0)return;const wi=billWI(mi,b.day);const x=byWi[wi];if(!x)return;x.fixed+=c;x.before+=c});
 info.forEach(x=>x.tot=x.fixed+x.mov.reduce((s,y)=>s+y.c,0));
 const sat=new Set();let rest=info.slice();
 for(let it=0;it<20;it++){rest=info.filter(x=>!sat.has(x));if(!rest.length)return null;
@@ -2185,7 +2186,7 @@ info.forEach(x=>{x.after=x.before-x.out+x.inn});
 return {info,ops}};
 const akEqOpen=mi=>{const pl=eqPlan(mi);if(!pl)return toast('Eşitlemek için en az 2 açık hafta gerekli');if(!pl.ops.length)return toast('Haftalar zaten dengeli');
 const rows=pl.info.map(x=>`<div class=row style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="flex:1"><div style="font-weight:600">${E(x.w[0].split('(')[0].trim())} · ${fdShort(iso(wd(x.w)))}</div></div><div class=num style="text-align:right"><span class=mut style="text-decoration:line-through">${F(x.before/100)}</span> → <b>${F(x.after/100)}</b></div></div>`).join('');
-akSheet(`<h3>Haftaları eşitle</h3><div class=mut style="margin-bottom:8px">Ödenmemiş TL ödemeler haftalar arasında kaydırılır, gerekirse bir ödeme ikiye bölünür. Ödenmiş, kısmen ödenmiş, dövizli kalemler ve kapanmış haftalar yerinde kalır. Faturalar hesaba katılmaz.</div>${rows}<div class=mut style="margin:10px 0">${pl.ops.length} taşıma yapılacak.</div><div style="display:flex;gap:8px"><button class=btn style="flex:2" onclick="akEqApply(${mi})">Eşitle</button><button class="btn ghost" style="flex:1" onclick="akClose()">Vazgeç</button></div>`)};
+akSheet(`<h3>Haftaları eşitle</h3><div class=mut style="margin-bottom:8px">Ödenmemiş TL ödemeler haftalar arasında kaydırılır, gerekirse bir ödeme ikiye bölünür. Ödenmiş, kısmen ödenmiş, dövizli kalemler ve kapanmış haftalar yerinde kalır. Faturalar da hesaba katılır; tarihlerine göre bulundukları haftada sabit kalır.</div>${rows}<div class=mut style="margin:10px 0">${pl.ops.length} taşıma yapılacak.</div><div style="display:flex;gap:8px"><button class=btn style="flex:2" onclick="akEqApply(${mi})">Eşitle</button><button class="btn ghost" style="flex:1" onclick="akClose()">Vazgeç</button></div>`)};
 const akEqApply=mi=>{const pl=eqPlan(mi);if(!pl||!pl.ops.length){akClose();return toast('Haftalar zaten dengeli')}const snap=JSON.stringify(S),m=S.m[mi];
 pl.ops.forEach(o=>{const sa=m.w[o.from][2],da=m.w[o.to][2],dI=wkIso(m.w[o.to]);let np,amt;
 if(o.t=='move'){const k=sa.indexOf(o.p);if(k<0)return;sa.splice(k,1);np=o.p;amt=Math.round((+np[2]||0)*100)/100;if(dI&&!o.keep)np[1]=dI}
