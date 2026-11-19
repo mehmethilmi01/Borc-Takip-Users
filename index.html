@@ -1065,6 +1065,12 @@ function motoDocsCard(){const m=(S.moto&&S.moto.m)||{};const g=(S.moto&&S.moto.s
  const po=(g.img||g.bit||g.sirket)?`<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--line)"><b>🛡 Sigorta poliçesi</b>${row('Şirket',E(g.sirket||''))}${row('Başlangıç',g.bas?dt(g.bas):'')}${g.bit?`<div class=row><span class=mut>Bitiş</span><b>${dt(g.bit)}${kal(g.bit)}</b></div>`:''}${row('Poliçe no',E(g.no||''))}</div>`:'';
  return `<div class=card style="margin-top:12px"><h2 style="border:0;margin:0 0 6px">🪪 Ruhsat & belgeler</h2>${ru}${po}<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">${m.ruId?`<button class=add style="flex:1" onclick="motoDocView('ru')">📄 Ruhsatı gör</button>`:''}${g.img?`<button class=add style="flex:1" onclick="motoDocView('po')">🛡 Poliçeyi gör</button>`:''}${(g.img||g.bit||g.sirket)?`<button class=add style="flex:1" onclick="motoSigDel()">🗑 Poliçeyi sil</button>`:''}</div></div>`}
 function motoMuaDue(){const m=(S.moto&&S.moto.m)||{};if(!m.muayene)return[];const d=Math.round((new Date(m.muayene+'T00:00')-bt0)/864e5);if(d!==30&&d!==7&&d!==1)return[];const id='mua_'+d;if((M.dis||{})[id]==iso(t0))return[];return[['🪪 Muayene '+(d===1?'yarın':d+' gün sonra')+' bitiyor'+(m.marka?' ('+m.marka+' '+(m.model||'')+')':''),"tab='mt';draw(1)",id]]}
+var MOTO_LP_T=0,MOTO_LP_FIRED=false;
+document.addEventListener('pointerdown',e=>{MOTO_LP_FIRED=false;clearTimeout(MOTO_LP_T);const c=e.target.closest&&e.target.closest('[data-mid]');if(!c)return;const id=c.dataset.mid;MOTO_LP_T=setTimeout(()=>{MOTO_LP_FIRED=true;motoMoveSheet(id)},500)},true);
+['pointerup','pointermove','pointercancel'].forEach(ev=>document.addEventListener(ev,()=>clearTimeout(MOTO_LP_T),true));
+document.addEventListener('click',e=>{if(MOTO_LP_FIRED){MOTO_LP_FIRED=false;e.stopPropagation();e.preventDefault()}},true);
+function motoMove(id,dir){motoEnsureId();const all=[S.moto,...S.motoOther].filter(o=>o&&o.m).sort((a,b)=>a.ord-b.ord);all.forEach((o,i)=>o.ord=i+1);const i=all.findIndex(o=>o.id===id),j=i+dir;if(i<0||j<0||j>=all.length)return;const t=all[i].ord;all[i].ord=all[j].ord;all[j].ord=t;save();draw(1)}
+function motoMoveSheet(id){const all=[S.moto,...S.motoOther].filter(o=>o&&o.m).sort((a,b)=>a.ord-b.ord);const i=all.findIndex(o=>o.id===id);if(i<0)return;akSheet('<h3>Motor sırası</h3><div class=mut style="margin-bottom:12px">Bu motoru sekmelerde taşı.</div><div style="display:flex;gap:8px"><button class=add style="flex:1" '+(i<=0?'disabled':'')+' onclick="motoMove(\''+id+'\',-1);akClose()">◀ Sola taşı</button><button class=add style="flex:1" '+(i>=all.length-1?'disabled':'')+' onclick="motoMove(\''+id+'\',1);akClose()">Sağa taşı ▶</button></div>')}
 function motoSetupHTML(){const PV=motoPoVals();
  const m=akSt.motoDraft||(S.moto&&S.moto.m)||{};const isPre=m.preset==='nmax155'||(!m.preset&&!m.marka);const col=m.renk||MOTO_CATALOG[0].renk;
  const sw=MOTO_SWATCH.map(c=>`<button class="msw${col==c?' on':''}" style="background:${c}" onclick="motoPick('${c}')" aria-label="Renk"></button>`).join('');
@@ -1179,7 +1185,7 @@ const motoBnBtn=k=>`<div style="margin:14px 0 0"><button class=add style="width:
 const motoEnsureId=()=>{if(!Array.isArray(S.motoOther))S.motoOther=[];[S.moto,...S.motoOther].forEach((o,i)=>{if(!o)return;if(!o.id)o.id='mt'+Date.now().toString(36)+i;if(!o.ord)o.ord=Date.now()+i})};
 const motoLabel=o=>o&&o.m?(((o.m.marka||'')+' '+(o.m.model||'')).trim()||'Motor'):'Yeni motor';
 const motoBar=()=>{motoEnsureId();const all=[S.moto,...S.motoOther].filter(o=>o&&o.m).sort((a,b)=>a.ord-b.ord);
- return `<div class=chips style="flex-wrap:nowrap;overflow-x:auto;margin:0 0 10px;padding-bottom:2px">${all.map(o=>`<button class="chip${o===S.moto?' on':''}" style="white-space:nowrap" onclick="motoSwitch('${o.id}')">🏍️ ${E(motoLabel(o))}</button>`).join('')}<button class=chip style="white-space:nowrap" onclick="motoAdd()">➕ Motor ekle</button></div>`};
+ return `<div class=chips style="flex-wrap:nowrap;overflow-x:auto;margin:0 0 10px;padding-bottom:2px">${all.map(o=>`<button class="chip${o===S.moto?' on':''}" style="white-space:nowrap;font-size:13px;padding:6px 12px" data-mid="${o.id}" onclick="motoSwitch('${o.id}')">🏍️ ${E(motoLabel(o))}</button>`).join('')}<button class=chip style="white-space:nowrap" onclick="motoAdd()">➕ Motor ekle</button></div>`};
 const motoSwitch=id=>{motoEnsureId();if(S.moto&&S.moto.id===id)return;const k=S.motoOther.findIndex(o=>o.id===id);if(k<0)return;const cur=S.moto;S.moto=S.motoOther[k];if(cur)S.motoOther[k]=cur;else S.motoOther.splice(k,1);akSt.motoPart=null;akSt.motoEdit=0;akSt.motoDraft=null;MOTO_POS=MOTO_KEYS[0];save();draw(1)};
 const motoAdd=()=>{motoEnsureId();if(!S.moto||!S.moto.m)return;akSt.motoPrev=S.moto.id;S.motoOther.push(S.moto);S.moto={id:'mt'+Date.now().toString(36),ord:Date.now()};akSt.motoPart=null;akSt.motoEdit=0;akSt.motoDraft=null;save();draw(1)};
 const motoAddCancel=()=>{MOTO_PEND.ru=null;MOTO_PEND.po=null;motoEnsureId();const k=S.motoOther.findIndex(o=>o.id===akSt.motoPrev),back=k>=0?S.motoOther.splice(k,1)[0]:S.motoOther.shift();if(back)S.moto=back;akSt.motoDraft=null;akSt.motoEdit=0;save();draw(1)};
@@ -1312,7 +1318,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='7.43';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
+const KEY='butce_v3';const VER='7.44';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -3379,7 +3385,7 @@ html.nv .check svg{width:14px;height:14px;stroke:#fff;stroke-width:3;fill:none;s
 html.nv .row.paid .check{background:var(--good);border-color:var(--good);transform:scale(1.05)}
 html.nv .row.paid .check svg{stroke-dashoffset:0}
 html.nv .row .meta{flex:1;min-width:0}
-html.nv .row .nm{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.nv .row .nm{font-weight:650;font-size:14.5px;line-height:1.25;white-space:normal;overflow-wrap:anywhere}
 html.nv .row .sub{font-size:12.5px;color:var(--mut);margin-top:2px;overflow-wrap:anywhere}
 html.nv .row.paid .nm{color:var(--mut);text-decoration:line-through;text-decoration-color:var(--line)}
 html.nv .row .amt{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
