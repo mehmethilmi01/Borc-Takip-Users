@@ -967,13 +967,19 @@ async function invDetail(id){const p=invPos().find(x=>x.id===id);if(!p)return;
  }catch(e){document.getElementById('invChart').textContent='Grafik alınamadı (internet ya da API limiti).'}}
 function invDel(id){ask('Pozisyon silinsin mi?',()=>{const r=invCfg();r.pos=r.pos.filter(x=>x.id!==id);save();akClose();draw(1)})}
 function invSetGroup(){return `<div class=ak-grp><h4>📈 Borsa takibi</h4><div class=ak-list><label style="display:flex;align-items:center;gap:10px;padding:8px 0"><input type=checkbox ${invOn()?'checked':''} onchange="invToggle(this.checked)"> Yatırım takibini göster</label><div class=mut style="font-size:12px">Kapalıyken Özet ekranında yatırım kartı görünmez.</div></div></div>`}
+let akSecEdit=false;
 function akSetList(){
- const parts=(akSkinCard()+akSetBody()+invSetGroup()).split(/(?=<div class=ak-grp>)/).filter(p=>/<h4>/.test(p));
+ let parts=(akSkinCard()+akSetBody()+invSetGroup()).split(/(?=<div class=ak-grp>)/).filter(p=>/<h4>/.test(p));
+ const ord=(M.secOrder||[]);
+ parts.sort((a,b)=>{const ia=ord.indexOf(akSecTitle(a)),ib=ord.indexOf(akSecTitle(b));return (ia<0?1e6:ia)-(ib<0?1e6:ib)});
  akSecParts=parts;
  const w=document.getElementById('akSW');
  if(akSecI!=null&&parts[akSecI]&&w&&w.classList.contains('open')){const sb=document.getElementById('akSB');if(sb)sb.innerHTML=`<h3>${akSecTitle(parts[akSecI])}</h3>`+parts[akSecI].replace(/<h4>.*?<\/h4>/,'')}
- return `<div class=ak-seclist>${parts.map((p,i)=>`<button class=ak-sec onclick="akSecOpen(${i})"><span>${akSecTitle(p)}</span><b>›</b></button>`).join('')}</div>`;
+ const tog=`<div class=row style="justify-content:flex-end;margin:0 4px 8px"><button class=add style="width:auto;padding:6px 12px;margin:0" onclick="akSecEditToggle()">${akSecEdit?'✓ Bitti':'⇅ Sıralamayı düzenle'}</button></div>`;
+ return tog+`<div class=ak-seclist>${parts.map((p,i)=>{const mv=akSecEdit?`<span style="display:flex;gap:6px"><button class=add style="width:auto;padding:4px 10px;margin:0" onclick="event.stopPropagation();akSecMove(${i},-1)" ${i==0?'disabled':''}>▲</button><button class=add style="width:auto;padding:4px 10px;margin:0" onclick="event.stopPropagation();akSecMove(${i},1)" ${i==parts.length-1?'disabled':''}>▼</button></span>`:'<b>›</b>';return `<button class=ak-sec onclick="akSecOpen(${i})"><span>${akSecTitle(p)}</span>${mv}</button>`}).join('')}</div>`;
 }
+const akSecEditToggle=()=>{akSecEdit=!akSecEdit;draw(1)};
+const akSecMove=(i,d)=>{const t=akSecParts.map(p=>akSecTitle(p));const j=i+d;if(j<0||j>=t.length)return;[t[i],t[j]]=[t[j],t[i]];M.secOrder=t;sm();draw(1)};
 function akSecOpen(i){akSecI=i;const p=akSecParts[i];if(!p)return;akSheet(`<h3>${akSecTitle(p)}</h3>`+p.replace(/<h4>.*?<\/h4>/,''))}
 
 const MOTO_CATALOG=[{id:'nmax155',marka:'Yamaha',model:'NMAX 155',renk:'#1d3f8f'}];
@@ -1353,7 +1359,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='7.58';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
+const KEY='butce_v3';const VER='7.61';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -1515,7 +1521,7 @@ const monthLbl=k=>{const yy=+k.slice(0,4),mm=+k.slice(5,7);return new Date(yy,mm
 const ymOf=mi=>{const d=wd(S.m[mi].w[0]);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
 const billWI=(mi,day)=>{const y=wd(S.m[mi].w[0]).getFullYear(),mo=wd(S.m[mi].w[0]).getMonth(),td=new Date(y,mo,day);let wi=null;
 S.m[mi].w.forEach((w,j)=>{const dt=wd(w);if(dt<=td&&(wi==null||dt>wd(S.m[mi].w[wi])))wi=j});if(wi==null)wi=0;return wi};
-const genBills=()=>{let ch=0;let cmi=S.m.findIndex(m=>{const d=wd(m.w[0]);return d.getFullYear()==t0.getFullYear()&&d.getMonth()==t0.getMonth()});if(cmi<0)cmi=0;S.bills.forEach(b=>{for(let mi=cmi;mi<S.m.length;mi++){const key=b.id+'_'+ymOf(mi);if(!S.billPaid[key]){S.billPaid[key]={amount:b.fixed?(+b.amount||0):0,paid:0};ch++}}});if(ch)save()};
+const genBills=()=>{let ch=0;let cmi=S.m.findIndex(m=>{const d=wd(m.w[0]);return d.getFullYear()==t0.getFullYear()&&d.getMonth()==t0.getMonth()});if(cmi<0)cmi=0;S.bills.forEach(b=>{for(let mi=cmi;mi<S.m.length;mi++){const key=b.id+'_'+ymOf(mi);if(!S.billPaid[key]){S.billPaid[key]={amount:b.fixed?(+b.amount||0):0,paid:0};if(b.susp){const i=S.billPaid[key];i.sAmt=i.amount;i.amount=0;i.susp=1}ch++}}});if(ch)save()};
 const tm=e=>e.ts?new Date(e.ts).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}):'';
 let QD={n:'',c:'🏦 Kredi',d:iso(t0),a:'',t:'1',note:''};
 cur=Math.max(0,S.m.findIndex(m=>m.w.some(w=>wd(w)>=t0)));
@@ -1807,6 +1813,10 @@ if(DP.idx!=null){const d=S.debts[DP.idx];const ch=[];if(d.name!=nm)ch.push('ad: 
 else{const id='dt'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);S.debts.push({id,name:nm,cat:DP.cat,amount:amt,paid:0,fx:fx||undefined,iban:(($('dibn')&&$('dibn').value||'').trim().toUpperCase())||undefined});logEv(id,nm,'eklendi: '+F(amt)+(fx?' ('+fxLbl(fx.u,fx.q)+')':'')+' · kategori '+DP.cat);toast('Borç eklendi')}
 save();closeDebtP();draw()};
 const tgBill=key=>{const i=S.billPaid[key];if(i.susp){toast('Askıdaki fatura ödenemez');return}if(i.lid){unlogExpense(i.lid);i.lid=null}i.paid=i.paid?0:1;save();draw()};
+const suspBill=(bid,on)=>{const b=S.bills.find(x=>x.id==bid);if(!b)return;b.susp=!!on;const cm=ymOf(akMonthIdx());
+Object.keys(S.billPaid).forEach(k=>{if(!k.startsWith(bid+'_'))return;if(k.slice(bid.length+1)<cm)return;const i=S.billPaid[k];
+if(on&&!i.susp){i.sAmt=+i.amount||0;i.amount=0;i.susp=1}else if(!on&&i.susp){i.amount=+i.sAmt||0;i.susp=0;delete i.sAmt}});
+save();draw(1);toast(on?'Fatura askıya alındı':'Fatura askıdan çıkarıldı')};
 const tgSusp=key=>{let i=S.billPaid[key];if(!i){const bid=key.slice(0,key.lastIndexOf('_'));const b=S.bills.find(x=>x.id==bid);if(!b)return;i=S.billPaid[key]={amount:b.fixed?(+b.amount||0):0,paid:0}};if(i.susp){i.amount=+i.sAmt||0;i.susp=0;delete i.sAmt;toast('Fatura askıdan çıkarıldı')}else{i.sAmt=+i.amount||0;i.amount=0;i.susp=1;toast('Fatura askıya alındı')}save();draw(1)};
 const edBill=(key,v)=>{S.billPaid[key].amount=v;save();draw()};
 const tgOld=(mi,w,p)=>{const x=S.m[mi].w[w][2][p];if(x[3]){x[3]=0;x[6]=0;if(x[10])x[10].qp=0;unlogExpense(x[8]);x[8]=null}else{x[3]=1;x[6]=+x[2]||0;if(x[10])x[10].qp=x[10].q;x[8]=(x[5]&&x[5].includes('Fatura'))?logExpense(x[0]||'Ödeme',x[6],x[5]):null}save();draw()};
