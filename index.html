@@ -958,13 +958,23 @@ async function invSave(){const sym=document.getElementById('invSym').value;const
 async function invDetail(id){const p=invPos().find(x=>x.id===id);if(!p)return;
  akSheet(`<h3>${E(p.sym)} · ${E(p.name)}</h3><div id=invChart class=mut style="min-height:200px;display:flex;align-items:center;justify-content:center">Grafik yükleniyor…</div><div id=invInfo style="margin-top:8px"></div><button class=add style="margin-top:12px;width:100%;color:${invRed}" onclick="invDel('${id}')">Pozisyonu sil</button>`);
  try{const from=new Date(p.date+'T00:00').getTime();const pts=(await invChart(p.cid,p.date)).filter(x=>x[0]>=from);if(pts.length<2)throw new Error('veri yok');
-  const vals=pts.map(x=>p.qty*x[1]-p.cost);const W=320,H=200,mn=Math.min(0,...vals),mx=Math.max(0,...vals),rg=(mx-mn)||1;
-  const X=i=>i*(W/(vals.length-1)),Y=v=>H-((v-mn)/rg)*H;
-  const d=vals.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
-  const last=vals[vals.length-1],c=last>=0?invGreen:invRed,px=INV_PX[p.cid];
-  document.getElementById('invChart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="overflow:visible"><line x1="0" x2="${W}" y1="${Y(0)}" y2="${Y(0)}" stroke="currentColor" stroke-opacity=".3" stroke-dasharray="4 4"/><path d="${d}" fill="none" stroke="${c}" stroke-width="2.5"/></svg>`;
-  document.getElementById('invInfo').innerHTML=`<div>Alış: ${p.date} · ${F(p.price)} / ${p.sym}</div>${px?`<div>Şu an: ${F(px)} / ${p.sym}</div>`:''}<div style="font-size:18px;font-weight:700;color:${c}">${last>=0?'+':''}${F(last)}</div>`;
+  const vals=pts.map(x=>p.qty*x[1]-p.cost),ts=pts.map(x=>x[0]);
+  const W=320,H=150,PL=8,PR=64,PT=12,PB=12,n=vals.length;
+  const mn=Math.min(0,...vals),mx=Math.max(0,...vals),rg=(mx-mn)||1;
+  const X=i=>PL+i*((W-PL-PR)/(n-1));
+  const Y=v=>PT+(H-PT-PB)*(1-(v-mn)/rg);
+  const line=vals.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
+  const area=line+` L${X(n-1).toFixed(1)} ${Y(0).toFixed(1)} L${X(0).toFixed(1)} ${Y(0).toFixed(1)} Z`;
+  const last=vals[n-1],c=last>=0?invGreen:invRed,px=INV_PX[p.cid];
+  const gid='ivg'+p.id.replace(/[^a-zA-Z0-9]/g,'');
+  const fmtD=t=>new Date(t).toLocaleDateString('tr-TR',{day:'numeric',month:'short',year:'numeric'});
+  window.INV_CH={vals,ts,X,Y,W,PL,PR,c,fmtD};
+  const sgn=v=>(v>=0?'+':'')+F(v);
+  document.getElementById('invChart').innerHTML=`<div style="width:100%"><div class=mut style="font-size:12px;margin-bottom:4px">Kâr / zarar · alıştan bugüne</div><svg viewBox="0 0 ${W} ${H+18}" width="100%" style="overflow:visible;touch-action:pan-y" onpointermove="invHover(event)" onpointerdown="invHover(event)"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c}" stop-opacity=".32"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></linearGradient></defs><line x1="${PL}" x2="${W-PR}" y1="${Y(0)}" y2="${Y(0)}" stroke="currentColor" stroke-opacity=".3" stroke-dasharray="4 4"/><text x="${W-PR+6}" y="${Y(mx)+4}" font-size="10" fill="currentColor" fill-opacity=".6">${sgn(mx)}</text><text x="${W-PR+6}" y="${Y(mn)+4}" font-size="10" fill="currentColor" fill-opacity=".6">${sgn(mn)}</text><path d="${area}" fill="url(#${gid})"/><path d="${line}" fill="none" stroke="${c}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${X(0)}" cy="${Y(vals[0])}" r="3.5" fill="currentColor" fill-opacity=".5"/><circle cx="${X(n-1)}" cy="${Y(last)}" r="5" fill="${c}" stroke="var(--card)" stroke-width="2"/><line id="invVl" x1="0" x2="0" y1="${PT}" y2="${H-PB}" stroke="currentColor" stroke-opacity=".35" style="display:none"/><circle id="invHd" r="5" fill="${c}" stroke="var(--card)" stroke-width="2" style="display:none"/><text x="${PL}" y="${H+14}" font-size="10" fill="currentColor" fill-opacity=".6">${fmtD(ts[0])}</text><text x="${W-PR}" y="${H+14}" text-anchor="end" font-size="10" fill="currentColor" fill-opacity=".6">Bugün</text></svg><div id=invTip class=mut style="font-size:12px;min-height:18px;margin-top:4px;text-align:center"></div></div>`;
+  const hi=Math.max(...vals),lo=Math.min(...vals);
+  document.getElementById('invInfo').innerHTML=`<div>Alış: ${p.date} · ${F(p.price)} / ${p.sym}</div>${px?`<div>Şu an: ${F(px)} / ${p.sym}</div>`:''}<div style="font-size:18px;font-weight:700;color:${c}">${sgn(last)} <span style="font-size:13px">(${(last>=0?'+':'')+((last/p.cost)*100).toFixed(2)}%)</span></div><div class=mut style="font-size:12px;margin-top:4px">En yüksek ${sgn(hi)} · En düşük ${sgn(lo)}</div>`;
  }catch(e){document.getElementById('invChart').textContent='Grafik alınamadı (internet ya da API limiti).'}}
+function invHover(e){const C=window.INV_CH;if(!C||!C.vals)return;const s=e.currentTarget,r=s.getBoundingClientRect();if(!r.width)return;const xr=(e.clientX-r.left)/r.width*C.W;const n=C.vals.length;const step=(C.W-C.PL-C.PR)/(n-1);let i=Math.round((xr-C.PL)/step);i=Math.max(0,Math.min(n-1,i));const x=C.X(i),y=C.Y(C.vals[i]);const vl=document.getElementById('invVl'),hd=document.getElementById('invHd'),tip=document.getElementById('invTip');if(!vl||!hd||!tip)return;vl.setAttribute('x1',x);vl.setAttribute('x2',x);vl.style.display='';hd.setAttribute('cx',x);hd.setAttribute('cy',y);hd.style.display='';const v=C.vals[i];tip.innerHTML=`${C.fmtD(C.ts[i])} · <b style="color:${v>=0?invGreen:invRed}">${(v>=0?'+':'')+F(v)}</b>`}
 function invDel(id){ask('Pozisyon silinsin mi?',()=>{const r=invCfg();r.pos=r.pos.filter(x=>x.id!==id);save();akClose();draw(1)})}
 function invSetGroup(){return `<div class=ak-grp><h4>📈 Borsa takibi</h4><div class=ak-list><label style="display:flex;align-items:center;gap:10px;padding:8px 0"><input type=checkbox ${invOn()?'checked':''} onchange="invToggle(this.checked)"> Yatırım takibini göster</label><div class=mut style="font-size:12px">Kapalıyken Özet ekranında yatırım kartı görünmez.</div></div></div>`}
 let akSecEdit=false;
@@ -1306,7 +1316,7 @@ function akRender(){
  else if(tab=='b'){title='Borçlar';body=akDebtBody()}
  else if(tab=='mt'){title='Motor';body=akMotorBody()}
  else if(tab=='s'){title=`Ayarlar <span class=ak-ver>v${VER}</span>`;body=akSetList()}
- else{title='Özet';body=invHomeCard()+akFlowBody()+akMonthSumBox()}
+ else{title='Özet';body=akFlowBody()+akMonthSumBox()+invHomeCard()}
  const tabs=[['o','Özet','<path d="M4 6h16M4 12h10M4 18h7"/>'],['a','Takvim','<rect x="3" y="5" width="18" height="16" rx="4"/><path d="M3 10h18M8 3v4M16 3v4"/>'],['+'],['g','Grafik','<path d="M5 20V11M12 20V5M19 20v-7"/>'],['b','Borçlar','<rect x="3" y="6" width="18" height="13" rx="4"/><path d="M3 11h18M7 15h3"/>']];
  const bar=tabs.map(t=>t[0]=='+'?`<button class=fab onclick="akAdd()" aria-label="Ekle"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>`:`<button class="tab ${tab==t[0]||(tab=='o'&&t[0]=='o')?'on':''}" onclick="akTab('${t[0]}')"><svg viewBox="0 0 24 24">${t[2]}</svg>${t[1]}</button>`).join('');
  const nb=unreadN();
@@ -1356,7 +1366,7 @@ function akSetBody(){
  <div class=ak-grp><h4>⚙️ Diğer</h4><div class=ak-list>
   <button class=ak-r2 onclick="openGuide()"><span>📖 Rehber</span></button>
   <button class=ak-r2 onclick="pdfRapor()"><span>📄 PDF rapor</span></button>
-  ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button><button class=ak-r2 onclick="goSet(\'Uygulamayı Güncelle\')"><span>🚀 Uygulamayı güncelle</span></button>':''}
+  ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
 const KEY='butce_v3';const VER='7.61';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
