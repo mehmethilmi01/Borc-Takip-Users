@@ -1240,12 +1240,12 @@ const motoBar=()=>{motoEnsureId();const all=[S.moto,...S.motoOther].filter(o=>o&
 const motoSwitch=id=>{motoEnsureId();if(S.moto&&S.moto.id===id)return;const k=S.motoOther.findIndex(o=>o.id===id);if(k<0)return;const cur=S.moto;S.moto=S.motoOther[k];if(cur)S.motoOther[k]=cur;else S.motoOther.splice(k,1);akSt.motoPart=null;akSt.motoEdit=0;akSt.motoDraft=null;MOTO_POS=MOTO_KEYS[0];save();draw(1)};
 const motoAdd=()=>{motoEnsureId();if(!S.moto||!S.moto.m)return;akSt.motoPrev=S.moto.id;S.motoOther.push(S.moto);S.moto={id:'mt'+Date.now().toString(36),ord:Date.now()};akSt.motoPart=null;akSt.motoEdit=0;akSt.motoDraft=null;save();draw(1)};
 const motoAddCancel=()=>{MOTO_PEND.ru=null;MOTO_PEND.po=null;motoEnsureId();const k=S.motoOther.findIndex(o=>o.id===akSt.motoPrev),back=k>=0?S.motoOther.splice(k,1)[0]:S.motoOther.shift();if(back)S.moto=back;akSt.motoDraft=null;akSt.motoEdit=0;save();draw(1)};
-const motoLinked=o=>{const g=new Set(((o&&o.log)||[]).map(x=>x.gid).filter(Boolean));return S.ex.filter(e=>e.gid&&g.has(e.gid))};
+const motoLinked=o=>{const g=new Set([...((o&&o.log)||[]),...((o&&o.fines)||[])].map(x=>x.gid).filter(Boolean));return S.ex.filter(e=>e.gid&&g.has(e.gid))};
 const motoDelAsk=()=>{const o=S.moto;if(!o)return;const L=motoLinked(o),tot=L.reduce((s,e)=>s+(+e.a||0),0);
  if(!L.length)return askSure('"'+motoLabel(o)+'" silinsin mi? Bakım kayıtları, bildirimler ve sigorta bilgisi de silinir.',()=>motoDelDo(false));
  akSheet(`<h3>"${E(motoLabel(o))}" silinsin mi?</h3><div class=mut style="margin-bottom:14px">Bu motora bağlı ${L.length} harcama var (toplam ${F(tot)}). Harcamalar da silinsin mi? Bakım kayıtları, bildirimler ve sigorta bilgisi her durumda silinir.</div><div style="display:flex;flex-direction:column;gap:8px"><button class=btnp onclick="akClose();motoDelDo(true)">Evet, harcamalar da silinsin</button><button class=add onclick="akClose();motoDelDo(false)">Hayır, harcamalar kalsın</button><button class=add onclick="akClose()">Vazgeç</button></div>`)};
 const motoDelDo=wipe=>{const o=S.moto;if(!o)return;const snap=JSON.stringify(S);let n=0;
- if(wipe){const g=new Set((o.log||[]).map(x=>x.gid).filter(Boolean));const b0=S.ex.length;S.ex=S.ex.filter(e=>!(e.gid&&g.has(e.gid)));n=b0-S.ex.length}
+ if(wipe){const g=new Set([...(o.log||[]),...(o.fines||[])].map(x=>x.gid).filter(Boolean));const b0=S.ex.length;S.ex=S.ex.filter(e=>!(e.gid&&g.has(e.gid)));n=b0-S.ex.length}
  motoEnsureId();const nx=S.motoOther.sort((a,b)=>a.ord-b.ord).shift();if(nx)S.moto=nx;else delete S.moto;
  akSt.motoPart=null;akSt.motoEdit=0;akSt.motoDraft=null;MOTO_POS=MOTO_KEYS[0];save();draw(1);UNDO=snap;showUndo('Motor silindi'+(n?' · '+n+' harcama silindi':''))};
 function akMotorBody(){
@@ -1257,7 +1257,20 @@ function akMotorBody(){
  <div class=mut style="text-align:center;font-size:12px;margin:-4px 0 12px">Sürükleyerek döndür · Noktalara dokun</div>
  <div class=card><div><b>${E(m.marka)} ${E(m.model)}</b></div><div class=mut>${m.yil||''} · ${motoKmFmt(m.km)} km</div>
  <div style="display:flex;gap:8px;margin-top:10px"><button class=add onclick="akSt.motoEdit=1;akSt.motoDraft=null;draw()">Düzenle</button><button class=add onclick="motoKmAsk()">Km güncelle</button><button class=add style="color:var(--bad)" onclick="motoDelAsk()">Sil</button></div></div>
- <div class=sect><h2>Bakım geçmişi</h2></div><div class=list>${log}</div>`}
+ <div class=sect><h2>Bakım geçmişi</h2></div><div class=list>${log}</div>${motoFinesHTML()}`}
+function motoFineSheet(idx){const f=idx!=null?((S.moto&&S.moto.fines)||[])[idx]:null;const d0=f?f.d:iso(t0),a0=f?f.a:'',n0=f?(f.n||''):'';
+ akSheet(`<h3>${f?'Trafik cezasını düzenle':'Trafik cezası ekle'}</h3><div class=field><label>Tarih</label><input type=date id=cfD class=in value="${d0}"></div><div class=field><label>Tutar ₺</label><input id=cfA class=in inputmode=decimal value="${a0}" placeholder="0"></div><div class=field><label>Açıklama (isteğe bağlı)</label><input id=cfN class=in value="${E(n0)}" placeholder="Örn: Hız ihlali, park yasağı"></div><button class=btnp onclick="motoFineSave(${idx==null?'null':idx})">Kaydet</button>`)}
+function motoFineSave(idx){const d=document.getElementById('cfD').value,a=NUM(document.getElementById('cfA').value)||0,n=(document.getElementById('cfN').value||'').trim();if(!d)return toast('Tarih gir');if(a<=0)return toast('Tutar gir');
+ S.moto=S.moto||{};S.moto.fines=S.moto.fines||[];
+ const lbl='Trafik cezası'+(n?' · '+n:'');
+ if(idx!=null&&S.moto.fines[idx]){const f=S.moto.fines[idx];f.d=d;f.a=a;f.n=n;let ex=S.ex.find(e=>e.gid==f.gid);if(ex){ex.d=d;ex.a=a;ex.n=lbl}else S.ex.push({d,c:motoCatName(),s:'Trafik cezası',a,n:lbl,ts:Date.now(),gid:f.gid})}
+ else{const gid='cz'+Date.now()+'-'+Math.random().toString(36).slice(2,7);S.moto.fines.unshift({d,a,n,gid});S.ex.push({d,c:motoCatName(),s:'Trafik cezası',a,n:lbl,ts:Date.now(),gid})}
+ akClose();save();toast('Trafik cezası kaydedildi');draw(1)}
+function motoCatName(){let mc=(S.cats||[]).find(c=>/motor/i.test(c));if(!mc){mc='🏍️ Motor';S.cats.push(mc)}return mc}
+function motoFineDel(idx){askSure('Bu trafik cezası silinsin mi? Bağlı harcama kaydı da silinir.',()=>{const f=((S.moto&&S.moto.fines)||[])[idx];if(!f)return;S.moto.fines.splice(idx,1);S.ex=S.ex.filter(e=>e.gid!=f.gid);save();draw(1);toast('Trafik cezası silindi')})}
+function motoFinesHTML(){const L=(S.moto&&S.moto.fines)||[];const tot=L.reduce((s,f)=>s+(+f.a||0),0);
+ const rows=L.map((f,i)=>`<div class=row><div style="flex:1;min-width:0"><b>${F(f.a)}</b> <span class=mut>· ${fd(new Date(f.d+'T00:00'))}</span><div class=mut>${f.n?E(f.n):'Trafik cezası'}</div></div><div><button class=bnic onclick="motoFineSheet(${i})" aria-label="Düzenle">✎</button><button class=bnic del onclick="motoFineDel(${i})" aria-label="Sil">🗑</button></div></div>`).join('')||'<div class=empty>Trafik cezası yok</div>';
+ return `<div class=sect><h2>Trafik cezaları</h2></div><div class=list>${rows}${L.length?`<div class=row><span class=mut>Toplam</span><b class=num>${F(tot)}</b></div>`:''}</div><div style="margin:10px 0 12px"><button class=add style="width:100%" onclick="motoFineSheet(null)">🚨 Trafik cezası ekle</button></div>`}
 const MOTO_LIGHTS={"W":800,"H":582};
 function motoLightClear(){
  (window.motoIntroT||[]).forEach(clearTimeout); window.motoIntroT=[];
