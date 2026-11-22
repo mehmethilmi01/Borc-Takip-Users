@@ -390,7 +390,6 @@ const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=
  <div class=row><span class=mut>Kazanılan</span><b class="num ok">${F(got)}</b></div>
  <div class=row><span class=mut>Kalan</span><b class=num>${F(Math.max(0,rem))}</b></div>
  <div class=row><span class=mut>Hesaba yatacak (şu an)</span><b class=num style="color:${yatir>=0?'var(--good)':'var(--bad)'}">${F(yatir)}</b></div>
- <div class=mut style="font-size:12px;margin:4px 0">Kazanılan − alınan nakit − sigorta − tevkifat</div>
  <div class=mut style="margin:6px 0 10px">${st}</div>
  <div class=wkstrip>${cols}</div></div>`};
 const srcOpts=()=>[{id:'mp',n:'⭐ Maxipuan'}].concat((S.debts||[]).filter(d=>d.keep&&ADMIN).map(d=>({id:d.id,n:'🤝 '+d.name})));
