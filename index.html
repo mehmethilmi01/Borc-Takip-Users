@@ -353,6 +353,17 @@ const akMonthSumBox=()=>{
  const nextBtn=ym<cur?`<button class=nav-arrow onclick="akSumNav(1)">›</button>`:'<span></span>';
  return `<div class=mhead><button class=nav-arrow onclick="akSumNav(-1)">‹</button><b>${ay} Özeti</b>${nextBtn}</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${box('Toplam kazanç',gross,'var(--ink)')}${mid}${box('Hesaba yatan',net,'var(--good)')}</div><div class=mut style="font-size:12px;margin-top:8px">Bu kart her pazartesi sabahı haftalık güncellenir.</div>`;
 };
+const wkKeys=()=>{const ks=new Set(Object.keys(S.wg||{}));ks.add(iso(wkMon()));return [...ks].sort().reverse()};
+const wkRangeTxt=k=>{const m=new Date(k+'T00:00');const e=new Date(m.getFullYear(),m.getMonth(),m.getDate()+6);const f=x=>x.toLocaleDateString('tr-TR',{day:'numeric',month:'short'});return f(m)+' – '+f(e)};
+const wkCalc=k=>{const D=(S.wg||{})[k]||{};const izin=D.izin||[];const g=D.g||[];const gi=g.filter(x=>!izin.includes(x.d));const got=gi.reduce((s,x)=>s+(+x.a||0),0);const cash=gi.reduce((s,x)=>s+(+x.n||0),0);const sig=wkSig();const tev=wkTev(got);return {got,cash,sig,tev,ded:cash+sig+tev,net:Math.round(got-cash-sig-tev)}};
+const wkPopList=(title,rowFn)=>akSheet(`<h3>${title}</h3>`+wkKeys().map(rowFn).join('')+`<div style="margin-top:8px"><button class=link onclick="akClose()">Kapat</button></div>`);
+const wkPopTotal=()=>wkPopList('Kazanılan',k=>{const c=wkCalc(k);return `<div class=row style="cursor:pointer" onclick="wkPopWeekDays('${k}')"><div class=meta><div class=nm>${wkRangeTxt(k)}</div><div class=sub>Gün gün görmek için dokun</div></div><b class="num ok">${F(c.got)}</b></div>`});
+const wkPopWeekDays=k=>{const D=(S.wg||{})[k]||{};const izin=D.izin||[];const g=D.g||[];const mon=new Date(k+'T00:00');
+ const rows=[...Array(7)].map((_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);const dk=iso(d);const isz=izin.includes(dk);const v=isz?0:g.filter(x=>x.d==dk).reduce((s,x)=>s+(+x.a||0),0);const lbl=d.toLocaleDateString('tr-TR',{day:'numeric',month:'long',weekday:'long'});return `<div class=row><div class=meta><div class=nm>${lbl}</div>${isz?'<div class=sub>İzin</div>':''}</div><b class=num>${F(v)}</b></div>`}).join('');
+ const c=wkCalc(k);
+ akSheet(`<h3>${wkRangeTxt(k)}</h3>${rows}<div class=row><span class=mut>Toplam</span><b class="num ok">${F(c.got)}</b></div><div style="margin-top:8px;display:flex;justify-content:space-between"><button class=link onclick="wkPopTotal()">‹ Haftalar</button><button class=link onclick="akClose()">Kapat</button></div>`)};
+const wkPopDed=()=>wkPopList('Düşülenler',k=>{const c=wkCalc(k);return `<div class=row><div class=meta><div class=nm>${wkRangeTxt(k)}</div><div class=sub>Alınan nakit ${F(c.cash)} · Sigorta ${F(c.sig)} · Tevkifat ${F(c.tev)}</div></div><b class=num>${F(c.ded)}</b></div>`});
+const wkPopNet=()=>wkPopList('Hesaba yatan',k=>{const c=wkCalc(k);return `<div class=row><div class=meta><div class=nm>${wkRangeTxt(k)}</div></div><b class=num style="color:${c.net>=0?'var(--good)':'var(--bad)'}">${F(c.net)}</b></div>`});
 const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=ghost-pill onclick="wkShow()">🎯 Haftalık hedef kartını göster</button></div>`;const open=S.wkOpen!==false;const days=wkDays();const D=wkData();const T=wkTarget(D);const hasT=!!D&&(D.tAuto||T>0);
  const head=`<div class=row><h2 onclick="wkTog()" style="border:0;margin:0;cursor:pointer;flex:1">🎯 Haftalık hedef <span class=mut style="font-size:14px">${open?'▾':'▸'}</span></h2><div style="display:flex;gap:6px;align-items:center"><button class=bnic onclick="wkPastOpen()" aria-label="Geçmiş">🕓</button><button class=add onclick="wkEditT()">${hasT?'Hedef: '+F(T):'+ Hedef gir'}</button><button class=bnic onclick="wkHide()" aria-label="Gizle">✕</button></div></div>`;
  if(!open)return `<div class=card style="margin:12px 0">${head}</div>`;
@@ -387,9 +398,10 @@ const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=
  <div style="height:10px;border-radius:6px;background:var(--line);overflow:hidden;margin:10px 0 8px"><div style="height:100%;width:${pct}%;background:var(--acc);transition:width .3s"></div></div>
  <div class=row style="cursor:pointer" onclick="akSt.wkAdd=!akSt.wkAdd;draw()"><span class=mut>Hedef Fatura ${open2?'▾':'▸'}</span><b class=num>${F(HF)}</b></div>
  ${open2?`<div class=row><span class=mut>Haftalık hedef${D.tAuto?' (otomatik)':''}</span><b class=num>${F(T)}</b></div><div class=row><span class=mut>Hedefe eklenenler</span><b class=num>${F(add)}</b></div><div class=row><span class=mut style="font-size:12px">Alınan nakit (${cash===cashEst?'gerçek':'gerçek '+F(cash)+' · tahmini '+F(cashEst-cash)})</span><b class=num>${F(cashEst)}</b></div><div class=row style="cursor:pointer" onclick="wkSigEdit()"><span class=mut>Sigorta ✎</span><b class=num>${F(SIG)}</b></div><div class=row><span class=mut>Tevkifat (${estMode&&gotEst>got?'tahmini':'gerçek'})</span><b class=num>${F(tev)}</b></div>`:''}
- <div class=row><span class=mut>Kazanılan</span><b class="num ok">${F(got)}</b></div>
+ <div class=row style="cursor:pointer" onclick="wkPopTotal()"><span class=mut>Kazanılan ›</span><b class="num ok">${F(got)}</b></div>
  <div class=row><span class=mut>Kalan</span><b class=num>${F(Math.max(0,rem))}</b></div>
- <div class=row><span class=mut>Hesaba yatacak (şu an)</span><b class=num style="color:${yatir>=0?'var(--good)':'var(--bad)'}">${F(yatir)}</b></div>
+ <div class=row style="cursor:pointer" onclick="wkPopDed()"><span class=mut>Düşülenler ›</span><b class=num>${F(cash+SIG+wkTev(got))}</b></div>
+ <div class=row style="cursor:pointer" onclick="wkPopNet()"><span class=mut>Hesaba yatacak (şu an) ›</span><b class=num style="color:${yatir>=0?'var(--good)':'var(--bad)'}">${F(yatir)}</b></div>
  <div class=mut style="margin:6px 0 10px">${st}</div>
  <div class=wkstrip>${cols}</div></div>`};
 const srcOpts=()=>[{id:'mp',n:'⭐ Maxipuan'}].concat((S.debts||[]).filter(d=>d.keep&&ADMIN).map(d=>({id:d.id,n:'🤝 '+d.name})));
