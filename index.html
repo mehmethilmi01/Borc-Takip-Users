@@ -355,8 +355,8 @@ const akMonthSumBox=()=>{
  return `<div class=mhead><button class=nav-arrow onclick="akSumNav(-1)">‹</button><b>${ay} Özeti</b>${nextBtn}</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${box('Toplam kazanç',gross,'var(--ink)','wkPopTotal')}${mid}${box('Hesaba yatan',net,'var(--good)','wkPopNet')}</div><div class=mut style="font-size:12px;margin-top:8px">Bu kart her pazartesi sabahı haftalık güncellenir.</div>`;
 };
 let WKYM='';const wkPopOpen=(fn,ym)=>{WKYM=ym||'';fn()};
-const wkKeys=()=>{const ks=new Set(Object.keys(S.wg||{}));ks.add(iso(wkMon()));return [...ks].filter(k=>!WKYM||k.slice(0,7)==WKYM).sort().reverse()};
-const wkMonthAgg=ym=>{const o={got:0,cash:0,sig:0,tev:0,ded:0,net:0};Object.keys(S.wg||{}).concat([iso(wkMon())]).filter((k,i,a)=>a.indexOf(k)===i&&k.slice(0,7)==ym).forEach(k=>{const c=wkCalc(k);o.got+=c.got;o.cash+=c.cash;o.sig+=c.sig;o.tev+=c.tev;o.ded+=c.ded;o.net+=c.net});return o};
+const wkKeys=()=>{const cur=iso(wkMon());return Object.keys(S.wg||{}).filter(k=>k<cur&&(!WKYM||k.slice(0,7)==WKYM)).sort().reverse()};
+const wkMonthAgg=ym=>{const cur=iso(wkMon());const o={got:0,cash:0,sig:0,tev:0,ded:0,net:0};Object.keys(S.wg||{}).filter(k=>k<cur&&k.slice(0,7)==ym).forEach(k=>{const c=wkCalc(k);o.got+=c.got;o.cash+=c.cash;o.sig+=c.sig;o.tev+=c.tev;o.ded+=c.ded;o.net+=c.net});return o};
 const wkRangeTxt=k=>{const m=new Date(k+'T00:00');const e=new Date(m.getFullYear(),m.getMonth(),m.getDate()+6);const f=x=>x.toLocaleDateString('tr-TR',{day:'numeric',month:'short'});return f(m)+' – '+f(e)};
 const wkCalc=k=>{const D=(S.wg||{})[k]||{};const izin=D.izin||[];const g=D.g||[];const gi=g.filter(x=>!izin.includes(x.d));const got=gi.reduce((s,x)=>s+(+x.a||0),0);const cash=gi.reduce((s,x)=>s+(+x.n||0),0);const sig=wkSig();const tev=wkTev(got);return {got,cash,sig,tev,ded:cash+sig+tev,net:Math.round(got-cash-sig-tev)}};
 const wkPopList=(title,rowFn)=>akSheet(`<h3>${title}</h3>`+wkKeys().map(rowFn).join('')+`<div style="margin-top:8px"><button class=link onclick="akClose()">Kapat</button></div>`);
