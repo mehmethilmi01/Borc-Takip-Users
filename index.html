@@ -370,22 +370,27 @@ const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=
  const cashEst=estMode?(cash-cashToday)+(_izin.includes(tdy)?cashToday:Math.max(cashToday,dEx))+dEx*fut:cash;
  const gotEst=estMode?Math.max(ref.fb?Math.max(got,T+cashEst+SIG):(got-gotToday)+Math.max(gotToday,dGot)+dGot*fut,T+cashEst+SIG):got;
  const tev=wkTev(gotEst);
- const eff=T+cashEst+SIG+tev;const rem=eff-got;
+ const add=cashEst+SIG+tev;
+ const HF=T+add;const rem=HF-got;
+ const yatir=Math.round(got-cash-SIG-wkTev(got));
  const ti=days.indexOf(iso(bt0));const izin=D.izin||[];
  const entered=d=>g.some(x=>x.d==d&&!x.auto);
  const openDays=days.filter((d,i)=>ti>=0&&i>=ti&&!entered(d)&&!izin.includes(d));
  const left=openDays.length;
  const per=left>0&&rem>0?Math.round(rem/left):0;
- const pct=eff>0?Math.max(0,Math.min(100,Math.round(got/eff*100))):0;
+ const pct=HF>0?Math.max(0,Math.min(100,Math.round(got/HF*100))):0;
  const st=rem<=0?'Hedef tamam 🎉':left>0?`Kalan ${left} günde günlük: ${F(per)}`:`Hafta bitti, kalan ${F(rem)}`;
- const per7=eff/7;
+ const per7=HF/7;
  const cols=days.map((d,i)=>{const gg=izin.includes(d)?0:wkDayGain(d);const up=openDays.includes(d)?(per>0?F(per):'—'):F(gg);const h=per7>0?Math.min(100,Math.round(gg/per7*100)):0;return `<div class="wkd${d==iso(bt0)?' today':''}${izin.includes(d)?' izin':''}" onclick="wkDayClick('${d}')" onpointerdown="wkHoldStart('${d}')" onpointerup="wkHoldEnd()" onpointerleave="wkHoldEnd()" onpointercancel="wkHoldEnd()" oncontextmenu="return false"><small class=wkup>${izin.includes(d)?'İzin':up}</small><div class=wkb><i style="height:${h}%"></i></div><small>${WK_DAYS[i]}</small></div>`}).join('');
+ const open2=akSt.wkAdd;
  return `<div class=card style="margin:12px 0">${head}
  <div style="height:10px;border-radius:6px;background:var(--line);overflow:hidden;margin:10px 0 8px"><div style="height:100%;width:${pct}%;background:var(--acc);transition:width .3s"></div></div>
- <div class=row><span class=mut>Haftanın borcu${D.tAuto?' (otomatik)':''}</span><b class=num>${F(T)}</b></div>
- <div class=row style="cursor:pointer" onclick="akSt.wkAdd=!akSt.wkAdd;draw()"><span class=mut>Hedefe Eklenen ${akSt.wkAdd?'▾':'▸'}</span><b class=num>${F(cashEst+SIG+tev)}</b></div>${akSt.wkAdd?`<div class=row><span class=mut>Alınan nakit</span><b class=num>${F(cashEst)}</b></div><div class=row><span class=mut style="font-size:12px">gerçek ${F(cash)} · tahmini ${F(cashEst-cash)}</span></div><div class=row style="cursor:pointer" onclick="wkSigEdit()"><span class=mut>Sigorta ✎</span><b class=num>${F(SIG)}</b></div>${tev>0?`<div class=row><span class=mut>Tevkifat (${estMode&&gotEst>got?'tahmini':'gerçek'})</span><b class=num>${F(tev)}</b></div>`:''}<div class=mut style="font-size:12px;line-height:1.4;margin-top:6px">Tahmini: Haftanın başında henüz girilmemiş nakit ve tevkifat, hedefe en yakın geçmiş haftanın tutarlarından alınır. Her gün bitip gerçek veri girildikçe tahmin gerçek değerlerle değişir.</div>`:''}
+ <div class=row style="cursor:pointer" onclick="akSt.wkAdd=!akSt.wkAdd;draw()"><span class=mut>Hedef Fatura ${open2?'▾':'▸'}</span><b class=num>${F(HF)}</b></div>
+ ${open2?`<div class=row><span class=mut>Haftalık hedef${D.tAuto?' (otomatik)':''}</span><b class=num>${F(T)}</b></div><div class=row><span class=mut>Hedefe eklenenler</span><b class=num>${F(add)}</b></div><div class=row><span class=mut style="font-size:12px">Alınan nakit (${cash===cashEst?'gerçek':'gerçek '+F(cash)+' · tahmini '+F(cashEst-cash)})</span><b class=num>${F(cashEst)}</b></div><div class=row style="cursor:pointer" onclick="wkSigEdit()"><span class=mut>Sigorta ✎</span><b class=num>${F(SIG)}</b></div><div class=row><span class=mut>Tevkifat (${estMode&&gotEst>got?'tahmini':'gerçek'})</span><b class=num>${F(tev)}</b></div>`:''}
  <div class=row><span class=mut>Kazanılan</span><b class="num ok">${F(got)}</b></div>
  <div class=row><span class=mut>Kalan</span><b class=num>${F(Math.max(0,rem))}</b></div>
+ <div class=row><span class=mut>Hesaba yatacak (şu an)</span><b class=num style="color:${yatir>=0?'var(--good)':'var(--bad)'}">${F(yatir)}</b></div>
+ <div class=mut style="font-size:12px;margin:4px 0">Kazanılan − alınan nakit − sigorta − tevkifat</div>
  <div class=mut style="margin:6px 0 10px">${st}</div>
  <div class=wkstrip>${cols}</div></div>`};
 const srcOpts=()=>[{id:'mp',n:'⭐ Maxipuan'}].concat((S.debts||[]).filter(d=>d.keep&&ADMIN).map(d=>({id:d.id,n:'🤝 '+d.name})));
