@@ -200,7 +200,7 @@ function serMonths(p){const b=baseNm(p);const out=[];S.m.forEach((m,mi)=>{if(m.w
 function akSerLbl(p){try{const L=seriesList(p);if(!L)return '';const mi=serMonthOf(p);const ms=serMonths(p);const i=ms.indexOf(mi);return i<0?'':(i+1)+'/'+ms.length}catch(e){return ''}}
 function akPayRow(mi,wi,pi,p){const paid=!!p[3];
  return `<div class="row pl ${paid?'paid':''}" data-mi="${mi}" data-wi="${wi}" data-pi="${pi}"><span class=check onclick="tg(${mi},${wi},${pi})">${AK_CHK}</span><div class=meta onclick="akEdit(${mi},${wi},${pi})"><div class=nm>${E(p[0]||'—')}</div><div class=sub>${(()=>{const l=p[16]||akSerLbl(p);return l?'<span>'+E(l)+'</span>'+(p[5]?' • ':''):''})()}${E(p[5]||'')}${(p[4]&&p[4]!=='PDF planı')?' <span class=tag>'+E(p[4])+'</span>':''}${p[15]?` <span class=tag onclick="event.stopPropagation();akExOpts(${mi},${wi},${pi})">Örnek</span>`:''}${!paid&&akPaidOf(p)>0?' · kalan '+F(remOf(p)):''}${(+p[9]>0)?` <span class=tag style="font-size:10px;padding:1px 7px;line-height:1.5;font-weight:600">↩️ Devir : ${F(p[9])}</span>`:''}</div>${akMergeTxt(p)}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none"><button class=x aria-label="IBAN kopyala" onclick="event.stopPropagation();copyIban('${E(S.ibans[p[0]])}')" style="display:${(!paid&&S.ibans[p[0]])?'inline-grid':'none'};place-items:center;width:28px;height:28px;border:1px solid var(--line);border-radius:8px;color:var(--acc);background:var(--card);padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="amt num">${F(paid?p[2]:remOf(p))}</div></div></div>`}
-function akBillRow(b){if(b.inst.susp)return '';const paid=!!b.inst.paid;
+function akBillRow(b){if(b.inst.susp)return `<div class="row"><span class=check></span><div class=meta><div class=nm>${billIco(b.b.cat)} ${E(b.b.name)}</div><div class=sub>Askıda · bu ay ödenmeyecek</div></div></div>`;const paid=!!b.inst.paid;
  return `<div class="row ${paid?'paid':''}"><span class=check onclick="tgBill('${b.key}')">${AK_CHK}</span><div class=meta><div class=nm>${billIco(b.b.cat)} ${E(b.b.name)}</div><div class=sub>Fatura${b.late?' · gecikmiş':''}</div></div><div class="amt num" onclick="openBillAmt('${b.key}')">${b.inst.amount?F(b.inst.amount):'Tutar'}</div></div>`}
 function akGroups(items){const g={};items.forEach(x=>{(g[x.k]=g[x.k]||[]).push(x.h)});
  const ks=Object.keys(g).sort((a,b)=>a===''?1:b===''?-1:a.localeCompare(b));
@@ -343,17 +343,20 @@ const akMonthSumBox=()=>{
  mSumUpd();
  const cur=bt0.getFullYear()+'-'+String(bt0.getMonth()+1).padStart(2,'0');
  const ym=akSt.sumYm||cur;
- const m=(S.mSum||{})[ym]||{gross:0,ex:0,tev:0,sig:0};
- const gross=m.gross,net=gross-m.ex-m.tev-m.sig;
+ const m=wkMonthAgg(ym);
+  const gross=m.got,net=m.net;
  const [yy,mm]=ym.split('-').map(Number);
  const ay=new Date(yy,mm-1,1).toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
  const cardSt='class=card style="margin:0;height:96px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:12px 8px;text-align:center"';
- const box=(lbl,val,col)=>`<div ${cardSt}><div class=mut style="font-size:12px">${lbl}</div><b class=num style="display:block;margin-top:6px;font-size:15px;color:${col}">${F(val)}</b></div>`;
- const mid=`<div ${cardSt}><div class=mut style="font-size:12px">Düşülenler</div><b class=num style="display:block;margin-top:6px;font-size:15px;color:var(--bad)">${F(m.ex+m.tev+m.sig)}</b></div>`;
+ const clickSt=cardSt.replace('display:flex','cursor:pointer;display:flex');
+  const box=(lbl,val,col,fn)=>`<div ${fn?clickSt:cardSt}${fn?` onclick="wkPopOpen(${fn},'${ym}')"`:''}><div class=mut style="font-size:12px">${lbl}</div><b class=num style="display:block;margin-top:6px;font-size:15px;color:${col}">${F(val)}</b></div>`;
+ const mid=`<div ${clickSt} onclick="wkPopOpen(wkPopDed,'${ym}')"><div class=mut style="font-size:12px">Düşülenler</div><b class=num style="display:block;margin-top:6px;font-size:15px;color:var(--bad)">${F(m.ded)}</b></div>`;
  const nextBtn=ym<cur?`<button class=nav-arrow onclick="akSumNav(1)">›</button>`:'<span></span>';
- return `<div class=mhead><button class=nav-arrow onclick="akSumNav(-1)">‹</button><b>${ay} Özeti</b>${nextBtn}</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${box('Toplam kazanç',gross,'var(--ink)')}${mid}${box('Hesaba yatan',net,'var(--good)')}</div><div class=mut style="font-size:12px;margin-top:8px">Bu kart her pazartesi sabahı haftalık güncellenir.</div>`;
+ return `<div class=mhead><button class=nav-arrow onclick="akSumNav(-1)">‹</button><b>${ay} Özeti</b>${nextBtn}</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${box('Toplam kazanç',gross,'var(--ink)','wkPopTotal')}${mid}${box('Hesaba yatan',net,'var(--good)','wkPopNet')}</div><div class=mut style="font-size:12px;margin-top:8px">Bu kart her pazartesi sabahı haftalık güncellenir.</div>`;
 };
-const wkKeys=()=>{const ks=new Set(Object.keys(S.wg||{}));ks.add(iso(wkMon()));return [...ks].sort().reverse()};
+let WKYM='';const wkPopOpen=(fn,ym)=>{WKYM=ym||'';fn()};
+const wkKeys=()=>{const ks=new Set(Object.keys(S.wg||{}));ks.add(iso(wkMon()));return [...ks].filter(k=>!WKYM||k.slice(0,7)==WKYM).sort().reverse()};
+const wkMonthAgg=ym=>{const o={got:0,cash:0,sig:0,tev:0,ded:0,net:0};Object.keys(S.wg||{}).concat([iso(wkMon())]).filter((k,i,a)=>a.indexOf(k)===i&&k.slice(0,7)==ym).forEach(k=>{const c=wkCalc(k);o.got+=c.got;o.cash+=c.cash;o.sig+=c.sig;o.tev+=c.tev;o.ded+=c.ded;o.net+=c.net});return o};
 const wkRangeTxt=k=>{const m=new Date(k+'T00:00');const e=new Date(m.getFullYear(),m.getMonth(),m.getDate()+6);const f=x=>x.toLocaleDateString('tr-TR',{day:'numeric',month:'short'});return f(m)+' – '+f(e)};
 const wkCalc=k=>{const D=(S.wg||{})[k]||{};const izin=D.izin||[];const g=D.g||[];const gi=g.filter(x=>!izin.includes(x.d));const got=gi.reduce((s,x)=>s+(+x.a||0),0);const cash=gi.reduce((s,x)=>s+(+x.n||0),0);const sig=wkSig();const tev=wkTev(got);return {got,cash,sig,tev,ded:cash+sig+tev,net:Math.round(got-cash-sig-tev)}};
 const wkPopList=(title,rowFn)=>akSheet(`<h3>${title}</h3>`+wkKeys().map(rowFn).join('')+`<div style="margin-top:8px"><button class=link onclick="akClose()">Kapat</button></div>`);
@@ -398,10 +401,10 @@ const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=
  <div style="height:10px;border-radius:6px;background:var(--line);overflow:hidden;margin:10px 0 8px"><div style="height:100%;width:${pct}%;background:var(--acc);transition:width .3s"></div></div>
  <div class=row style="cursor:pointer" onclick="akSt.wkAdd=!akSt.wkAdd;draw()"><span class=mut>Hedef Fatura ${open2?'▾':'▸'}</span><b class=num>${F(HF)}</b></div>
  ${open2?`<div class=row><span class=mut>Haftalık hedef${D.tAuto?' (otomatik)':''}</span><b class=num>${F(T)}</b></div><div class=row><span class=mut>Hedefe eklenenler</span><b class=num>${F(add)}</b></div><div class=row><span class=mut style="font-size:12px">Alınan nakit (${cash===cashEst?'gerçek':'gerçek '+F(cash)+' · tahmini '+F(cashEst-cash)})</span><b class=num>${F(cashEst)}</b></div><div class=row style="cursor:pointer" onclick="wkSigEdit()"><span class=mut>Sigorta ✎</span><b class=num>${F(SIG)}</b></div><div class=row><span class=mut>Tevkifat (${estMode&&gotEst>got?'tahmini':'gerçek'})</span><b class=num>${F(tev)}</b></div>`:''}
- <div class=row style="cursor:pointer" onclick="wkPopTotal()"><span class=mut>Kazanılan ›</span><b class="num ok">${F(got)}</b></div>
+ <div class=row style="cursor:pointer" onclick="wkPopOpen(wkPopTotal)"><span class=mut>Kazanılan ›</span><b class="num ok">${F(got)}</b></div>
  <div class=row><span class=mut>Kalan</span><b class=num>${F(Math.max(0,rem))}</b></div>
- <div class=row style="cursor:pointer" onclick="wkPopDed()"><span class=mut>Düşülenler ›</span><b class=num>${F(cash+SIG+wkTev(got))}</b></div>
- <div class=row style="cursor:pointer" onclick="wkPopNet()"><span class=mut>Hesaba yatacak (şu an) ›</span><b class=num style="color:${yatir>=0?'var(--good)':'var(--bad)'}">${F(yatir)}</b></div>
+ <div class=row style="cursor:pointer" onclick="wkPopOpen(wkPopDed)"><span class=mut>Düşülenler ›</span><b class=num>${F(cash+SIG+wkTev(got))}</b></div>
+ <div class=row style="cursor:pointer" onclick="wkPopOpen(wkPopNet)"><span class=mut>Hesaba yatacak (şu an) ›</span><b class=num style="color:${yatir>=0?'var(--good)':'var(--bad)'}">${F(yatir)}</b></div>
  <div class=mut style="margin:6px 0 10px">${st}</div>
  <div class=wkstrip>${cols}</div></div>`};
 const srcOpts=()=>[{id:'mp',n:'⭐ Maxipuan'}].concat((S.debts||[]).filter(d=>d.keep&&ADMIN).map(d=>({id:d.id,n:'🤝 '+d.name})));
@@ -415,7 +418,7 @@ function akFlowBody(){
  const w=x.w,items=[];let total=0,paid=0;
  w[2].forEach((p,pi)=>{total+=(+p[2]||0);paid+=akPaidOf(p);items.push({k:p[1]||'',h:akPayRow(x.mi,x.wi,pi,p),paid:!!p[3],nm:p[0]||'',d:p[1]||''})});
  const bl=billsFor(x.mi,x.wi),billItems=[];
- bl.forEach(b=>{const a=+b.inst.amount||0;total+=a;if(b.inst.paid)paid+=a;billItems.push({h:akBillRow(b),paid:!!b.inst.paid})});
+ bl.forEach(b=>{if(b.inst.susp)return;const a=+b.inst.amount||0;total+=a;if(b.inst.paid)paid+=a;billItems.push({h:akBillRow(b),paid:!!b.inst.paid})});
  const left=kalanW(w),pct=total?Math.round(paid/total*100):0,C=2*Math.PI*50;
  const next=items.filter(i=>!i.paid).sort((a,b)=>(a.d||'9').localeCompare(b.d||'9'))[0];
  const cI0=first?arr.findIndex(y=>y.mi==first.mi&&y.wi==first.wi):-1,st0=Math.max(0,cI0<0?idx:Math.min(cI0,idx)),en0=Math.max(st0+6,idx+1),strip=arr.slice(st0,en0).map(y=>{const on=y.mi==x.mi&&y.wi==x.wi;return `<button class="wk ${on?'on':''}" onclick="akWk(${y.mi},${y.wi})"><small>${new Date(y.d).toLocaleDateString('tr-TR',{day:'numeric',month:'short'})} · kalan</small><b class=num>${F(kalanW(y.w))}</b></button>`}).join('');
@@ -1420,7 +1423,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='7.61';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
+const KEY='butce_v3';const VER='7.62';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
