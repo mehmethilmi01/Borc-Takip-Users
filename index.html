@@ -355,6 +355,7 @@ const akMonthSumBox=()=>{
  return `<div class=mhead><button class=nav-arrow onclick="akSumNav(-1)">‹</button><b>${ay} Özeti</b>${nextBtn}</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${box('Toplam kazanç',gross,'var(--ink)','wkPopTotal')}${mid}${box('Hesaba yatan',net,'var(--good)','wkPopNet')}</div><div class=mut style="font-size:12px;margin-top:8px">Bu kart her pazartesi sabahı haftalık güncellenir.</div>`;
 };
 let WKYM='';const wkPopOpen=(fn,ym)=>{WKYM=ym||'';fn()};
+const wkN=v=>(+v||0).toLocaleString('tr-TR',{maximumFractionDigits:2});
 const wkKeys=()=>{const cur=iso(wkMon());return Object.keys(S.wg||{}).filter(k=>k<cur&&(!WKYM||k.slice(0,7)==WKYM)).sort().reverse()};
 const wkMonthAgg=ym=>{const cur=iso(wkMon());const o={got:0,cash:0,sig:0,tev:0,ded:0,net:0};Object.keys(S.wg||{}).filter(k=>k<cur&&k.slice(0,7)==ym).forEach(k=>{const c=wkCalc(k);o.got+=c.got;o.cash+=c.cash;o.sig+=c.sig;o.tev+=c.tev;o.ded+=c.ded;o.net+=c.net});return o};
 const wkRangeTxt=k=>{const m=new Date(k+'T00:00');const e=new Date(m.getFullYear(),m.getMonth(),m.getDate()+6);const f=x=>x.toLocaleDateString('tr-TR',{day:'numeric',month:'short'});return f(m)+' – '+f(e)};
@@ -395,7 +396,7 @@ const wkCard=()=>{if(S.wkHidden)return `<div style="margin:8px 0"><button class=
  const pct=HF>0?Math.max(0,Math.min(100,Math.round(got/HF*100))):0;
  const st=rem<=0?'Hedef tamam 🎉':left>0?`Kalan ${left} günde günlük: ${F(per)}`:`Hafta bitti, kalan ${F(rem)}`;
  const per7=HF/7;
- const cols=days.map((d,i)=>{const gg=izin.includes(d)?0:wkDayGain(d);const up=openDays.includes(d)?(per>0?F(per):'—'):F(gg);const h=per7>0?Math.min(100,Math.round(gg/per7*100)):0;return `<div class="wkd${d==iso(bt0)?' today':''}${izin.includes(d)?' izin':''}" onclick="wkDayClick('${d}')" onpointerdown="wkHoldStart('${d}')" onpointerup="wkHoldEnd()" onpointerleave="wkHoldEnd()" onpointercancel="wkHoldEnd()" oncontextmenu="return false"><small class=wkup>${izin.includes(d)?'İzin':up}</small><div class=wkb><i style="height:${h}%"></i></div><small>${WK_DAYS[i]}</small></div>`}).join('');
+ const cols=days.map((d,i)=>{const gg=izin.includes(d)?0:wkDayGain(d);const up=openDays.includes(d)?(per>0?wkN(per)+' ₺':'—'):wkN(gg)+' ₺';const h=per7>0?Math.min(100,Math.round(gg/per7*100)):0;return `<div class="wkd${d==iso(bt0)?' today':''}${izin.includes(d)?' izin':''}" onclick="wkDayClick('${d}')" onpointerdown="wkHoldStart('${d}')" onpointerup="wkHoldEnd()" onpointerleave="wkHoldEnd()" onpointercancel="wkHoldEnd()" oncontextmenu="return false"><small class=wkup>${izin.includes(d)?'İzin':up}</small><div class=wkb><i style="height:${h}%"></i></div><small>${WK_DAYS[i]}</small></div>`}).join('');
  const open2=akSt.wkAdd;
  return `<div class=card style="margin:12px 0">${head}
  <div style="height:10px;border-radius:6px;background:var(--line);overflow:hidden;margin:10px 0 8px"><div style="height:100%;width:${pct}%;background:var(--acc);transition:width .3s"></div></div>
@@ -3925,7 +3926,9 @@ input,textarea,[contenteditable=true]{-webkit-user-select:text;user-select:text}
 .wkd small{font-size:11px;color:var(--mut)}
 .wkd.today small{font-weight:700;color:var(--acc)}</style><style>.wkstrip{height:110px!important}
 .wkup{font-size:11px;font-weight:600;white-space:nowrap;color:var(--ink)}
-.wkd{cursor:pointer}
+.wkd{cursor:pointer;min-width:0}
+.wkup{white-space:nowrap;overflow:hidden;text-overflow:clip;letter-spacing:-.3px;line-height:1.15;font-size:8.5px}
+.wkstrip{gap:3px!important}
 .wkb{height:64px;flex:none}</style><style>.wkd.izin .wkb{background:repeating-linear-gradient(45deg,var(--line),var(--line) 6px,transparent 6px,transparent 12px)}.wkd.izin .wkb i{background:transparent}.wkd.izin .wkup{color:var(--mut)}.wkd{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}</style><style>button.ak-r2,label.ak-r2{cursor:pointer;color:var(--acc);font-weight:600}button.ak-r2::after,label.ak-r2::after{content:"›";font-size:22px;line-height:1;color:var(--mut);margin-left:auto;font-weight:400}button.ak-r2 span[style*="color"]{color:var(--bad)!important}</style><style>button.ak-r2,label.ak-r2{background:var(--surface2);border-radius:14px;margin:6px 10px;width:calc(100% - 20px);padding:14px 16px;cursor:pointer;color:var(--acc);font-weight:600;border:1px solid var(--line)}button.ak-r2:active,label.ak-r2:active{transform:scale(.99)}</style><style>.tl-pp{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-top:2px}.tl-pg,.tl-pr{font-size:12px;font-weight:600;white-space:nowrap}.tl-pg{color:var(--good)}.tl-pr{color:var(--bad)}.tl-bar{width:120px;height:6px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:6px;margin-left:auto}.tl-bar i{display:block;height:100%;background:var(--good);border-radius:4px;transition:width .3s}</style><style>body{text-transform:capitalize}input,textarea,select{text-transform:none}</style><style>#qkcats *,#qksrc *{animation:none!important;transition:none!important}</style><style>
 .ak-ygrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .ak-ym{background:var(--surface);border:0;border-radius:16px;padding:12px;box-shadow:0 1px 2px rgba(20,20,30,.05),0 8px 18px -12px rgba(20,20,30,.22);text-align:left;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);display:flex;flex-direction:column;min-width:0;height:96px;overflow:hidden;cursor:pointer;transition:transform .15s var(--ease)}
