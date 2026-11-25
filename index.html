@@ -211,7 +211,7 @@ let QK={a:''};
 const qkPanel=()=>`<div class=qkbar>${S.cats.map((c,i)=>`<button class="qkc ${c==cat?'on':''}" title="${E(c)}" onclick="qkCat(${i})">${E(c.split(' ')[0])}</button>`).join('')}</div>`;
 const qkRefresh=()=>{const el=document.getElementById('qkcats');if(el)el.innerHTML=qkPanel()};
 const pickPop=(anchor,items,sel,onPick)=>{document.querySelectorAll('.qkpop').forEach(e=>e.remove());if(!anchor)return;const d=document.createElement('div');d.className='qkpop';const add=(label,j,on)=>{const b=document.createElement('button');b.className=on?'on':'';b.textContent=label;b.onclick=(ev)=>{ev.stopPropagation();d.remove();onPick(j)};d.appendChild(b)};add(cat,-1,!sel);items.forEach((x,j)=>add(x,j,x==sel));document.body.appendChild(d);let r=anchor.getBoundingClientRect();const w=d.offsetWidth,h=d.offsetHeight;const dn=h+14-r.top;if(dn>0){window.scrollBy(0,-dn);r=anchor.getBoundingClientRect()}let left=Math.max(8,Math.min(r.left+r.width/2-w/2,innerWidth-w-8));let top=r.top-h-6;if(top<8)top=r.bottom+6;d.style.left=left+'px';d.style.top=top+'px';const off=(ev)=>{if(!d.contains(ev.target)){d.remove();document.removeEventListener('pointerdown',off,true)}};setTimeout(()=>document.addEventListener('pointerdown',off,true),0)};
-const qkCat=i=>{cat=S.cats[i];csub=null;if(/motor/i.test(cat)){ED.a=QK.a||'';ED.n='';QK.a='';return motoLogSheet()}qkRefresh();const subs=subsOf(cat);if(!subs.length)return;pickPop(document.querySelectorAll('.qkc')[i],subs,csub,j=>{csub=j<0?null:subs[j];qkRefresh()})};
+const qkCat=i=>{cat=S.cats[i];csub=null;qkRefresh();const subs=subsOf(cat);if(!subs.length)return;pickPop(document.querySelectorAll('.qkc')[i],subs,csub,j=>{csub=j<0?null:subs[j];qkRefresh()})};
 const qkSet=j=>{const l=subsOf(cat);csub=(+j>=0&&l[+j])?l[+j]:null;qkRefresh()};
 const qkSave=()=>{const a=+QK.a;if(!a)return toast('Tutar gir');ED.a=a;ED.n='';ED.d=iso(t0);ED.ds=null;ED.mp=QK.src=='mp';ED.ds=(QK.src&&QK.src!='mp')?QK.src:null;QK.a='';QK.src='';QK.srcOpen=false;const n0=S.ex.length;addEx();document.querySelectorAll('.qkin').forEach(i=>{i.value='';i.blur()});if(S.ex.length>n0)toast('Harcama eklendi · '+F(a))};
 const fixedNow=i=>{const f=(S.fixed||[])[i];if(!f)return;cat=f.c;csub=null;ED.a=+f.a;ED.n='';ED.d=iso(t0);ED.ds=f.ds||null;const n0=S.ex.length;addEx();if(S.ex.length>n0)toast('Sabit harcama eklendi')};
@@ -561,7 +561,7 @@ function akDebtChart(){
   S.m.forEach(m=>m.w.forEach(w=>w[2].forEach(p=>{if((p[5]||'📌 Diğer')!=akSt.gbc)return;const r=remOf(p);if(r<=0)return;const n=baseNm(p);rows[n]=(rows[n]||0)+r})));
   S.debts.forEach(d=>{if(!d.paid&&d.amount&&d.cat==akSt.gbc)rows[d.name]=(rows[d.name]||0)+ +d.amount});
   det=`<div class=sect><button class=link onclick="akSt.gbc=null;draw()">‹ Tümü</button><h2>${E(akSt.gbc)}</h2></div><div class=list>${Object.entries(rows).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<div class=row><div class=meta><div class=nm>${E(n)}</div></div><div class="amt num">${F(v)}</div></div>`).join('')||'<div class=empty>Kalan yok</div>'}</div>`}
- return `<div class=card>${akDonut(dg,c=>/motor/i.test(c)?'motoLogSheet()':`akSt.gbc='${Q(c)}';draw()`)}</div>${det}${akFxBody()}`}
+ return `<div class=card>${akDonut(dg,c=>`akSt.gbc='${Q(c)}';draw()`)}</div>${det}${akFxBody()}`}
 
 /* harcama: dönem + drill (ay → hafta → gün) */
 function akRangeEx(rg){return S.ex.map((e,i)=>({...e,i})).filter(e=>e.d>=rg[0]&&e.d<=rg[1])}
@@ -953,7 +953,7 @@ function akPay(){QD.c=QD.c||S.dcats[0];QD.d=QD.d||iso(t0);QD.t=QD.t||'1';
   <input type=hidden id=qcu value="">
   <button class="btn ghost" onclick="akPdfOpen()">PDF'den plan yükle</button><button class=btn onclick="akPayRead();addQuick();akClose()">Kaydet</button><button class="btn ghost" onclick="akClose()">Vazgeç</button>`)}
 function akSpendRead(){const a=document.getElementById('akA');if(!a)return;ED.a=a.value;ED.n=document.getElementById('akN').value}
-const akCatTap=i=>{akSpendRead();cat=S.cats[i];csub=null;if(/motor/i.test(cat)){akClose();return motoLogSheet()}akSpend();const subs=subsOf(cat);if(!subs.length)return;pickPop(document.querySelectorAll('#akSW .cats button')[i],subs,csub,j=>{csub=j<0?null:subs[j];akSpend()})};
+const akCatTap=i=>{akSpendRead();cat=S.cats[i];csub=null;akSpend();const subs=subsOf(cat);if(!subs.length)return;pickPop(document.querySelectorAll('#akSW .cats button')[i],subs,csub,j=>{csub=j<0?null:subs[j];akSpend()})};
 function akSpend(){
  akSheet(`<h3>Harcama ekle</h3>
   <div class=field><label>Tutar</label><input class="input big-input" id=akA inputmode=decimal placeholder="0" value="${E(ED.a||'')}"></div>
@@ -1424,7 +1424,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='7.72';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
+const KEY='butce_v3';const VER='7.73';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
