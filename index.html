@@ -1299,7 +1299,7 @@ function akMotorBody(){
  <div class=mut style="text-align:center;font-size:12px;margin:-4px 0 12px">Sürükleyerek döndür · Noktalara dokun</div>
  <div class=card><div><b>${E(m.marka)} ${E(m.model)}</b></div><div class=mut>${m.yil||''} · ${motoKmFmt(m.km)} km</div>
  <div style="display:flex;gap:8px;margin-top:10px"><button class=add onclick="akSt.motoEdit=1;akSt.motoDraft=null;draw()">Düzenle</button><button class=add onclick="motoKmAsk()">Km güncelle</button><button class=add style="color:var(--bad)" onclick="motoDelAsk()">Sil</button></div></div>
- <div class=sect><h2>Bakım geçmişi</h2></div><div class=list>${log}</div>${motoFinesHTML()}`}
+ <div style="margin:8px 0 12px"><button class=add style="width:100%" onclick="motoLogSheet()">🔧 Bakım ekle (toplu)</button></div><div class=sect><h2>Bakım geçmişi</h2></div><div class=list>${log}</div>${motoFinesHTML()}`}
 function motoFineSheet(idx){const f=idx!=null?((S.moto&&S.moto.fines)||[])[idx]:null;const d0=f?f.d:iso(t0),a0=f?f.a:'',n0=f?(f.n||''):'';
  akSheet(`<h3>${f?'Trafik cezasını düzenle':'Trafik cezası ekle'}</h3><div class=field><label>Tarih</label><input type=date id=cfD class=in value="${d0}"></div><div class=field><label>Tutar ₺</label><input id=cfA class=in inputmode=decimal value="${a0}" placeholder="0"></div><div class=field><label>Açıklama (isteğe bağlı)</label><input id=cfN class=in value="${E(n0)}" placeholder="Örn: Hız ihlali, park yasağı"></div><button class=btnp onclick="motoFineSave(${idx==null?'null':idx})">Kaydet</button>`)}
 function motoFineSave(idx){const d=document.getElementById('cfD').value,a=NUM(document.getElementById('cfA').value)||0,n=(document.getElementById('cfN').value||'').trim();if(!d)return toast('Tarih gir');if(a<=0)return toast('Tutar gir');
@@ -1424,7 +1424,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='7.78';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
+const KEY='butce_v3';const VER='7.79';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
