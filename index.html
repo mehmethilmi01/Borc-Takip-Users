@@ -1403,7 +1403,7 @@ function akSetBody(){
   ${adm?'<button class=ak-r2 onclick="openAdminUsers()"><span>👥 Kullanıcılar</span></button>':''}
   <button class=ak-r2 onclick="clr()"><span style="color:var(--bad)">Tüm verileri temizle</span></button>
  </div></div>`}
-const KEY='butce_v3';const VER='7.91';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
+const KEY='butce_v3';const VER='7.93';const NUM=s=>{let t=String(s==null?'':s).trim().replace(/\s/g,'');if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=parseFloat(t);return isFinite(v)?v:0};
 try{['butce_pre_update','butce_pre_ver','butce_auto_prev','butce_ver'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 let CATC=['#1f6f5c','#c9752f','#7d5ba6','#b4402f','#2f6fb4','#a3852f','#5fae8c','#c94f7c','#4f8fc9','#8c6f4f'];
 let S; try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
@@ -2684,17 +2684,31 @@ const ed=(w,p,i,v)=>{const pay=S.m[cur].w[w][2][p];if(i!=6){const LB={0:'ad',1:'
 const renderSearch=()=>{const el=$('sres');if(!el)return;const q=SQ.trim().toLocaleLowerCase('tr');if(!q){el.innerHTML='';return}
 const hit=x=>String(x==null?'':x).toLocaleLowerCase('tr').includes(q);
 const dl=d=>new Date(d+'T00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'short'});
-const ex=S.ex.map((e,i)=>({...e,i})).filter(e=>hit(e.c)||hit(e.n)||hit(e.a)||hit(e.d)||hit(dl(e.d))).sort((a,b)=>b.d.localeCompare(a.d)||(b.ts||0)-(a.ts||0));
+const ex=S.ex.map((e,i)=>({...e,i})).filter(e=>hit(e.c)||hit(e.s)||hit(e.n)||hit(e.a)||hit(e.d)||hit(dl(e.d))).sort((a,b)=>b.d.localeCompare(a.d)||(b.ts||0)-(a.ts||0));
 const pays=[];S.m.forEach((m,mi)=>m.w.forEach((w,wi)=>w[2].forEach((p,pi)=>{if(hit(p[0])||hit(p[4])||hit(p[5])||hit(p[2])||(p[1]&&hit(dl(p[1]))))pays.push({mi,wi,pi,p,mt:m.t})})));
 const debts=S.debts.map((d,i)=>({...d,i})).filter(d=>hit(d.name)||hit(d.cat)||hit(d.amount));
-const dox=[].map((d,i)=>({...d,i})).filter(d=>hit(d.name)||hit(d.cat)||hit(d.bank)||hit(d.exp));
-const sec=(t,n,html)=>n?`<div class=mut style="margin:10px 0 4px;font-weight:bold">${t} (${n})</div>${html}`:'';
+const dox=(S.docs||[]).map((d,i)=>({...d,i})).filter(d=>hit(docTitle(d))||hit(d.bank)||hit(catTxt(d))||hit(d.exp)||hit(d.note));
+const krs=(S.kr||[]).map(c=>({c,uses:(c.uses||[]).filter(u=>hit(u.n)||hit(u.a)||hit(u.d)||hit(dl(u.d)))})).filter(o=>hit(o.c.name)||o.uses.length);
+const bills=(S.bills||[]).map((b,i)=>({...b,i})).filter(b=>hit(b.name)||hit(b.cat)||hit(b.amount));
+const fixed=(S.fixed||[]).map((f,i)=>({...f,i})).filter(f=>hit(f.n)||hit(f.c)||hit(f.a));
+const mo=S.moto||{};
+const motoLog=(mo.log||[]).map((x,i)=>({...x,i})).filter(x=>hit(motoPartLbl[x.k])||hit(x.n)||hit(x.km)||hit(x.d)||hit(dl(x.d))).sort((a,b)=>b.d.localeCompare(a.d));
+const motoFines=(mo.fines||[]).map((f,i)=>({...f,i})).filter(f=>hit(f.n)||hit(f.a)||hit(f.d)||hit(dl(f.d)));
+const motoMeta=mo.m&&(hit(mo.m.marka)||hit(mo.m.model)||hit(mo.m.plaka))?[mo.m]:[];
+const total=ex.length+pays.length+debts.length+krs.length+bills.length+fixed.length+motoLog.length+motoFines.length+motoMeta.length+dox.length;
+const sec=(t,n,html)=>n?`<div class=mut style="margin:12px 0 4px;font-weight:bold">${t} (${n})</div>${html}`:'';
 const rowL=(l,r,onc)=>`<div class=row style="cursor:pointer" onclick="${onc}"><span>${l}</span><span class=n>${r}</span></div>`;
-el.innerHTML=`<div class=mut style="margin:6px 0">${ex.length+pays.length+debts.length+dox.length} sonuç</div>`+
-sec('💸 Harcamalar',ex.length,ex.slice(0,30).map(e=>rowL(`${dl(e.d)} · ${E(e.c)}${e.n?' · '+E(e.n):''}`,F(e.a),`openExEdit(${e.i})`)).join(''))+
+el.innerHTML=`<div class=mut style="margin:6px 0">${total} sonuç</div>`+
+sec('💸 Harcamalar',ex.length,ex.slice(0,30).map(e=>rowL(`${dl(e.d)} · ${E(e.c)}${e.s?' › '+E(Array.isArray(e.s)?e.s.join(', '):e.s):''}${e.n?' · '+E(e.n):''}`,F(e.a),`openExEdit(${e.i})`)).join(''))+
 sec('🧾 Ödemeler',pays.length,pays.slice(0,30).map(x=>rowL(`${E(x.p[0]||'—')} <span class=mut>· ${x.mt}</span>`,F(x.p[2]),`cur=${x.mi};gw=${x.wi};tab='a';SQ='';draw(1)`)).join(''))+
 sec('💳 Borçlar',debts.length,debts.slice(0,30).map(d=>rowL(`${E(d.name)} <span class=mut>· ${E(d.cat)}</span>`,F(d.amount),`tab='b';bcat=null;bplan=null;SQ='';draw(1)`)).join(''))+
-sec('📁 Belgeler',dox.length,dox.slice(0,30).map(d=>rowL(E(docTitle(d)),'',`SQ='';draw(1);openDocs();openDocV(${d.i})`)).join(''))};
+sec('🏦 Krediler',krs.length,krs.slice(0,30).map(o=>rowL(`${E(o.c.name)}`,F(o.c.amount),`SQ='';draw(1);krDetail('${o.c.id}')`)+o.uses.slice(0,10).map(u=>rowL(`&nbsp;&nbsp;${dl(u.d)} · ${E(u.n||'Harcama')}`,F(u.a),`SQ='';draw(1);krDetail('${o.c.id}')`)).join('')).join(''))+
+sec('🧾 Faturalar',bills.length,bills.slice(0,30).map(b=>rowL(`${E(b.name)} <span class=mut>· ${E(b.cat||'')}</span>`,F(b.amount),`tab='o';SQ='';draw(1)`)).join(''))+
+sec('📌 Sabit harcamalar',fixed.length,fixed.slice(0,30).map(f=>rowL(`${E(f.n||f.c||'Sabit')} <span class=mut>· ${E(f.c||'')}</span>`,F(f.a),`tab='o';SQ='';draw(1)`)).join(''))+
+sec('🏍️ Motor bakım',motoLog.length,motoLog.slice(0,30).map(x=>rowL(`${dl(x.d)} · ${E(motoPartLbl[x.k]||x.k)}${x.n?' · '+E(x.n):''}`,motoKmFmt(x.km)+' km',`tab='mt';SQ='';draw(1)`)).join(''))+
+sec('🚦 Trafik cezaları',motoFines.length,motoFines.slice(0,30).map(f=>rowL(`${dl(f.d)} · ${E(f.n||'Trafik cezası')}`,F(f.a),`tab='mt';SQ='';draw(1)`)).join(''))+
+sec('🏍️ Motor bilgisi',motoMeta.length,motoMeta.map(m=>rowL(`${E([m.marka,m.model].filter(Boolean).join(' ')||'Motor')}`,'',`tab='mt';SQ='';draw(1)`)).join(''))+
+sec('📁 Belgeler',dox.length,dox.slice(0,30).map(d=>rowL(E(docTitle(d)),'',`SQ='';draw(1);openDocs();openDocV(${d.i})`)).join(''));};
 const renderDocs=()=>{renderDocsOld()};
 const TOURS=[
 {t:'o',s:null,h:'Hoş geldin 👋',x:'Borç Takip; maaşını haftalara bölmene, ödemelerini, taksitlerini ve borçlarını tek yerden takip etmene yardım eder. Şimdi uygulamayı birlikte gezelim.'},
